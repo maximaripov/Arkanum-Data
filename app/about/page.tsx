@@ -38,7 +38,7 @@ export default function About() {
           <li>We don&apos;t sell or share any data, and there are no ads or trackers.</li>
         </ul>
       </section>
-      <p className="small muted"><Link href="/">← Back to Markets</Link></p>
+      <p className="small muted"><Link href="/terms">Terms of use</Link> · <Link href="/">← Back to Markets</Link></p>
     </div>
   );
 }

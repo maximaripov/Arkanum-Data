@@ -85,6 +85,8 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
   const [status, setStatus] = useState("");
   const [on, setOn] = useState(false);
   const [owner, setOwner] = useState("");
+  const [ownerMode, setOwnerMode] = useState(false);
+  useEffect(() => setOwnerMode(new URLSearchParams(location.search).has("owner")), []);
   const [env, setEnv] = useState({ supported: true, ios: false, standalone: false });
   useEffect(() => {
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -131,8 +133,9 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
         </>
       )}
       {status ? <p className="small status">{status}</p> : null}
-      {on ? (
-        <details className="small muted"><summary>Site owner</summary>
+      {/* Only at /briefing?owner, so visitors don't see it. */}
+      {on && ownerMode ? (
+        <details className="small muted" open><summary>Site owner</summary>
           <form className="levelform" onSubmit={async (e) => { e.preventDefault(); try { const r = await register({ ownerCode: owner }); setStatus(r.owner ? "This device will also get alerts if the daily update fails." : "That code isn't right."); setOwner(""); } catch (err: any) { setStatus(err.message); } }}>
             <input className="note" type="password" placeholder="Owner code" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner code" />
             <button type="submit">Save</button>

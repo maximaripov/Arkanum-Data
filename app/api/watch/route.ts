@@ -38,5 +38,5 @@ export async function GET(req: Request) {
       funds,
     };
   }));
-  return Response.json(out, { headers: { "Cache-Control": "public, s-maxage=900" } });
+  return Response.json(out, { headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600" } });
 }

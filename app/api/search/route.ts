@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   if (!q) return Response.json([]);
   try {
     const hits = await searchCompanies(q);
-    return Response.json(hits.map((c) => ({ symbol: c.ticker, name: c.name, type: "Stock", exchange: c.exchange ?? "" })), { headers: { "Cache-Control": "public, s-maxage=3600" } });
+    return Response.json(hits.map((c) => ({ symbol: c.ticker, name: c.name, type: "Stock", exchange: c.exchange ?? "" })), { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
   } catch {
     return Response.json([]);
   }

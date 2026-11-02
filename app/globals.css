@@ -302,3 +302,21 @@ a.hb-row:hover { background: var(--chip); }
    transparent frame white unless the frame element's scheme matches its document's. */
 .tradingview-widget-container iframe { color-scheme: light; }
 @media (max-width: 760px) { .mcard.tvq { flex-basis: 60%; } }
+
+/* First-visit welcome */
+.welcome-backdrop { position: fixed; inset: 0; z-index: 50; background: #0008; display: grid; place-items: center; padding: 1rem; animation: fade .2s ease; }
+.welcome { width: min(460px, 100%); max-height: calc(100dvh - 2rem); overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 1.4rem 1.3rem 1rem; box-shadow: 0 20px 60px #0007; }
+.welcome h2 { font-size: 1.35rem; margin-bottom: .4rem; }
+.welcome > p { margin: .25rem 0 .9rem; line-height: 1.5; }
+.welcome-steps { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .8rem; }
+.welcome-steps li { display: flex; gap: .75rem; align-items: flex-start; }
+.welcome-steps li div { display: grid; gap: .1rem; }
+.welcome-icon { flex: 0 0 2.2rem; height: 2.2rem; border-radius: 10px; background: var(--chip); display: grid; place-items: center; font-size: 1.05rem; }
+.welcome-tip { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 10px; padding: .6rem .75rem; margin: 0 0 1rem; }
+.welcome-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: .6rem; }
+@keyframes fade { from { opacity: 0; } }
+@media (max-width: 640px) {
+  .welcome-backdrop { place-items: end center; padding: 0; }
+  .welcome { width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  .welcome-actions .btn { flex: 1; }
+}

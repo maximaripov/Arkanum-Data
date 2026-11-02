@@ -203,3 +203,12 @@ The owner asked to show market data in Foresight's own design rather than embedd
 
 - The owner preferred one consistent look, so bitcoin, gold and the 10-year are TradingView mini quotes too: `BITSTAMP:BTCUSD`, `TVC:GOLD` (spot gold) and `FRED:DGS10`. Free widgets refuse `TVC:US10Y` and `TVC:TNX` ("only available on TradingView"), so the 10-year is TradingView's daily copy of FRED, which can trail FRED by a day.
 - Foresight's own line charts (`components/Charts.tsx`) are removed. `lib/macro.ts` and `/api/markets` stay for the Digest page's weekly summary and the 4 PM notification line, which TradingView widgets can't supply.
+
+## Round 15: launch readiness (2026-11-02)
+
+- **Device sync only when something changed.** Every register call rewrites the shared `alerts/devices.json` in Blob storage, and every page load used to make one for devices with notifications on (two Blob operations per visit). The browser now remembers what it last sent (`foresight.synced`) and skips the call unless the watchlist or screens differ, or a week has passed (so the server's 120-day idle pruning still sees the device).
+- **Longer CDN caching** with `stale-while-revalidate` on the per-stock SEC routes (insiders 30 min, announcements 30 min, company 1 day, search 1 hour, watch 30 min, retail 12 hours, digest 5 min), so traffic to a popular stock costs one SEC request per cache period.
+- **Owner code box** on the Digest page now appears only at `/briefing?owner`.
+- **Terms of use** page (`/terms`), linked from the footer and About: not advice, data as-is, third-party data stays theirs, fair use, changes. No contact address yet (owner's choice).
+- **First-visit welcome** ([components/Welcome.tsx](../components/Welcome.tsx)): one screen explaining the three things to do (follow stocks, see who's buying, daily digest), with an Add-to-Home-Screen tip on iPhone Safari. A bottom sheet on phones, shown once per browser.
+- FINRA retail table kept on stock pages by the owner's decision; the public-display terms for that dataset remain unconfirmed.

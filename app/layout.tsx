@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata, Viewport } from "next";
 import { Nav } from "@/components/Nav";
+import { Welcome } from "@/components/Welcome";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
@@ -16,10 +17,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ServiceWorker />
+        <Welcome />
         <Nav />
         <main>{children}</main>
         <footer className="muted small">
-          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link>
+          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/terms">Terms</Link>
         </footer>
       </body>
     </html>
