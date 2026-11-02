@@ -49,9 +49,11 @@ function Setup({ onPasscode }: { onPasscode: () => void }) {
   const [status, setStatus] = useState("");
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [env, setEnv] = useState({ supported: true, ios: false, standalone: false, permission: "default" as string });
-  const hasPass = !!getPasscode();
+  // Read after the page loads: the server can't see this device's saved passcode.
+  const [hasPass, setHasPass] = useState(false);
 
   useEffect(() => {
+    setHasPass(!!getPasscode());
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
     const standalone = matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
     const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -92,7 +94,7 @@ function Setup({ onPasscode }: { onPasscode: () => void }) {
       {!hasPass ? (
         <form className="levelform" onSubmit={async (e) => {
           e.preventDefault(); setPasscode(pass.trim());
-          try { await register(); onPasscode(); setStatus("Passcode saved on this device."); }
+          try { await register(); onPasscode(); setHasPass(true); setStatus("Passcode saved on this device."); }
           catch (err: any) { setPasscode(""); setStatus(err.message); }
         }}>
           <input className="note" placeholder="Passcode" value={pass} onChange={(e) => setPass(e.target.value)} autoCapitalize="none" autoCorrect="off" aria-label="Passcode" />
