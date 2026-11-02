@@ -15,6 +15,7 @@ export type Briefing = {
   watchlist: Move[];
   levels: { symbol: string; price: number; note: string; last: number; distPct: number; crossed: boolean }[];
   insiders: { watchlist: InsiderBuy[]; top: InsiderBuy[]; filed: string | null };
-  catalysts: { date: string; time: string | null; kind: "econ" | "fed" | "earnings"; title: string }[];
+  catalysts: { date: string; time: string | null; kind: "econ" | "fed" | "earnings" | "dividend"; title: string }[];
+  screens?: { name: string; count: number; added: string[]; dropped: number; first: boolean }[];
   notes: string[];
 };

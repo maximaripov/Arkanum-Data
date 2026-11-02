@@ -1,5 +1,5 @@
 // Called by your phone: registers it for notifications and/or syncs watchlist + levels.
-import { passcodeOk, readState, sanitizeLevels, sanitizeWatchlist, writeState } from "@/lib/alerts";
+import { passcodeOk, readState, sanitizeLevels, sanitizeScreens, sanitizeWatchlist, writeState } from "@/lib/alerts";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -18,6 +18,8 @@ export async function POST(req: Request) {
   if (w) state.watchlist = w;
   const l = sanitizeLevels(body.levels);
   if (l) state.levels = l;
+  const sc = sanitizeScreens(body.screens);
+  if (sc) state.screens = sc;
   const updated = await writeState(state);
   return Response.json({ ok: true, devices: state.subscriptions.length, watchlist: state.watchlist.length, updated });
 }

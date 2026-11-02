@@ -101,13 +101,52 @@ function fiscal(co, cik) {
   return { value: last.val, prior: prev && Math.abs(days(prev.end, last.end) - 365) < 20 ? prev.val : null, end: last.end };
 }
 
+/** Annual-only version of periods(): cash-flow items are reported year-to-date, so
+ *  single quarters are rarely available; the last fiscal year is used instead. */
+async function annual(tags) {
+  const co = new Map();
+  for (const p of [`CY${Y - 2}`, `CY${Y - 1}`, `CY${Y}`]) for (const t of tags) {
+    const d = await sec(`https://data.sec.gov/api/xbrl/frames/us-gaap/${t}/USD/${p}.json`);
+    await sleep(150);
+    for (const row of d?.data ?? []) {
+      if (!row.start) continue;
+      if (!co.has(row.cik)) co.set(row.cik, { q: new Map(), y: new Map() });
+      const m = co.get(row.cik).y, cur = m.get(row.end);
+      if (!cur || row.val > cur.val) m.set(row.end, { start: row.start, end: row.end, val: row.val });
+    }
+  }
+  return co;
+}
+
 console.log("Quarterly fundamentals…");
 const revQ = await periods(REV);
 const niQ = await periods(["NetIncomeLoss"]);
+console.log("Cash flow, dividends, debt…");
+const ocfY = await annual(["NetCashProvidedByUsedInOperatingActivities"]);
+// Companies label the same item differently (AT&T: "productive assets"; J&J: "ordinary dividends").
+const capexY = await annual(["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"]);
+const divY = await annual(["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"]);
+// Debt from the newest balance sheet. Total debt labels first; otherwise long-term
+// (non-current) debt plus its current portion.
+const newest = async (tag) => {
+  const m = new Map();
+  for (let i = QTRS.length - 1; i >= 0; i--) for (const [cik, v] of await frame("us-gaap", tag, "USD", `${QTRS[i]}I`)) if (!m.has(cik)) m.set(cik, v);
+  return m;
+};
+const debt = new Map();
+for (const tag of ["LongTermDebt", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities", "DebtLongtermAndShorttermCombinedAmount"])
+  for (const [cik, v] of await newest(tag)) if (!debt.has(cik)) debt.set(cik, v);
+const ltNon = await newest("LongTermDebtNoncurrent"), ltCur = await newest("LongTermDebtCurrent");
+const leaseNon = await newest("LongTermDebtAndCapitalLeaseObligations");
+for (const [cik, v] of [...ltNon, ...leaseNon]) if (!debt.has(cik)) debt.set(cik, v + (ltCur.get(cik) ?? 0));
 // Equity: newest balance sheet wins.
 const equity = new Map();
 for (let i = QTRS.length - 1; i >= 0; i--) {
   for (const [cik, v] of await frame("us-gaap", "StockholdersEquity", "USD", `${QTRS[i]}I`)) if (!equity.has(cik)) equity.set(cik, v);
+}
+// Some companies (P&G, AT&T) only report equity including minority interests.
+for (let i = QTRS.length - 1; i >= 0; i--) {
+  for (const [cik, v] of await frame("us-gaap", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "USD", `${QTRS[i]}I`)) if (!equity.has(cik)) equity.set(cik, v);
 }
 // Shares outstanding: newest quarter wins.
 const shares = new Map();
@@ -186,13 +225,14 @@ async function worker() {
 await Promise.all([worker(), worker(), worker()]);
 
 const r = (x, d = 2) => (x == null || !Number.isFinite(x) ? null : Number(x.toFixed(d)));
-const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni", "sector", "ind", "basis"];
+const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni", "sector", "ind", "basis", "dy", "de", "fcfy", "fcf"];
 const rows = [];
 let ttmCount = 0;
 // SEC lists a company's main stock first, then any other tickers filed under it:
 // share classes (GOOG), preferreds (JPM-PC) and, for banks, exchange-traded notes
 // (BMO issues dozens). Only tickers trading near the main stock's price are the same
-// equity, so only those get the company's market cap and valuation ratios.
+// equity, so only those get the company's market cap and valuation ratios. 5% keeps
+// GOOG/GOOGL together but excludes listed bonds (AT&T's TBB trades within 20% of T).
 const mainPrice = new Map();
 for (const u of list) {
   const p = prices.get(u.ticker);
@@ -207,9 +247,18 @@ for (const u of list) {
   const basis = useTtm ? `Last 4 quarters to ${fmtEnd(rT.end)}` : rF || nF ? `Fiscal year to ${fmtEnd((rF ?? nF).end)}` : null;
   const sh = shares.get(u.cik), E = equity.get(u.cik);
   if (!mainPrice.has(u.cik)) mainPrice.set(u.cik, p.price);
-  const sameEquity = Math.abs(p.price / mainPrice.get(u.cik) - 1) <= 0.2;
+  const sameEquity = Math.abs(p.price / mainPrice.get(u.cik) - 1) <= 0.05;
   const mcap = sh && sameEquity ? p.price * sh : null;
   const [sic, ind] = sicCache[u.cik] ?? ["", ""];
+  // Last fiscal year: dividends paid, free cash flow (operating cash flow − capital spending).
+  const ocf = fiscal(ocfY, u.cik), capex = fiscal(capexY, u.cik), div = fiscal(divY, u.cik);
+  const sector = sic ? sectorForSic(sic) : u.cik in sicCache ? "Funds & investment companies" : null;
+  // Free cash flow and debt-to-equity aren't meaningful for banks, insurers and funds,
+  // whose cash flows and balance sheets are their business.
+  const meaningful = sector !== "Financials" && sector !== "Funds & investment companies";
+  // Free cash flow needs both numbers for the same fiscal year.
+  const fcf = meaningful && ocf && capex && capex.end === ocf.end ? ocf.value - capex.value : null;
+  const D = meaningful ? debt.get(u.cik) : undefined;
   rows.push([
     u.ticker, u.name, u.exchange, r(p.price),
     r(((p.price - p.prev) / p.prev) * 100),
@@ -223,7 +272,14 @@ for (const u of list) {
     r(((p.price - p.hi) / p.hi) * 100, 1),
     R ?? null, N ?? null,
     // SEC lists closed-end funds and BDCs (lending funds) with no industry code.
-    sic ? sectorForSic(sic) : u.cik in sicCache ? "Funds & investment companies" : null, ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
+    sector, ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
+    // Dividend yield %: 0 when the company files cash flows but reports no dividends paid;
+    // unknown (null) when it files no cash-flow data at all.
+    // Above 25% is almost always a one-off special dividend or a share-count mismatch.
+    mcap && div ? (div.value / mcap > 0.25 ? null : r((div.value / mcap) * 100, 2)) : mcap && ocf ? 0 : null,
+    E > 0 && D != null ? r(D / E, 2) : null, // debt-to-equity
+    mcap && fcf != null ? r((fcf / mcap) * 100, 1) : null, // free-cash-flow yield %
+    fcf,
   ]);
 }
 console.log(`TTM fundamentals for ${ttmCount} of ${rows.length}`);

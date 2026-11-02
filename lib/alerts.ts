@@ -11,8 +11,11 @@ export type AlertState = {
   subscriptions: (PushSubscription & { added: string })[];
   watchlist: string[];
   levels: Record<string, Level[]>;
+  screens: Screen[];
+  screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last briefing
   updated: string | null;
 };
+export type Screen = { id: string; name: string; filter: { text?: string; exch?: string; sector?: string; industry?: string; ranges: Record<string, [number | "", number | ""]> } };
 
 const STATE = "alerts/state.json";
 const BRIEFING = "alerts/briefing.json";
@@ -27,7 +30,7 @@ const writeJson = (path: string, data: unknown) =>
 
 export async function readState(): Promise<AlertState> {
   const s = await readJson<AlertState>(STATE);
-  return { subscriptions: [], watchlist: [], levels: {}, updated: null, ...s };
+  return { subscriptions: [], watchlist: [], levels: {}, screens: [], screenMatches: {}, updated: null, ...s };
 }
 export async function writeState(s: AlertState) {
   const updated = new Date().toISOString();
@@ -104,4 +107,20 @@ export function sanitizeLevels(l: unknown): Record<string, Level[]> | undefined 
     if (ok.length) out[clean(sym)] = ok;
   }
   return out;
+}
+
+const bound = (v: unknown): number | "" => (v === "" || v == null ? "" : Number.isFinite(+v!) ? +v! : "");
+const str = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : undefined);
+export function sanitizeScreens(x: unknown): Screen[] | undefined {
+  if (!Array.isArray(x)) return undefined;
+  return x.slice(0, 20).flatMap((s: any) => {
+    if (!s || typeof s.name !== "string" || !s.filter) return [];
+    const ranges: Screen["filter"]["ranges"] = {};
+    for (const [k, v] of Object.entries(s.filter.ranges ?? {}).slice(0, 30)) {
+      if (!/^[a-zA-Z0-9]{1,12}$/.test(k) || !Array.isArray(v)) continue;
+      ranges[k] = [bound(v[0]), bound(v[1])];
+    }
+    const f = s.filter;
+    return [{ id: String(s.id ?? "").slice(0, 12), name: s.name.slice(0, 30), filter: { text: str(f.text, 40), exch: str(f.exch, 12), sector: str(f.sector, 40), industry: str(f.industry, 80), ranges } }];
+  });
 }

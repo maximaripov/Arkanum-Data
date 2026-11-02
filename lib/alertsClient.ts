@@ -10,6 +10,7 @@ import { DEFAULT_WATCHLIST } from "./markets";
 const PASS = "foresight.alertsPasscode";
 const WATCH = "foresight.watchlist";
 const LEVELS = "foresight.levels";
+const SCREENS = "foresight.screens";
 const CHANGED = "foresight.localChangedAt"; // ms of this device's last unsent-or-sent edit
 const SYNCED = "foresight.syncedAt"; // server's "updated" when this device last matched it
 const MIGRATED = "foresight.syncV2"; // set once this device has used two-way sync
@@ -26,7 +27,7 @@ export const setPasscode = (p: string) => ls.set(PASS, p);
 function localState() {
   // Exactly what the Markets tab shows: the saved list, or the default list if none was saved.
   const w = ls.json<unknown>(WATCH, null);
-  return { watchlist: Array.isArray(w) ? (w as string[]) : DEFAULT_WATCHLIST, levels: ls.json<Record<string, unknown>>(LEVELS, {}) };
+  return { watchlist: Array.isArray(w) ? (w as string[]) : DEFAULT_WATCHLIST, levels: ls.json<Record<string, unknown>>(LEVELS, {}), screens: ls.json<unknown[]>(SCREENS, []) };
 }
 
 /** Sends this device's watchlist and levels (plus any extra fields) to the server. */
@@ -45,13 +46,15 @@ export async function register(extra: Record<string, unknown> = {}) {
 }
 
 /** Writes the server's copy into this device and tells the open screens to refresh. */
-function adopt(watchlist: string[], levels: Record<string, unknown>, updated: string) {
+function adopt(watchlist: string[], levels: Record<string, unknown>, screens: unknown[], updated: string) {
   ls.set(WATCH, JSON.stringify(watchlist));
   ls.set(LEVELS, JSON.stringify(levels ?? {}));
+  ls.set(SCREENS, JSON.stringify(screens ?? []));
   ls.set(SYNCED, updated);
   ls.set(CHANGED, "0");
   window.dispatchEvent(new Event("foresight-watchlist"));
   window.dispatchEvent(new Event("foresight-levels"));
+  window.dispatchEvent(new Event("foresight-screens"));
 }
 
 let pulling: Promise<void> | null = null;
@@ -63,17 +66,17 @@ export function syncNow(): Promise<void> {
     try {
       const r = await fetch("/api/alerts/sync", { headers: { "x-passcode": passcode }, cache: "no-store" });
       if (!r.ok) return;
-      const server = (await r.json()) as { watchlist: string[]; levels: Record<string, unknown>; updated: string | null };
+      const server = (await r.json()) as { watchlist: string[]; levels: Record<string, unknown>; screens?: unknown[]; updated: string | null };
       const changedAt = Number(ls.get(CHANGED) ?? 0);
       if (!ls.get(MIGRATED)) {
         // First run of two-way sync on this device: keep a list you customized here
         // (it's what the briefing used until now); otherwise take the shared copy.
         ls.set(MIGRATED, "1");
-        if (ls.get(WATCH) !== null || Object.keys(ls.json(LEVELS, {})).length) { await register(); return; }
+        if (ls.get(WATCH) !== null || Object.keys(ls.json(LEVELS, {})).length || ls.json<unknown[]>(SCREENS, []).length) { await register(); return; }
       }
       if (!server.updated) { await register(); return; } // nothing on the server yet
       if (changedAt > Date.parse(server.updated)) { await register(); return; } // this device's edit is newer
-      if (server.updated !== ls.get(SYNCED) || changedAt) adopt(server.watchlist, server.levels, server.updated);
+      if (server.updated !== ls.get(SYNCED) || changedAt) adopt(server.watchlist, server.levels, server.screens ?? [], server.updated);
     } catch {} finally { pulling = null; }
   })();
   return pulling;

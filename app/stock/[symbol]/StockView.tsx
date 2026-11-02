@@ -8,6 +8,7 @@ import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
 import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement, Headline } from "@/lib/news";
 import { useLevels } from "@/components/useLevels";
+import { CalendarCard, type CalendarInfo } from "@/components/CalendarCard";
 
 const RANGES = ["1d", "5d", "1mo", "6mo", "1y", "5y"];
 const IND_KEY = "foresight.indicators";
@@ -33,6 +34,7 @@ export function StockView({ symbol }: { symbol: string }) {
   const [levelPrice, setLevelPrice] = useState("");
   const [levelNote, setLevelNote] = useState("");
   const [news, setNews] = useState<{ headlines: Headline[]; announcements: Announcement[] } | null>(null);
+  const [cal, setCal] = useState<CalendarInfo | null>(null);
   const q = quotes[symbol];
 
   useEffect(() => {
@@ -71,6 +73,11 @@ export function StockView({ symbol }: { symbol: string }) {
     setCmpSymbols((xs) => [...xs, s]);
     setCmpInput("");
   };
+
+  useEffect(() => {
+    setCal(null);
+    fetch(`/api/calendar?symbols=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setCal(d[symbol] ?? null)).catch(() => {});
+  }, [symbol]);
 
   useEffect(() => {
     setNews(null);
@@ -174,6 +181,7 @@ export function StockView({ symbol }: { symbol: string }) {
         <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
         {fund?.basis ? <p className="muted small">Fundamentals: {fund.basis} (SEC filings). P/E uses reported net income, so one-time gains or losses distort it.</p> : null}
       </section>
+      {cal && (cal.earnings || cal.dividends) ? <CalendarCard symbol={symbol} info={cal} /> : null}
       <div className="twocol">
         <section className="card">
           <h2>Headlines <span className="muted small">Yahoo Finance</span></h2>

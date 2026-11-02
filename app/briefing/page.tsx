@@ -13,12 +13,15 @@ const dayName = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(unde
 function dayNote(b: Briefing, s?: MarketStatus) {
   if (!s) return null;
   if (s.open) return `Markets are open, so this is the previous trading day: ${dayName(b.marketDate)}. Today's summary arrives after the 4 PM close.`;
-  if (s.lastSession === s.today && b.marketDate < s.today)
+  const justClosed = s.closesAt != null && Date.now() / 1000 < s.closesAt + 45 * 60;
+  if (s.lastSession === s.today && b.marketDate < s.today && justClosed)
     return `Markets closed at 4 PM. Today's summary usually arrives by 4:20 PM ET; until then this is ${dayName(b.marketDate)}.`;
+  if (s.lastSession && b.marketDate < s.lastSession)
+    return `⚠ This briefing is out of date: it covers ${dayName(b.marketDate)}, but ${dayName(s.lastSession)} has closed. The 4 PM update may have failed (you'd normally get a notification); check GitHub Actions.`;
   return `Markets are closed. This is the latest trading day: ${dayName(b.marketDate)}.`;
 }
 
-const KIND = { econ: "Economy", fed: "Fed", earnings: "Earnings" } as const;
+const KIND = { econ: "Economy", fed: "Fed", earnings: "Earnings", dividend: "Dividend" } as const;
 
 function b64ToBytes(b64: string) {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -134,7 +137,7 @@ export default function BriefingPage() {
       setStatus(d.status);
       if (d.empty) return setB("none");
       // Fill any missing sections so an older or partial briefing still renders.
-      setB({ headline: [], markets: [], sectors: [], breadth: null, movers: { gainers: [], losers: [] }, watchlist: [], levels: [], insiders: { watchlist: [], top: [], filed: null }, catalysts: [], notes: [], ...d });
+      setB({ headline: [], markets: [], sectors: [], breadth: null, movers: { gainers: [], losers: [] }, watchlist: [], levels: [], insiders: { watchlist: [], top: [], filed: null }, catalysts: [], screens: [], notes: [], ...d });
     }).catch(() => setB("none"));
   }, [n]);
 
@@ -179,6 +182,15 @@ export default function BriefingPage() {
               ))}</ul>
             ) : <p className="muted">Nothing major scheduled.</p>}
           </section>
+          {b.screens?.length ? (
+            <section className="card">
+              <h2>Your saved screens</h2>
+              <ul className="news">{b.screens.map((s) => (
+                <li key={s.name}><strong>{s.name}</strong>: {s.count.toLocaleString()} matches
+                  <div className="muted small">{s.first ? "First check: new matches will be listed from tomorrow." : s.added.length ? <>New today: {s.added.map((t, i) => <span key={t}>{i ? ", " : ""}<Link href={`/stock/${t}`}>{t}</Link></span>)}</> : "No new matches."}{!s.first && s.dropped ? ` ${s.dropped} dropped out.` : ""}</div></li>
+              ))}</ul>
+            </section>
+          ) : null}
           {b.insiders.watchlist.length || b.insiders.top.length ? (
             <section className="card">
               <h2>Insider buying <span className="muted small">officers & directors, filed {b.insiders.filed}</span></h2>

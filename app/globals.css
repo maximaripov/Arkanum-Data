@@ -80,6 +80,7 @@ footer { max-width: 1280px; margin: 0 auto; padding: 1rem 1rem calc(1rem + env(s
 @media (max-width: 640px) {
   .nav { flex-wrap: wrap; }
   .search { flex: 1 1 100%; order: 3; }
+  .nav nav { flex-wrap: wrap; overflow: visible; }
   .chart { height: 280px; }
   .grid { grid-template-columns: 1fr; }
   .hide-sm { display: none; }
@@ -115,3 +116,8 @@ footer { max-width: 1280px; margin: 0 auto; padding: 1rem 1rem calc(1rem + env(s
 .cmpform { display: inline-flex; gap: .35rem; }
 .cmpform input { width: 7rem; padding: .25rem .5rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: .82rem; }
 @media (max-width: 640px) { .chart.tall { height: 380px; } }
+.chip.saved { display: inline-flex; padding: 0; overflow: hidden; }
+.chip.saved button { background: none; border: 0; padding: .3rem .55rem; cursor: pointer; font-size: .85rem; color: inherit; }
+.chip.saved button + button { padding-left: .2rem; color: var(--muted); }
+.chip.saved.on { border-color: var(--accent); }
+.table.compact td, .table.compact th { padding: .3rem .4rem; font-size: .82rem; }

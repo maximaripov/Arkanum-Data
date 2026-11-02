@@ -7,6 +7,7 @@
 //
 // Optional: FRED_API_KEY adds jobs report, CPI, PPI and retail sales dates.
 import { readFile } from "node:fs/promises";
+import { execBuysBySymbol, matchesFilter } from "../lib/screen.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push"); // update the Briefing page without notifying
@@ -93,7 +94,11 @@ const move = (symbol, label, unit) => {
   const changePct = !q ? null : unit === "yield" ? q.last - q.prev : ((q.last - q.prev) / q.prev) * 100; // yields: change in points
   return { symbol, label, price: q?.last ?? null, changePct, ...(unit ? { unit } : {}) };
 };
-const marketDate = quotes["^GSPC"]?.date ?? today;
+if (!quotes["^GSPC"] || Object.keys(quotes).length < all.length / 2) {
+  console.error(`Yahoo returned prices for only ${Object.keys(quotes).length} of ${all.length} symbols (S&P 500: ${quotes["^GSPC"] ? "ok" : "missing"}).`);
+  process.exit(1);
+}
+const marketDate = quotes["^GSPC"].date;
 const closed = marketDate !== today; // summarizing an earlier day (market open now, weekend or holiday)
 
 const markets = MARKETS.map((g) => ({ title: g.title, items: g.items.map(([s, l, u]) => move(s, l, u)) }));
@@ -101,7 +106,7 @@ const sectors = SECTORS.map(([s, l]) => move(s, l)).filter((m) => m.changePct !=
 const wl = watchlist.map((s) => move(s, s)).filter((m) => m.price != null);
 
 // ---- Breadth and big movers from tonight's screener file -------------------------
-let breadth = null, movers = { gainers: [], losers: [] };
+let breadth = null, movers = { gainers: [], losers: [] }, screenRows = null;
 try {
   const sc = JSON.parse(await readFile("public/data/screener.json", "utf8"));
   // The screener's daily change is only for the summarized day if its prices were taken
@@ -113,6 +118,7 @@ try {
   const big = rows.filter((r) => r.mcap >= 10e9 && r.chg != null).sort((a, b) => b.chg - a.chg);
   const toMove = (r) => ({ symbol: r.t, label: r.t, price: r.p, changePct: r.chg });
   movers = { gainers: big.slice(0, 3).map(toMove), losers: big.slice(-3).reverse().map(toMove) };
+  screenRows = rows;
 } catch (e) {
   notes.push(e.message === "intraday" ? "Breadth and biggest movers appear in briefings built after the close." : "Screener data unavailable, so no market breadth.");
 }
@@ -209,7 +215,34 @@ for (let k = 1; k <= 7; k++) {
     catalysts.push({ date: d, time: when, kind: "earnings", title: `${r.symbol} earnings${wset.has(r.symbol) ? " (watchlist)" : ""}` });
   }
 }
+// Ex-dividend dates already declared for your watchlist (Nasdaq calendar, rebuilt at 4 PM).
+try {
+  const dv = JSON.parse(await readFile("public/data/dividends.json", "utf8")).rows ?? {};
+  for (const s of watchlist) {
+    const x = dv[s];
+    if (x && inWindow(x.ex)) catalysts.push({ date: x.ex, time: null, kind: "dividend", title: `${s} ex-dividend${x.amount ? ` ($${x.amount.toFixed(2)}/share)` : ""}` });
+  }
+} catch {}
+
 catalysts.sort((a, b) => a.date.localeCompare(b.date) || (a.kind === "earnings") - (b.kind === "earnings"));
+
+// ---- Your saved screens: what newly matches since the last briefing ----------------
+const screens = [];
+let screenMatchesNow = null;
+if (screenRows && state.screens?.length) {
+  let buys = new Map();
+  try { buys = execBuysBySymbol(JSON.parse(await readFile("public/data/insiders.json", "utf8")).trades); } catch {}
+  const rows = screenRows.map((r) => ({ ...r, ins: buys.get(r.t) ?? null }));
+  screenMatchesNow = {};
+  for (const s of state.screens) {
+    const hits = rows.filter((r) => matchesFilter(r, s.filter)).sort((a, b) => (b.mcap ?? 0) - (a.mcap ?? 0)).map((r) => r.t);
+    const before = state.screenMatches?.[s.id];
+    const added = before ? hits.filter((t) => !before.includes(t)) : [];
+    const dropped = before ? before.filter((t) => !hits.includes(t)) : [];
+    screens.push({ name: s.name, count: hits.length, added: added.slice(0, 10), dropped: dropped.length, first: !before });
+    screenMatchesNow[s.id] = hits.slice(0, 500);
+  }
+}
 
 // ---- Compose -----------------------------------------------------------------------
 const pct = (m) => (m.changePct == null ? "n/a" : m.unit === "yield" ? `${m.price.toFixed(2)}%` : `${m.changePct > 0 ? "+" : "−"}${Math.abs(m.changePct).toFixed(1)}%`);
@@ -225,6 +258,7 @@ const headline = [
   topWl.length ? `Your biggest movers: ${topWl.map((m) => `${m.symbol} ${pct(m)}`).join(", ")}.` : null,
   crossed.length ? `Crossed your levels: ${crossed.map((l) => `${l.symbol} ${l.price}${l.note ? ` (${l.note})` : ""}`).join(", ")}.` : null,
   insiders.watchlist.length ? `Insider buying in your watchlist: ${insiders.watchlist.map((t) => t.symbol).join(", ")}.` : null,
+  ...screens.filter((s) => s.added.length).map((s) => `Screen "${s.name}": ${s.added.length} new match${s.added.length === 1 ? "" : "es"} (${s.added.slice(0, 5).join(", ")}${s.added.length > 5 ? "…" : ""}).`),
   catalysts.length ? `Coming up: ${catalysts.slice(0, 4).map((c) => `${c.title} ${weekday(c.date)}`).join(", ")}.` : "No major scheduled catalysts in the next 7 days.",
 ].filter(Boolean);
 
@@ -233,13 +267,15 @@ const body = [
   topWl.length ? `You: ${topWl.map((m) => `${m.symbol} ${pct(m)}`).join(", ")}` : null,
   crossed.length ? `Crossed: ${crossed.map((l) => `${l.symbol} ${l.price}`).join(", ")}` : insiders.watchlist.length ? `Insider buy: ${insiders.watchlist.map((t) => t.symbol).join(", ")}` : null,
   nextUp.length ? `Next: ${nextUp.map((c) => `${c.title.replace(/ \(watchlist\)/, "")} ${weekday(c.date)}`).join(" · ")}` : null,
+  screens.some((s) => s.added.length) ? `Screens: ${screens.filter((s) => s.added.length).map((s) => `${s.name} +${s.added.length}`).join(", ")}` : null,
 ].filter(Boolean).join("\n");
 
 const briefing = {
   generated: new Date().toISOString(),
   marketDate, closed,
   title: `Market close · ${pretty(marketDate)}`,
-  body, headline, markets, sectors, breadth, movers, watchlist: wl, levels, insiders, catalysts, notes,
+  body, headline, markets, sectors, breadth, movers, watchlist: wl, levels, insiders, catalysts, screens, notes,
+  ...(screenMatchesNow ? { screenMatchesNow } : {}), // stored by the site, not shown
 };
 
 if (DRY || !SECRET) {
