@@ -57,7 +57,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.test_alert
         env:
           SITE_URL: https://foresightscreener.vercel.app
-        run: node scripts/notify.mjs "Foresight: test alert" "This is a test. If a 4 PM update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: |
+          node scripts/notify.mjs "Foresight: test alert" "This is a test. If a 4 PM update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       # Closing prices first: the briefing's market breadth and movers come from them.
       - id: screener
         name: Build screener (closing prices + SEC fundamentals)
