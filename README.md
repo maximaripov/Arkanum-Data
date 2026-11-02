@@ -9,7 +9,7 @@ Personal market tracker: live quotes across stocks, indices, FX, commodities and
 | Page | What it does | Data |
 |---|---|---|
 | Markets | Watchlist (saved in your browser), indices, rates & FX, commodities, crypto | Yahoo, polled every 5–15 s; crypto streams tick-by-tick from Coinbase |
-| Stock page | Chart (1D–5Y, line or candles) with your own price levels and notes, key stats, sector, fundamentals, headlines, the company's SEC 8-K announcements, its insider trades | Yahoo + SEC EDGAR |
+| Stock page | Chart (1D–5Y, line or candles) with 50/200 moving averages, volume and RSI, % comparison against up to 3 symbols (one tap for the S&P 500), your own price levels and notes, key stats, sector, fundamentals, headlines, the company's SEC 8-K announcements, its insider trades | Yahoo + SEC EDGAR |
 | Screener | ~7,000 NYSE/Nasdaq/Cboe stocks: sector and industry, market cap, P/E, P/S, margin, revenue growth, ROE, 1Y return, distance from 52-week high, officer/director buying (30 days). Presets included | Rebuilt nightly |
 | Briefing | Daily summary at the 4 PM Eastern close, also sent as a phone notification (GitHub starts the job at 4:02 PM; it usually arrives 4:05–4:20): indices, rates, oil, gold, bitcoin, sectors, breadth, biggest movers, your watchlist and price levels, officer/director buys, and the next 7 days of catalysts (GDP, PCE, trade, Fed decisions, earnings; jobs report and CPI with a FRED key) | Yahoo, SEC, BEA, Federal Reserve, Nasdaq, FRED |
 | Insiders | Every insider open-market buy and every sale over $250K for the last 30 days, filterable to officers & directors or funds & 10% owners, "cluster buys" (2+ insiders, same stock), plus a live feed | SEC Form 4 |
@@ -52,7 +52,7 @@ Every time the app opens (and on every change), a device with the passcode sends
 - **Fundamentals use the last 4 reported quarters** where SEC data allows (fiscal Q4 is rebuilt as full year minus Q1–Q3), otherwise the last fiscal year. Banks and some others only get annual figures. P/E uses reported net income, so one-time gains or losses distort it.
 - **Sectors come from SEC industry (SIC) codes**, mapped to familiar sector names. SIC is older than the usual classification, so a few companies land in a surprising sector.
 - **Headlines come from Yahoo** and are mixed with general market stories; the stock page puts stories naming the company first. The SEC 8-K list is official.
-- **Watchlist and price levels live on each device.** Devices with the passcode push theirs to the server for the briefing; the most recent change wins, and devices don't pull each other's changes. On iPhone the Home Screen app and Safari keep separate copies.
+- **Watchlist and price levels sync between devices that have the passcode.** Each device loads the shared copy on open and when it returns to the foreground, and sends edits right away; if two devices edit before syncing, the later edit wins. A device without the passcode keeps its own copy.
 - **Notifications on iPhone** need iOS 16.4+ and the Home Screen app. If you delete the Home Screen icon, turn notifications on again.
 - **Market cap is missing for some companies with several share classes** (e.g. Visa, Berkshire), because they report share counts per class.
 - **Foreign companies** filing 20-F/40-F (Toyota, TSMC…) have prices but no fundamentals, since SEC's dataset only covers US GAAP filers.

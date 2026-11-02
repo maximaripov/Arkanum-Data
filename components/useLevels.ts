@@ -13,7 +13,13 @@ const readAll = (): Record<string, Level[]> => {
 /** Price levels you're watching, per symbol, saved in this browser. */
 export function useLevels(symbol: string) {
   const [levels, setLevels] = useState<Level[]>([]);
-  useEffect(() => setLevels(readAll()[symbol] ?? []), [symbol]);
+  useEffect(() => {
+    setLevels(readAll()[symbol] ?? []);
+    // Another device's levels arrived via sync.
+    const on = () => setLevels(readAll()[symbol] ?? []);
+    window.addEventListener("foresight-levels", on);
+    return () => window.removeEventListener("foresight-levels", on);
+  }, [symbol]);
   const save = useCallback((next: Level[]) => {
     const all = readAll();
     if (next.length) all[symbol] = next; else delete all[symbol];

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getPasscode, register, setPasscode } from "@/lib/alertsClient";
+import { getPasscode, joinSync, register, setPasscode } from "@/lib/alertsClient";
 import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
 import type { Briefing, Move } from "@/lib/briefing";
 import type { MarketStatus } from "@/lib/marketStatus";
@@ -94,8 +94,10 @@ function Setup({ onPasscode }: { onPasscode: () => void }) {
       {!hasPass ? (
         <form className="levelform" onSubmit={async (e) => {
           e.preventDefault(); setPasscode(pass.trim());
-          try { await register(); onPasscode(); setHasPass(true); setStatus("Passcode saved on this device."); }
-          catch (err: any) { setPasscode(""); setStatus(err.message); }
+          // Check the passcode, then load the shared watchlist and levels onto this device.
+          const ok = await fetch("/api/alerts/sync", { headers: { "x-passcode": pass.trim() } }).then((r) => r.ok).catch(() => false);
+          if (!ok) { setPasscode(""); setStatus("Wrong passcode."); return; }
+          await joinSync(); onPasscode(); setHasPass(true); setStatus("Passcode saved. Your watchlist and levels now sync with your other devices.");
         }}>
           <input className="note" placeholder="Passcode" value={pass} onChange={(e) => setPass(e.target.value)} autoCapitalize="none" autoCorrect="off" aria-label="Passcode" />
           <button type="submit">Save</button>

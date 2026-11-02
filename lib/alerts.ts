@@ -29,7 +29,11 @@ export async function readState(): Promise<AlertState> {
   const s = await readJson<AlertState>(STATE);
   return { subscriptions: [], watchlist: [], levels: {}, updated: null, ...s };
 }
-export const writeState = (s: AlertState) => writeJson(STATE, { ...s, updated: new Date().toISOString() });
+export async function writeState(s: AlertState) {
+  const updated = new Date().toISOString();
+  await writeJson(STATE, { ...s, updated });
+  return updated;
+}
 export const readBriefing = () => readJson<Record<string, unknown>>(BRIEFING);
 export const writeBriefing = (b: unknown) => writeJson(BRIEFING, b);
 

@@ -51,19 +51,22 @@ export async function getQuotes(symbols: string[]): Promise<Quote[]> {
   });
 }
 
-const RANGES: Record<string, { range: string; interval: string; ttl: number }> = {
-  "1d": { range: "1d", interval: "2m", ttl: 15 },
-  "5d": { range: "5d", interval: "15m", ttl: 60 },
-  "1mo": { range: "1mo", interval: "1h", ttl: 300 },
-  "6mo": { range: "6mo", interval: "1d", ttl: 900 },
-  "1y": { range: "1y", interval: "1d", ttl: 900 },
-  "5y": { range: "5y", interval: "1wk", ttl: 3600 },
+// `fetch` loads extra history before the visible period so 200-period moving averages
+// and RSI have enough bars to start at the left edge. `show` is what's displayed:
+// a number of trading days (intraday ranges) or calendar days.
+const RANGES: Record<string, { fetch: string; interval: string; ttl: number; show: { sessions: number } | { days: number } }> = {
+  "1d": { fetch: "5d", interval: "2m", ttl: 15, show: { sessions: 1 } },
+  "5d": { fetch: "1mo", interval: "15m", ttl: 60, show: { sessions: 5 } },
+  "1mo": { fetch: "6mo", interval: "1h", ttl: 300, show: { days: 31 } },
+  "6mo": { fetch: "2y", interval: "1d", ttl: 900, show: { days: 183 } },
+  "1y": { fetch: "2y", interval: "1d", ttl: 900, show: { days: 366 } },
+  "5y": { fetch: "10y", interval: "1wk", ttl: 3600, show: { days: 1827 } },
 };
 
 export async function getChart(symbol: string, key: string) {
   const r = RANGES[key] ?? RANGES["1y"];
   const data = await yget(
-    `/v8/finance/chart/${encodeURIComponent(symbol)}?range=${r.range}&interval=${r.interval}`,
+    `/v8/finance/chart/${encodeURIComponent(symbol)}?range=${r.fetch}&interval=${r.interval}`,
     r.ttl
   );
   const res = data?.chart?.result?.[0];
@@ -74,7 +77,19 @@ export async function getChart(symbol: string, key: string) {
     .map((t, i) => ({ time: t, open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i], volume: q.volume?.[i] }))
     .filter((c) => c.open != null && c.close != null);
   const m = res.meta;
+  // Start of the visible period.
+  let from = candles[0]?.time ?? 0;
+  if ("sessions" in r.show) {
+    const tz = m.exchangeTimezoneName || "America/New_York";
+    const day = (t: number) => new Date(t * 1000).toLocaleDateString("en-CA", { timeZone: tz });
+    const days = [...new Set(candles.map((c) => day(c.time)))];
+    const first = days[Math.max(0, days.length - r.show.sessions)];
+    from = candles.find((c) => day(c.time) === first)?.time ?? from;
+  } else if (candles.length) {
+    from = Math.max(candles[0].time, candles.at(-1)!.time - r.show.days * 86400);
+  }
   return {
+    from,
     meta: {
       symbol: m.symbol,
       name: m.longName ?? m.shortName ?? m.symbol,

@@ -1,10 +1,11 @@
 :root {
   --bg: #0b0e14; --card: #12161f; --line: #1f2633; --text: #e6e9ef; --muted: #8a93a6;
   --up: #22c55e; --down: #ef4444; --accent: #4ade80; --chip: #1a202b; --level: #f59e0b;
+  --ma50: #60a5fa; --ma200: #c084fc; --rsi: #22d3ee; --cmp1: #60a5fa; --cmp2: #f472b6; --cmp3: #facc15;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
-  :root { --bg: #f5f6f8; --card: #ffffff; --line: #e5e7eb; --text: #111827; --muted: #6b7280; --up: #16a34a; --down: #dc2626; --accent: #15803d; --chip: #eef0f3; --level: #d97706; color-scheme: light; }
+  :root { --bg: #f5f6f8; --card: #ffffff; --line: #e5e7eb; --text: #111827; --muted: #6b7280; --up: #16a34a; --down: #dc2626; --accent: #15803d; --chip: #eef0f3; --level: #d97706; --ma50: #2563eb; --ma200: #9333ea; --rsi: #0891b2; --cmp1: #2563eb; --cmp2: #db2777; --cmp3: #ca8a04; color-scheme: light; }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -105,3 +106,12 @@ footer { max-width: 1280px; margin: 0 auto; padding: 1rem 1rem calc(1rem + env(s
 .btn.primary { background: var(--accent); color: #04120a; border-color: transparent; font-weight: 600; }
 .nav nav { overflow-x: auto; scrollbar-width: none; }
 .daynote { margin: .35rem 0; padding: .45rem .7rem; border-radius: 8px; background: var(--chip); font-size: .88rem; }
+
+.chart.tall { height: 480px; }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin: .25rem 0 .5rem; }
+.toggle { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .65rem; border-radius: 999px; border: 1px solid var(--line); background: none; cursor: pointer; font-size: .82rem; color: var(--muted); }
+.toggle.on { color: var(--text); background: var(--chip); }
+.toggle .dot { width: 10px; height: 3px; border-radius: 2px; background: currentColor; }
+.cmpform { display: inline-flex; gap: .35rem; }
+.cmpform input { width: 7rem; padding: .25rem .5rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-size: .82rem; }
+@media (max-width: 640px) { .chart.tall { height: 380px; } }

@@ -18,6 +18,6 @@ export async function POST(req: Request) {
   if (w) state.watchlist = w;
   const l = sanitizeLevels(body.levels);
   if (l) state.levels = l;
-  await writeState(state);
-  return Response.json({ ok: true, devices: state.subscriptions.length, watchlist: state.watchlist.length });
+  const updated = await writeState(state);
+  return Response.json({ ok: true, devices: state.subscriptions.length, watchlist: state.watchlist.length, updated });
 }

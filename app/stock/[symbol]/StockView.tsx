@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { PriceChart, type Candle } from "@/components/PriceChart";
+import { useEffect, useMemo, useState } from "react";
+import { PriceChart, type Candle, type CompareLine, type Indicators } from "@/components/PriceChart";
 import { InsiderTable } from "@/components/InsiderTable";
 import { useQuotes } from "@/components/useQuotes";
 import { useWatchlist } from "@/components/useWatchlist";
@@ -10,12 +10,20 @@ import type { Announcement, Headline } from "@/lib/news";
 import { useLevels } from "@/components/useLevels";
 
 const RANGES = ["1d", "5d", "1mo", "6mo", "1y", "5y"];
+const IND_KEY = "foresight.indicators";
+const IND_LABELS: [keyof Indicators, string, string][] = [["ma50", "MA 50", "--ma50"], ["ma200", "MA 200", "--ma200"], ["volume", "Volume", "--muted"], ["rsi", "RSI 14", "--rsi"]];
+const DEFAULT_IND: Indicators = { ma50: false, ma200: false, volume: true, rsi: false };
 type Meta = { name: string; exchange: string; currency: string; type: string; dayHigh: number; dayLow: number; volume: number; high52: number; low52: number };
 
 export function StockView({ symbol }: { symbol: string }) {
   const [range, setRange] = useState("1y");
   const [mode, setMode] = useState<"area" | "candles">("area");
-  const [chart, setChart] = useState<{ meta: Meta; candles: Candle[] } | null>(null);
+  const [chart, setChart] = useState<{ meta: Meta; candles: Candle[]; from: number } | null>(null);
+  const [ind, setInd] = useState<Indicators>(DEFAULT_IND);
+  const [cmpSymbols, setCmpSymbols] = useState<string[]>([]);
+  const [cmpData, setCmpData] = useState<Record<string, Candle[]>>({});
+  const [cmpInput, setCmpInput] = useState("");
+  const [cmpErr, setCmpErr] = useState("");
   const [err, setErr] = useState("");
   const [insiders, setInsiders] = useState<InsiderTrade[] | null>(null);
   const [fund, setFund] = useState<Record<string, any> | null>(null);
@@ -34,6 +42,35 @@ export function StockView({ symbol }: { symbol: string }) {
       .then((d) => (d.error ? setErr(d.error) : setChart(d)))
       .catch((e) => setErr(String(e)));
   }, [symbol, range]);
+
+  // Indicator choices are remembered on this device.
+  useEffect(() => { try { setInd({ ...DEFAULT_IND, ...JSON.parse(localStorage.getItem(IND_KEY) ?? "{}") }); } catch {} }, []);
+  const toggleInd = (k: keyof Indicators) => setInd((cur) => {
+    const next = { ...cur, [k]: !cur[k] };
+    try { localStorage.setItem(IND_KEY, JSON.stringify(next)); } catch {}
+    return next;
+  });
+
+  // Comparison lines load for the same period as the main chart.
+  useEffect(() => { setCmpSymbols([]); setCmpData({}); }, [symbol]);
+  useEffect(() => {
+    setCmpData({});
+    for (const s of cmpSymbols) {
+      fetch(`/api/chart?symbol=${encodeURIComponent(s)}&range=${range}`).then((r) => r.json()).then((d) => {
+        if (d.error || !d.candles?.length) { setCmpErr(`No chart data for ${s}.`); setCmpSymbols((xs) => xs.filter((x) => x !== s)); return; }
+        setCmpData((cur) => ({ ...cur, [s]: d.candles }));
+      }).catch(() => {});
+    }
+  }, [cmpSymbols, range]);
+  const compare = useMemo<CompareLine[]>(() => cmpSymbols.filter((s) => cmpData[s]).map((s) => ({ symbol: s, candles: cmpData[s] })), [cmpSymbols, cmpData]);
+  const addCompare = (raw: string) => {
+    const s = raw.trim().toUpperCase();
+    setCmpErr("");
+    if (!s || s === symbol || cmpSymbols.includes(s)) return;
+    if (cmpSymbols.length >= 3) { setCmpErr("Compare up to 3 symbols at a time."); return; }
+    setCmpSymbols((xs) => [...xs, s]);
+    setCmpInput("");
+  };
 
   useEffect(() => {
     setNews(null);
@@ -79,7 +116,34 @@ export function StockView({ symbol }: { symbol: string }) {
           <div className="seg">{RANGES.map((r) => <button key={r} className={r === range ? "on" : ""} onClick={() => setRange(r)}>{r.toUpperCase()}</button>)}</div>
           <div className="seg"><button className={mode === "area" ? "on" : ""} onClick={() => setMode("area")}>Line</button><button className={mode === "candles" ? "on" : ""} onClick={() => setMode("candles")}>Candles</button></div>
         </div>
-        {err ? <p className="down">Couldn&apos;t load chart: {err}</p> : <PriceChart candles={chart?.candles ?? []} mode={mode} levels={levels} onPick={(p) => setLevelPrice(p.toFixed(p < 1 ? 4 : 2))} />}
+        <div className="legend">
+          {IND_LABELS.map(([k, label, color]) => (
+            <button key={k} className={`toggle${ind[k] && !compare.length ? " on" : ""}`} onClick={() => toggleInd(k)} disabled={compare.length > 0} aria-pressed={ind[k]}>
+              <span className="dot" style={{ background: `var(${color})` }} />{label}
+            </button>
+          ))}
+        </div>
+        <div className="legend">
+          <span className="small muted">Compare:</span>
+          {compare.length ? <span className="toggle on"><span className="dot" style={{ background: "var(--text)" }} />{symbol}</span> : null}
+          {cmpSymbols.map((s, i) => (
+            <button key={s} className="toggle on" onClick={() => setCmpSymbols((xs) => xs.filter((x) => x !== s))} aria-label={`Stop comparing ${s}`}>
+              <span className="dot" style={{ background: `var(--cmp${i + 1})` }} />{s} ×
+            </button>
+          ))}
+          {symbol !== "^GSPC" && !cmpSymbols.includes("^GSPC") && cmpSymbols.length < 3 ? <button className="toggle" onClick={() => addCompare("^GSPC")}>+ S&amp;P 500</button> : null}
+          {cmpSymbols.length < 3 ? (
+            <form className="cmpform" onSubmit={(e) => { e.preventDefault(); addCompare(cmpInput); }}>
+              <input value={cmpInput} onChange={(e) => setCmpInput(e.target.value)} placeholder="Add symbol" autoCapitalize="characters" aria-label="Symbol to compare" />
+            </form>
+          ) : null}
+        </div>
+        {cmpErr ? <p className="small down">{cmpErr}</p> : null}
+        {compare.length ? <p className="small muted">Showing % change from the start of the period. Indicators and price levels are hidden while comparing.</p> : null}
+        {err ? <p className="down">Couldn&apos;t load chart: {err}</p> : (
+          <PriceChart candles={chart?.candles ?? []} from={chart?.from} mode={mode} levels={levels} indicators={ind} compare={compare}
+            onPick={(p) => setLevelPrice(p.toFixed(p < 1 ? 4 : 2))} />
+        )}
         <form className="levelform" onSubmit={(e) => {
           e.preventDefault();
           const p = parseFloat(levelPrice);

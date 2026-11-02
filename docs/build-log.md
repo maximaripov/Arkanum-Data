@@ -121,3 +121,9 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 - The briefing's watchlist is the Markets tab's list, in order: the app syncs it every time it opens, not only when it changes, and sends the default list when none was saved (exactly what the Markets tab shows).
 - **Which day the briefing covers:** while the market is open, the previous trading day; after the close, today; on weekends and holidays, the last trading day. Uses the S&P 500's actual session hours from Yahoo, so holidays and early closes need no calendar. The Briefing page says which day it is showing and why, including the 4:00–4:20 PM gap before today's summary arrives.
 - **Manual runs without a notification:** Actions → Run workflow → untick "Send the briefing notification" updates the page silently.
+
+## Round 5: sync, indicators, compare (2026-11-02)
+
+- **Sync between devices** ([lib/alertsClient.ts](../lib/alertsClient.ts), `/api/alerts/sync`): the server copy is shared. Devices load it on open and on returning to the foreground, and send edits within ~1 s; a device's edit newer than the server copy wins. Entering the passcode on a new device adopts the shared copy instead of overwriting it.
+- **Indicators** ([lib/indicators.ts](../lib/indicators.ts)): MA 50, MA 200, volume, RSI 14 (Wilder) in its own panel; toggles remembered per device. The chart loads extra history before the visible period so 200-period averages start at the left edge.
+- **Compare**: up to 3 symbols as % change from the start of the period; one tap for the S&P 500.
