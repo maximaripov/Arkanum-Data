@@ -11,7 +11,9 @@ export function TradingView({ widget, config, height, label }: {
   label?: string; // attribution text
 }) {
   const box = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  // Unknown until the browser reports it: embedding before that and again after would leave
+  // the first script running against a removed element (and load every widget twice).
+  const [theme, setTheme] = useState<"dark" | "light" | null>(null);
   useEffect(() => {
     const m = matchMedia("(prefers-color-scheme: light)");
     const on = () => setTheme(m.matches ? "light" : "dark");
@@ -21,7 +23,7 @@ export function TradingView({ widget, config, height, label }: {
   const key = JSON.stringify(config) + theme;
   useEffect(() => {
     const el = box.current;
-    if (!el) return;
+    if (!el || !theme) return;
     el.innerHTML = "";
     const inner = document.createElement("div");
     inner.className = "tradingview-widget-container__widget";
