@@ -92,8 +92,16 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 
 ## Next steps (suggested)
 
-1. **Directors and officers only** filter on the Insiders page, to separate executives from funds.
-2. **Alerts:** price moves and new insider buys on watchlist stocks, sent to your phone.
-3. Trailing-twelve-month fundamentals instead of annual.
-4. Sector and industry in the screener.
-5. If Yahoo breaks: Finnhub's free tier, which needs a key, as the fallback.
+1. **Alerts:** price moves, price levels being crossed, and new insider buys on watchlist stocks, sent to your phone.
+2. **Sync watchlist and levels** between phone and computer (needs a small database).
+3. If Yahoo breaks: Finnhub's free tier, which needs a key, as the fallback.
+
+## Round 2 (2026-11-02)
+
+| # | Improvement | Where |
+|---|---|---|
+| 1 | Officers & directors vs funds & 10% owners filter; screener's insider column counts officers & directors only | [lib/insider.ts](../lib/insider.ts), [app/insiders/page.tsx](../app/insiders/page.tsx) |
+| 3 | Last-4-quarters fundamentals built from each filing's real dates (works for any fiscal year-end); falls back to last fiscal year | [scripts/build-screener.mjs](../scripts/build-screener.mjs) |
+| 4 | Sector and industry filters and column, from SEC industry codes cached in `data/sic.json` | [lib/sectors.mjs](../lib/sectors.mjs), [app/screener/page.tsx](../app/screener/page.tsx) |
+| 5 | Headlines (company stories first; RSS fallback for crypto, FX, commodities) and the company's SEC 8-K announcements in plain English | [lib/news.ts](../lib/news.ts), [app/api/news/route.ts](../app/api/news/route.ts) |
+| 6 | Your own price levels with notes: tap the chart to pick a price; drawn on the chart, distance from price, saved on the device | [components/useLevels.ts](../components/useLevels.ts), [components/PriceChart.tsx](../components/PriceChart.tsx) |

@@ -2,7 +2,8 @@
 // Builds public/data/screener.json: every NYSE/Nasdaq/Cboe stock with price stats
 // (Yahoo, unofficial) and fundamentals (SEC EDGAR XBRL "frames", official).
 // Runs nightly from GitHub Actions. Usage: node scripts/build-screener.mjs [--limit 200]
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { sectorForSic } from "../lib/sectors.mjs";
 
 const SEC_UA = process.env.SEC_USER_AGENT || "Foresight personal app (set SEC_USER_AGENT)";
 const limitArg = process.argv.indexOf("--limit");
@@ -38,17 +39,80 @@ const now = new Date();
 const FY = now.getUTCFullYear() - 1; // latest fully reported calendar year
 const REV = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"];
 
-console.log(`Fundamentals for CY${FY} vs CY${FY - 1}…`);
-const [rev, revPrev, ni, equity] = [
-  await maxOf(REV, "USD", `CY${FY}`),
-  await maxOf(REV, "USD", `CY${FY - 1}`),
-  await frame("us-gaap", "NetIncomeLoss", "USD", `CY${FY}`),
-  await frame("us-gaap", "StockholdersEquity", "USD", `CY${FY}Q4I`),
-];
+// ---- Trailing twelve months (TTM) -------------------------------------------------
+// Every SEC figure carries its own start and end dates. Companies don't file their
+// fiscal Q4 separately (it's inside the annual 10-K), so it's rebuilt as
+// full year − the three quarters inside it. Works for any fiscal year-end.
+const Y = now.getUTCFullYear();
+const QTRS = [];
+for (let y = Y - 3; y <= Y; y++) for (let q = 1; q <= 4; q++) QTRS.push(`CY${y}Q${q}`);
+const DAY = 86_400_000;
+const days = (a, b) => (Date.parse(b) - Date.parse(a)) / DAY;
+
+/** Per company: quarters and fiscal years with dates. Largest tag wins per period. */
+async function periods(tags) {
+  const co = new Map(); // cik → { q: Map(end → {start,end,val}), y: Map(end → {...}) }
+  const add = (kind, row) => {
+    if (!co.has(row.cik)) co.set(row.cik, { q: new Map(), y: new Map() });
+    const m = co.get(row.cik)[kind], cur = m.get(row.end);
+    if (!cur || row.val > cur.val) m.set(row.end, { start: row.start, end: row.end, val: row.val });
+  };
+  for (const [kind, list] of [["q", QTRS], ["y", [`CY${Y - 3}`, `CY${Y - 2}`, `CY${Y - 1}`, `CY${Y}`]]]) {
+    for (const p of list) for (const t of tags) {
+      const d = await sec(`https://data.sec.gov/api/xbrl/frames/us-gaap/${t}/USD/${p}.json`);
+      await sleep(150);
+      for (const row of d?.data ?? []) if (row.start) add(kind, row);
+    }
+  }
+  for (const c of co.values()) {
+    for (const yr of c.y.values()) {
+      const inside = [...c.q.values()].filter((q) => days(yr.start, q.start) >= -5 && days(q.end, yr.end) >= -5);
+      if (inside.length !== 3 || inside.some((q) => Math.abs(days(q.end, yr.end)) <= 5)) continue;
+      const lastEnd = inside.map((q) => q.end).sort().at(-1);
+      c.q.set(yr.end, { start: new Date(Date.parse(lastEnd) + DAY).toISOString().slice(0, 10), end: yr.end, val: yr.val - inside.reduce((a, q) => a + q.val, 0) });
+    }
+  }
+  return co;
+}
+
+// 75–120 days: some retailers (Costco) use 12- and 16-week quarters.
+const quarterGap = (a, b) => { const g = days(a.end, b.end); return g >= 75 && g <= 120; };
+const fmtEnd = (d) => new Date(d).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+
+/** Latest 4 back-to-back quarters for one company, and the 4 before them. */
+function ttm(co, cik) {
+  const qs = [...(co.get(cik)?.q.values() ?? [])].sort((a, b) => a.end.localeCompare(b.end));
+  for (let i = qs.length - 1; i >= 3; i--) {
+    const w = qs.slice(i - 3, i + 1);
+    if (!w.every((q, k) => k === 0 || quarterGap(w[k - 1], q))) continue;
+    if (days(w[3].end, now.toISOString()) > 550) return null; // too stale to call "trailing"
+    const p = i >= 7 ? qs.slice(i - 7, i - 3) : [];
+    const priorOk = p.length === 4 && p.every((q, k) => k === 0 || quarterGap(p[k - 1], q)) && quarterGap(p[3], w[0]);
+    return { value: w.reduce((a, q) => a + q.val, 0), prior: priorOk ? p.reduce((a, q) => a + q.val, 0) : null, end: w[3].end };
+  }
+  return null;
+}
+
+/** Latest fiscal year and the one before (fallback when quarters are incomplete). */
+function fiscal(co, cik) {
+  const ys = [...(co.get(cik)?.y.values() ?? [])].sort((a, b) => a.end.localeCompare(b.end));
+  const last = ys.at(-1), prev = ys.at(-2);
+  if (!last) return null;
+  return { value: last.val, prior: prev && Math.abs(days(prev.end, last.end) - 365) < 20 ? prev.val : null, end: last.end };
+}
+
+console.log("Quarterly fundamentals…");
+const revQ = await periods(REV);
+const niQ = await periods(["NetIncomeLoss"]);
+// Equity: newest balance sheet wins.
+const equity = new Map();
+for (let i = QTRS.length - 1; i >= 0; i--) {
+  for (const [cik, v] of await frame("us-gaap", "StockholdersEquity", "USD", `${QTRS[i]}I`)) if (!equity.has(cik)) equity.set(cik, v);
+}
 // Shares outstanding: newest quarter wins.
 const shares = new Map();
 const quarters = [];
-for (let y = now.getUTCFullYear(); y >= FY; y--) for (let q = 4; q >= 1; q--) quarters.push(`CY${y}Q${q}I`);
+for (let y = Y; y >= FY; y--) for (let q = 4; q >= 1; q--) quarters.push(`CY${y}Q${q}I`);
 for (const p of quarters) {
   const m = await frame("dei", "EntityCommonStockSharesOutstanding", "shares", p);
   for (const [cik, v] of m) if (!shares.has(cik)) shares.set(cik, v);
@@ -60,7 +124,7 @@ for (const p of [...quarters.map((q) => q.slice(0, -1)), `CY${FY}`]) {
   for (const [cik, v] of await frame("us-gaap", "WeightedAverageNumberOfDilutedSharesOutstanding", "shares", p))
     if (!shares.has(cik)) shares.set(cik, v);
 }
-console.log(`revenue ${rev.size}, net income ${ni.size}, shares ${shares.size}`);
+console.log(`equity ${equity.size}, shares ${shares.size}`);
 
 const tickers = await sec("https://www.sec.gov/files/company_tickers_exchange.json");
 const universe = [];
@@ -71,6 +135,31 @@ for (const [cik, name, ticker, exchange] of tickers.data) {
   universe.push({ cik, name, ticker, exchange });
 }
 const list = universe.slice(0, LIMIT);
+
+// ---- Industry (SIC code) ----------------------------------------------------------
+// One SEC request per company, so results are cached in data/sic.json and only new
+// companies are looked up each night.
+const SIC_FILE = "data/sic.json";
+let sicCache = {};
+try { sicCache = JSON.parse(await readFile(SIC_FILE, "utf8")); } catch {}
+const needSic = [...new Set(list.map((u) => u.cik))].filter((c) => !(c in sicCache));
+console.log(`Industry codes: ${needSic.length} to look up…`);
+async function sicWorker() {
+  while (needSic.length) {
+    const cik = needSic.shift();
+    const d = await sec(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`);
+    if (d) sicCache[cik] = [d.sic || "", d.sicDescription || ""];
+    await sleep(400);
+    if (needSic.length % 1000 === 0 && needSic.length) {
+      console.log(`  ${needSic.length} left`);
+      await writeFile(SIC_FILE, JSON.stringify(sicCache)); // keep progress if interrupted
+    }
+  }
+}
+await mkdir("data", { recursive: true });
+await Promise.all([sicWorker(), sicWorker(), sicWorker(), sicWorker()]);
+await writeFile(SIC_FILE, JSON.stringify(sicCache));
+
 console.log(`Prices for ${list.length} tickers…`);
 
 const prices = new Map();
@@ -97,13 +186,23 @@ async function worker() {
 await Promise.all([worker(), worker(), worker()]);
 
 const r = (x, d = 2) => (x == null || !Number.isFinite(x) ? null : Number(x.toFixed(d)));
-const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni"];
+const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni", "sector", "ind", "basis"];
 const rows = [];
+let ttmCount = 0;
 for (const u of list) {
   const p = prices.get(u.ticker);
   if (!p) continue;
-  const sh = shares.get(u.cik), R = rev.get(u.cik), N = ni.get(u.cik), E = equity.get(u.cik), Rp = revPrev.get(u.cik);
+  // Prefer the last four quarters; fall back to the last full fiscal year.
+  const rT = ttm(revQ, u.cik), nT = ttm(niQ, u.cik);
+  const useTtm = rT && nT && rT.end === nT.end;
+  if (useTtm) ttmCount++;
+  const rF = fiscal(revQ, u.cik), nF = fiscal(niQ, u.cik);
+  const R = useTtm ? rT.value : rF?.value, Rp = useTtm ? rT.prior : rF?.prior;
+  const N = useTtm ? nT.value : nF?.value;
+  const basis = useTtm ? `Last 4 quarters to ${fmtEnd(rT.end)}` : rF || nF ? `Fiscal year to ${fmtEnd((rF ?? nF).end)}` : null;
+  const sh = shares.get(u.cik), E = equity.get(u.cik);
   const mcap = sh ? p.price * sh : null;
+  const [sic, ind] = sicCache[u.cik] ?? ["", ""];
   rows.push([
     u.ticker, u.name, u.exchange, r(p.price),
     r(((p.price - p.prev) / p.prev) * 100),
@@ -116,8 +215,10 @@ for (const u of list) {
     r(((p.price - p.first) / p.first) * 100, 1),
     r(((p.price - p.hi) / p.hi) * 100, 1),
     R ?? null, N ?? null,
+    sectorForSic(sic), ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
   ]);
 }
+console.log(`TTM fundamentals for ${ttmCount} of ${rows.length}`);
 await mkdir("public/data", { recursive: true });
 await writeFile("public/data/screener.json", JSON.stringify({ updated: now.toISOString(), fiscalYear: FY, fields, rows }));
 console.log(`Wrote ${rows.length} rows to public/data/screener.json`);

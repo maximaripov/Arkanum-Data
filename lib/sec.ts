@@ -26,6 +26,8 @@ async function secFetch(url: string, revalidate: number, as: "json" | "text" = "
   });
 }
 
+export const secJson = (url: string, revalidate: number) => secFetch(url, revalidate, "json");
+
 let tickerMap: { at: number; map: Map<string, { cik: number; name: string }> } | null = null;
 export async function cikForTicker(ticker: string) {
   if (!tickerMap || Date.now() - tickerMap.at > 86_400_000) {

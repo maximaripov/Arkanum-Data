@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
+import { isExecOrDirector } from "@/lib/insider";
 
-type Row = { t: string; n: string; x: string; p: number; chg: number | null; mcap: number | null; pe: number | null; ps: number | null; margin: number | null; growth: number | null; roe: number | null; ret1y: number | null; offHigh: number | null; ins: number | null };
+type Row = { t: string; n: string; x: string; p: number; chg: number | null; mcap: number | null; pe: number | null; ps: number | null; margin: number | null; growth: number | null; roe: number | null; ret1y: number | null; offHigh: number | null; ins: number | null; sector: string | null; ind: string | null; basis: string | null };
 type Range = [number | "", number | ""];
 type Key = "ins" | "mcap" | "pe" | "ps" | "margin" | "growth" | "roe" | "ret1y" | "offHigh" | "chg";
 
@@ -17,7 +18,7 @@ const COLS: { k: Key; label: string; fmt: (v: any) => string; unit: string }[] =
   { k: "ret1y", label: "1Y return", fmt: (v) => fmtPct(v, 1), unit: "%" },
   { k: "offHigh", label: "From 52W high", fmt: (v) => fmtPct(v, 1), unit: "%" },
   { k: "chg", label: "Day", fmt: (v) => fmtPct(v), unit: "%" },
-  { k: "ins", label: "Insider buys 30d", fmt: (v) => (v ? "$" + fmtBig(v) : "—"), unit: "$K" },
+  { k: "ins", label: "Exec buys 30d", fmt: (v) => (v ? "$" + fmtBig(v) : "—"), unit: "$K" },
 ];
 const empty = (): Record<Key, Range> => Object.fromEntries(COLS.map((c) => [c.k, ["", ""]])) as Record<Key, Range>;
 const PRESETS: Record<string, Partial<Record<Key, Range>>> = {
@@ -34,6 +35,8 @@ export default function Screener() {
   const [meta, setMeta] = useState<{ updated: string; fiscalYear: number } | null>(null);
   const [f, setF] = useState(empty);
   const [exch, setExch] = useState("All");
+  const [sector, setSector] = useState("All");
+  const [industry, setIndustry] = useState("All");
   const [text, setText] = useState("");
   const [sort, setSort] = useState<{ k: Key; dir: 1 | -1 }>({ k: "mcap", dir: -1 });
   const [page, setPage] = useState(0);
@@ -44,7 +47,7 @@ export default function Screener() {
       fetch("/data/insiders.json").then((r) => r.json()).catch(() => ({ trades: [] })),
     ]).then(([d, ins]) => {
       const buys = new Map<string, number>();
-      for (const t of ins.trades) if (t.code === "P" && t.value) buys.set(t.symbol, (buys.get(t.symbol) ?? 0) + t.value);
+      for (const t of ins.trades) if (t.code === "P" && t.value && isExecOrDirector(t)) buys.set(t.symbol, (buys.get(t.symbol) ?? 0) + t.value);
       setMeta({ updated: d.updated, fiscalYear: d.fiscalYear });
       setRows(d.rows.map((r: any[]) => {
         const row = Object.fromEntries(d.fields.map((k: string, i: number) => [k, r[i]]));
@@ -58,6 +61,8 @@ export default function Screener() {
     const q = text.trim().toLowerCase();
     return rows.filter((r) => {
       if (exch !== "All" && r.x !== exch) return false;
+      if (sector !== "All" && r.sector !== sector) return false;
+      if (industry !== "All" && r.ind !== industry) return false;
       if (q && !r.t.toLowerCase().startsWith(q) && !r.n.toLowerCase().includes(q)) return false;
       for (const c of COLS) {
         const [lo, hi] = f[c.k];
@@ -71,7 +76,14 @@ export default function Screener() {
       }
       return true;
     }).sort((a, b) => ((a[sort.k] ?? -Infinity) - (b[sort.k] ?? -Infinity)) * sort.dir);
-  }, [rows, f, exch, text, sort]);
+  }, [rows, f, exch, sector, industry, text, sort]);
+
+  const sectors = useMemo(() => [...new Set((rows ?? []).map((r) => r.sector).filter(Boolean) as string[])].sort(), [rows]);
+  const industries = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows ?? []) if (r.ind && (sector === "All" || r.sector === sector)) counts.set(r.ind, (counts.get(r.ind) ?? 0) + 1);
+    return [...counts].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [rows, sector]);
 
   const set = (k: Key, i: 0 | 1, v: string) => { setPage(0); setF((p) => ({ ...p, [k]: (i ? [p[k][0], v === "" ? "" : +v] : [v === "" ? "" : +v, p[k][1]]) as Range })); };
   const PAGE = 100;
@@ -82,14 +94,16 @@ export default function Screener() {
         <h1>Stock screener</h1>
         <p className="muted small">
           {rows ? `${rows.length.toLocaleString()} US stocks` : "Loading…"}
-          {meta ? ` · prices from ${new Date(meta.updated).toLocaleString()} · fundamentals from fiscal ${meta.fiscalYear} SEC filings` : ""}
+          {meta ? ` · prices from ${new Date(meta.updated).toLocaleString()} · fundamentals from SEC filings: the last 4 reported quarters where available, otherwise the last fiscal year` : ""}
         </p>
         <div className="chips">
           {Object.keys(PRESETS).map((p) => <button key={p} className="chip" onClick={() => { setPage(0); setF({ ...empty(), ...PRESETS[p] }); }}>{p}</button>)}
-          <button className="chip" onClick={() => { setF(empty()); setExch("All"); setText(""); }}>Reset</button>
+          <button className="chip" onClick={() => { setF(empty()); setExch("All"); setSector("All"); setIndustry("All"); setText(""); }}>Reset</button>
         </div>
         <div className="filters">
           <label>Name or ticker<input value={text} onChange={(e) => { setPage(0); setText(e.target.value); }} placeholder="e.g. bank" /></label>
+          <label>Sector<select value={sector} onChange={(e) => { setPage(0); setSector(e.target.value); setIndustry("All"); }}><option>All</option>{sectors.map((x) => <option key={x}>{x}</option>)}</select></label>
+          <label>Industry<select value={industry} onChange={(e) => { setPage(0); setIndustry(e.target.value); }}><option>All</option>{industries.map(([x, n]) => <option key={x} value={x}>{x} ({n})</option>)}</select></label>
           <label>Exchange<select value={exch} onChange={(e) => { setPage(0); setExch(e.target.value); }}>{["All", "Nasdaq", "NYSE", "CBOE"].map((x) => <option key={x}>{x}</option>)}</select></label>
           {COLS.map((c) => (
             <label key={c.k}>{c.label}{c.unit ? ` (${c.unit})` : ""}
@@ -103,16 +117,18 @@ export default function Screener() {
       </section>
       <section className="card">
         <h2>{result.length.toLocaleString()} matches</h2>
+        <p className="muted small">P/E, margin and growth use reported net income, so a one-time gain or loss (an asset sale, an investment revaluation) can make a stock look much cheaper or pricier than its business is. Check the stock page before acting.</p>
         <div className="tablewrap">
           <table className="table">
             <thead><tr>
-              <th>Symbol</th><th className="r">Price</th>
+              <th>Symbol</th><th>Sector</th><th className="r">Price</th>
               {COLS.map((c) => <th key={c.k} className="r sortable" onClick={() => setSort((s) => ({ k: c.k, dir: s.k === c.k ? (-s.dir as 1 | -1) : -1 }))}>{c.label}{sort.k === c.k ? (sort.dir < 0 ? " ↓" : " ↑") : ""}</th>)}
             </tr></thead>
             <tbody>
               {result.slice(page * PAGE, (page + 1) * PAGE).map((r) => (
                 <tr key={r.t}>
                   <td><Link href={`/stock/${r.t}`}><strong>{r.t}</strong></Link><div className="muted small ellipsis">{r.n}</div></td>
+                  <td><div className="ellipsis small">{r.sector ?? "—"}</div><div className="muted small ellipsis" title={r.ind ?? ""}>{r.ind ?? ""}</div></td>
                   <td className="r mono">{fmtPrice(r.p)}</td>
                   {COLS.map((c) => <td key={c.k} className={`r mono ${["chg", "ret1y", "growth"].includes(c.k) ? tone(r[c.k]) : ""}`}>{c.fmt(r[c.k])}</td>)}
                 </tr>
