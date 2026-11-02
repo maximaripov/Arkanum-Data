@@ -87,7 +87,8 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 - [x] Code on GitHub, repo private
 - [x] Deployed on Vercel at foresightscreener.vercel.app; `SEC_USER_AGENT` set
 - [x] `SEC_USER_AGENT` added as a GitHub Actions secret
-- [ ] First nightly job run (#1, started by hand). Confirm it ended green and that Vercel redeployed with the new data.
+- [x] First nightly job run (#1) succeeded: 7,148 stocks, 30-day insider file
+- [ ] Vercel redeploys automatically after the nightly commit
 
 ## Next steps (suggested)
 

@@ -24,8 +24,10 @@ jobs:
       - run: node scripts/build-insiders.mjs --days 30
       - name: Commit data
         run: |
-          git config user.name "foresight-bot"
-          git config user.email "actions@users.noreply.github.com"
+          # Vercel's Hobby plan only deploys commits authored by the project owner,
+          # so the bot commits as the owner's GitHub no-reply identity.
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
           git add public/data
           git diff --cached --quiet || git commit -m "data: nightly refresh $(date -u +%F)"
           git push
