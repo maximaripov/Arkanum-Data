@@ -128,7 +128,7 @@ export function StockView({ symbol }: { symbol: string }) {
           {compare.length ? <span className="toggle on"><span className="dot" style={{ background: "var(--text)" }} />{symbol}</span> : null}
           {cmpSymbols.map((s, i) => (
             <button key={s} className="toggle on" onClick={() => setCmpSymbols((xs) => xs.filter((x) => x !== s))} aria-label={`Stop comparing ${s}`}>
-              <span className="dot" style={{ background: `var(--cmp${i + 1})` }} />{s} ×
+              <span className="dot" style={{ background: `var(--cmp${i + 1})` }} />{s === "^GSPC" ? "S&P 500" : s} ×
             </button>
           ))}
           {symbol !== "^GSPC" && !cmpSymbols.includes("^GSPC") && cmpSymbols.length < 3 ? <button className="toggle" onClick={() => addCompare("^GSPC")}>+ S&amp;P 500</button> : null}
@@ -154,7 +154,7 @@ export function StockView({ symbol }: { symbol: string }) {
           <input className="note" placeholder="Note, e.g. buy zone, stop, resistance" value={levelNote} onChange={(e) => setLevelNote(e.target.value)} maxLength={40} aria-label="Level note" />
           <button type="submit">Add level</button>
         </form>
-        <p className="muted small">Tap the chart to fill in a price. Levels are saved on this device.</p>
+        <p className="muted small">Tap the chart to fill in a price. Levels sync to your devices that have the passcode.</p>
         {levels.length ? (
           <ul className="levels">
             {levels.map((l) => {
