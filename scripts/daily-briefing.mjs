@@ -226,6 +226,21 @@ try {
 
 catalysts.sort((a, b) => a.date.localeCompare(b.date) || (a.kind === "earnings") - (b.kind === "earnings"));
 
+// ---- Retail chatter: watchlist stocks whose Reddit mentions jumped (ApeWisdom) ------
+const chatter = [];
+try {
+  const wset2 = new Set(watchlist);
+  for (let page = 1; page <= 6; page++) {
+    const d = await getJson(`https://apewisdom.io/api/v1.0/filter/all-stocks/page/${page}`, { "User-Agent": "Foresight personal app" });
+    for (const x of d?.results ?? []) {
+      const m = +x.mentions, before = +x.mentions_24h_ago || 0;
+      if (wset2.has(String(x.ticker).toUpperCase()) && m >= 15 && m >= 2 * Math.max(before, 1))
+        chatter.push({ symbol: String(x.ticker).toUpperCase(), mentions: m, before, rank: +x.rank });
+    }
+    if (!d || page >= (d.pages ?? 1)) break;
+  }
+} catch {}
+
 // ---- Your saved screens: what newly matches since the last briefing ----------------
 const screens = [];
 let screenMatchesNow = null;
@@ -258,6 +273,7 @@ const headline = [
   topWl.length ? `Your biggest movers: ${topWl.map((m) => `${m.symbol} ${pct(m)}`).join(", ")}.` : null,
   crossed.length ? `Crossed your levels: ${crossed.map((l) => `${l.symbol} ${l.price}${l.note ? ` (${l.note})` : ""}`).join(", ")}.` : null,
   insiders.watchlist.length ? `Insider buying in your watchlist: ${insiders.watchlist.map((t) => t.symbol).join(", ")}.` : null,
+  ...chatter.map((c) => `Reddit buzz: ${c.symbol} got ${c.mentions} mentions in 24 hours (${c.before} the day before), #${c.rank} most discussed.`),
   ...screens.filter((s) => s.added.length).map((s) => `Screen "${s.name}": ${s.added.length} new match${s.added.length === 1 ? "" : "es"} (${s.added.slice(0, 5).join(", ")}${s.added.length > 5 ? "…" : ""}).`),
   catalysts.length ? `Coming up: ${catalysts.slice(0, 4).map((c) => `${c.title} ${weekday(c.date)}`).join(", ")}.` : "No major scheduled catalysts in the next 7 days.",
 ].filter(Boolean);

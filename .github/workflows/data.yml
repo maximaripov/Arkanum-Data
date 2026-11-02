@@ -47,8 +47,8 @@ jobs:
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -78,6 +78,9 @@ jobs:
       - id: dividends
         name: Update dividend calendar
         run: node scripts/build-dividends.mjs
+      - id: funds
+        name: Update big-fund holdings (13F)
+        run: node scripts/build-funds.mjs
       - id: check_all
         name: Check all data before publishing
         run: node scripts/health-check.mjs all
@@ -103,6 +106,7 @@ jobs:
           [ "${{ steps.briefing.outcome }}" = "failure" ] && failed="$failed daily briefing,"
           [ "${{ steps.insiders.outcome }}" = "failure" ] && failed="$failed insider trades,"
           [ "${{ steps.dividends.outcome }}" = "failure" ] && failed="$failed dividend calendar,"
+          [ "${{ steps.funds.outcome }}" = "failure" ] && failed="$failed big-fund holdings,"
           [ "${{ steps.check_all.outcome }}" = "failure" ] && failed="$failed data check,"
           failed="${failed%,}"
           node scripts/notify.mjs "Foresight: 4 PM update failed" "Failed:${failed:- setup}. The site keeps yesterday's data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

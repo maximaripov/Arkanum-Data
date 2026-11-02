@@ -4,11 +4,12 @@ import Link from "next/link";
 import { InsiderTable } from "@/components/InsiderTable";
 import { fmtBig } from "@/lib/format";
 import type { InsiderTrade } from "@/lib/sec";
+import { FundsView } from "@/components/FundsView";
 import { WHO, matchesWho, type Who } from "@/lib/insider";
 
 const FILTERS = { buys: "Open-market buys", sales: "Sales", all: "All transactions" } as const;
 
-export default function Insiders() {
+function InsidersPage() {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [err, setErr] = useState("");
   const [filter, setFilter] = useState<keyof typeof FILTERS>("buys");
@@ -69,6 +70,18 @@ export default function Insiders() {
       <section className="card">
         {err ? <p className="down">Couldn&apos;t reach SEC: {err}</p> : trades === null ? <p className="muted">Reading the latest filings from SEC (takes ~10 seconds)…</p> : <InsiderTable trades={shown} showSymbol />}
       </section>
+    </div>
+  );
+}
+
+export default function Insiders() {
+  const [view, setView] = useState<"trades" | "funds">("trades");
+  useEffect(() => { if (new URLSearchParams(location.search).get("view") === "funds") setView("funds"); }, []);
+  const go = (v: "trades" | "funds") => { setView(v); history.replaceState(null, "", v === "funds" ? "?view=funds" : location.pathname); };
+  return (
+    <div className="stack">
+      <div className="seg big"><button className={view === "trades" ? "on" : ""} onClick={() => go("trades")}>Insider trades</button><button className={view === "funds" ? "on" : ""} onClick={() => go("funds")}>Big funds (13F)</button></div>
+      {view === "trades" ? <InsidersPage /> : <FundsView />}
     </div>
   );
 }

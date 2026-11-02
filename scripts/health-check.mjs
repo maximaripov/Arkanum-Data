@@ -32,6 +32,11 @@ if (which === "all") {
     if (Object.keys(dv.rows).length < 50) problems.push(`only ${Object.keys(dv.rows).length} upcoming dividends found (normally hundreds): Nasdaq calendar probably failed`);
     console.log(`dividends: ${Object.keys(dv.rows).length} upcoming`);
   }
+  const fu = await load("public/data/funds.json");
+  if (fu) {
+    if (fu.funds.length < 10) problems.push(`only ${fu.funds.length} funds' 13F filings were read (normally 13): SEC filings probably failed`);
+    console.log(`funds: ${fu.funds.length} with 13F data`);
+  }
 }
 if (problems.length) {
   console.error("PROBLEMS:\n- " + problems.join("\n- "));

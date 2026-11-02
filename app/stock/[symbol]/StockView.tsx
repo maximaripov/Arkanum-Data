@@ -9,6 +9,11 @@ import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement, Headline } from "@/lib/news";
 import { useLevels } from "@/components/useLevels";
 import { CalendarCard, type CalendarInfo } from "@/components/CalendarCard";
+import { AnalystCard, OptionsCard, RetailCard } from "@/components/ResearchCards";
+import { FundHolders } from "@/components/FundsView";
+import type { Chain } from "@/lib/options";
+import type { Analysts } from "@/lib/analysts";
+import type { RedditInterest, RetailFlow } from "@/lib/retail";
 
 const RANGES = ["1d", "5d", "1mo", "6mo", "1y", "5y"];
 const IND_KEY = "foresight.indicators";
@@ -35,6 +40,7 @@ export function StockView({ symbol }: { symbol: string }) {
   const [levelNote, setLevelNote] = useState("");
   const [news, setNews] = useState<{ headlines: Headline[]; announcements: Announcement[] } | null>(null);
   const [cal, setCal] = useState<CalendarInfo | null>(null);
+  const [research, setResearch] = useState<{ options: Chain | null; analysts: Analysts | null; reddit: RedditInterest | null; retailFlow: RetailFlow | null } | null>(null);
   const q = quotes[symbol];
 
   useEffect(() => {
@@ -73,6 +79,11 @@ export function StockView({ symbol }: { symbol: string }) {
     setCmpSymbols((xs) => [...xs, s]);
     setCmpInput("");
   };
+
+  useEffect(() => {
+    setResearch(null);
+    fetch(`/api/research?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setResearch).catch(() => {});
+  }, [symbol]);
 
   useEffect(() => {
     setCal(null);
@@ -182,6 +193,13 @@ export function StockView({ symbol }: { symbol: string }) {
         {fund?.basis ? <p className="muted small">Fundamentals: {fund.basis} (SEC filings). P/E uses reported net income, so one-time gains or losses distort it.</p> : null}
       </section>
       {cal && (cal.earnings || cal.dividends) ? <CalendarCard symbol={symbol} info={cal} /> : null}
+      {research?.options?.expiries.length ? <OptionsCard chain={research.options} earningsDate={cal?.earnings?.next?.date} /> : null}
+      {research && (research.analysts || research.reddit || research.retailFlow) ? (
+        <div className="twocol">
+          {research.analysts ? <AnalystCard a={research.analysts} price={q?.price ?? null} /> : null}
+          {research.reddit || research.retailFlow ? <RetailCard reddit={research.reddit} flow={research.retailFlow} /> : null}
+        </div>
+      ) : null}
       <div className="twocol">
         <section className="card">
           <h2>Headlines <span className="muted small">Yahoo Finance</span></h2>
@@ -212,6 +230,7 @@ export function StockView({ symbol }: { symbol: string }) {
           </section>
         ) : null}
       </div>
+      <FundHolders symbol={symbol} />
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
           <h2>Insider transactions <span className="muted small">SEC Form 4, latest 25 filings</span></h2>

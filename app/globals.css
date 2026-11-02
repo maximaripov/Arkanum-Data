@@ -121,3 +121,9 @@ footer { max-width: 1280px; margin: 0 auto; padding: 1rem 1rem calc(1rem + env(s
 .chip.saved button + button { padding-left: .2rem; color: var(--muted); }
 .chip.saved.on { border-color: var(--accent); }
 .table.compact td, .table.compact th { padding: .3rem .4rem; font-size: .82rem; }
+.chip.on { border-color: var(--accent); color: var(--text); }
+.table tr.atm td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.table td.itm { background: color-mix(in srgb, var(--muted) 10%, transparent); }
+.ratingbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin: .5rem 0 .25rem; }
+.seg.big { align-self: start; }
+.seg.big button { padding: .45rem .9rem; font-size: .92rem; }
