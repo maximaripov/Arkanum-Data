@@ -311,3 +311,15 @@ a.hb-row:hover { background: var(--chip); }
 .daychip { margin: 0 0 .5rem; }
 .daychip .chip { display: inline-flex; align-items: center; gap: .3rem; cursor: default; }
 @media (min-width: 900px) { .twocol.wide-left { grid-template-columns: 3fr 2fr; } }
+.mcard.tvq { padding: .2rem .2rem .1rem; cursor: default; overflow: hidden; }
+.mcard.tvq:hover { border-color: var(--line); }
+.mcard.tvq .tradingview-widget-copyright { font-size: .7rem; padding: 0 .4rem; }
+.part-seg { margin-top: .75rem; display: flex; width: fit-content; max-width: 100%; }
+.scroll-tabs { overflow-x: auto; scrollbar-width: none; }
+.scroll-tabs::-webkit-scrollbar { display: none; }
+.scroll-tabs button { white-space: nowrap; flex: 0 0 auto; }
+.section-note { margin: 0 .25rem; }
+/* TradingView's frames don't declare a color scheme; when ours is dark, browsers paint a
+   transparent frame white unless the frame element's scheme matches its document's. */
+.tradingview-widget-container iframe { color-scheme: light; }
+@media (max-width: 760px) { .mcard.tvq { flex-basis: 60%; } }

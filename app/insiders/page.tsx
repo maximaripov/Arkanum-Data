@@ -9,6 +9,8 @@ import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
 
 type Kind = "buys" | "sells" | "all";
+type View = "overview" | "groups" | "trades" | "funds";
+const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["funds", "Big funds"]];
 const SIZES = [[0, "Any size"], [100_000, "$100K+"], [1_000_000, "$1M+"]] as const;
 const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
 const shortDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -30,10 +32,10 @@ function HowToRead() {
   );
 }
 
-function ClusterCards({ clusters }: { clusters: Cluster[] }) {
+function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; preview?: number; more?: () => void }) {
   const [all, setAll] = useState(false);
   if (!clusters.length) return null;
-  const top = clusters.slice(0, 6), rest = clusters.slice(6);
+  const top = clusters.slice(0, preview ?? 6), rest = preview ? [] : clusters.slice(6);
   return (
     <section className="card">
       <h2>Several insiders buying <span className="muted small">2+ executives or directors, last 30 days</span></h2>
@@ -54,11 +56,12 @@ function ClusterCards({ clusters }: { clusters: Cluster[] }) {
           ))}</ul>
         ) : <button className="btn wide" onClick={() => setAll(true)}>Show all {clusters.length}</button>
       ) : null}
+      {preview && more && clusters.length > preview ? <button className="btn wide" onClick={more}>See all {clusters.length} group buys ›</button> : null}
     </section>
   );
 }
 
-function InsiderTrades() {
+function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: View) => void }) {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [err, setErr] = useState("");
   const [updated, setUpdated] = useState("");
@@ -84,12 +87,13 @@ function InsiderTrades() {
   useEffect(() => {
     if (!loaded.current) { loaded.current = true; return; }
     const p = new URLSearchParams();
+    if (view !== "overview") p.set("view", view);
     if (kind !== "buys") p.set("show", kind);
     if (!execOnly) p.set("everyone", "1");
     if (min) p.set("min", String(min));
     if (q.trim()) p.set("q", q.trim());
     history.replaceState(null, "", p.toString() ? `?${p}` : location.pathname);
-  }, [kind, execOnly, min, q]);
+  }, [view, kind, execOnly, min, q]);
 
   useEffect(() => {
     setTrades(null); setErr("");
@@ -147,36 +151,14 @@ function InsiderTrades() {
     return [...by.values()].filter((c) => c.people.length > 1 && c.value / c.people.length >= 25_000).sort((a, b) => b.people.length - a.people.length || b.value - a.value);
   }, [trades]);
 
-  return (
+  if (view === "groups") return (
     <>
-      <section className="card">
-        <h1>What insiders are buying</h1>
-        <p className="muted">Every trade company executives and directors made in their own company&apos;s stock, from official SEC filings.</p>
-        <HowToRead />
-      </section>
-
-      {source === "history" && buys.length ? (
-        <div className="twocol">
-          <section className="card">
-            <h2>Insider buying by day</h2>
-            <div className="bigstats">
-              <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>
-              <div><span className="mono">{totals.people}</span><span className="muted small">insiders</span></div>
-              <div><span className="mono">{totals.cos}</span><span className="muted small">companies</span></div>
-            </div>
-            <VBars cols={byDay} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); document.getElementById("trades")?.scrollIntoView({ behavior: "smooth", block: "start" }); } }} />
-          </section>
-          <section className="card">
-            <h2>Biggest buys by company <span className="muted small">last 30 days</span></h2>
-            <HBars rows={topStocks.map((x) => ({ key: x.symbol, href: `/stock/${x.symbol}`, value: x.value, text: `$${fmtBig(x.value)}`,
-              label: <><strong>{x.symbol}</strong> <span className="muted">{titleCase(x.issuer)}</span></>,
-              sub: x.people.size > 1 ? `${x.people.size} insiders` : [...x.people][0] }))} />
-          </section>
-        </div>
-      ) : null}
-
-      {source === "history" ? <ClusterCards clusters={clusters} /> : null}
-
+      <p className="muted small section-note">Stocks that two or more executives or directors bought in the last 30 days: the strongest insider signal.</p>
+      {trades === null ? <p className="muted">Loading…</p> : clusters.length ? <ClusterCards clusters={clusters} /> : <section className="card"><p className="muted">No stock had several insiders buying in the last 30 days.</p></section>}
+    </>
+  );
+  if (view === "trades") return (
+    <>
       <section className="card" id="trades">
         <h2>All trades</h2>
         {day ? <p className="daychip"><span className="chip on">Showing {shortDay(day)} <button className="icon" onClick={() => setDay(null)} aria-label="Show all days">×</button></span></p> : null}
@@ -199,19 +181,54 @@ function InsiderTrades() {
       </section>
     </>
   );
+  return (
+    <>
+      <section className="card">
+        <h1>What insiders are buying</h1>
+        <p className="muted">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Here&apos;s what they bought in the last 30 days.</p>
+        <HowToRead />
+      </section>
+      {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
+      {source === "history" && buys.length ? (
+        <div className="twocol">
+          <section className="card">
+            <h2>Insider buying by day</h2>
+            <div className="bigstats">
+              <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>
+              <div><span className="mono">{totals.people}</span><span className="muted small">insiders</span></div>
+              <div><span className="mono">{totals.cos}</span><span className="muted small">companies</span></div>
+            </div>
+            <VBars cols={byDay} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
+          </section>
+          <section className="card">
+            <h2>Biggest buys by company <span className="muted small">last 30 days</span></h2>
+            <HBars rows={topStocks.map((x) => ({ key: x.symbol, href: `/stock/${x.symbol}`, value: x.value, text: `$${fmtBig(x.value)}`,
+              label: <><strong>{x.symbol}</strong> <span className="muted">{titleCase(x.issuer)}</span></>,
+              sub: x.people.size > 1 ? `${x.people.size} insiders` : [...x.people][0] }))} />
+          </section>
+        </div>
+      ) : null}
+
+      <ClusterCards clusters={clusters} preview={3} more={() => { go("groups"); scrollTo({ top: 0 }); }} />
+    </>
+  );
 }
 
 export default function Insiders() {
-  const [view, setView] = useState<"trades" | "funds">("trades");
-  useEffect(() => { if (new URLSearchParams(location.search).get("view") === "funds") setView("funds"); }, []);
-  const go = (v: "trades" | "funds") => { setView(v); history.replaceState(null, "", v === "funds" ? "?view=funds" : location.pathname); };
+  const [view, setView] = useState<View>("overview");
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    const v = p.get("view") as View | null;
+    if (v && VIEWS.some(([k]) => k === v)) setView(v);
+    else if (p.get("show") || p.get("q") || p.get("min") || p.get("everyone")) setView("trades");
+  }, []);
+  const go = (v: View) => { setView(v); history.replaceState(null, "", v === "overview" ? location.pathname : `?view=${v}`); };
   return (
     <div className="stack">
-      <div className="tabs" role="tablist">
-        <button role="tab" aria-selected={view === "trades"} className={view === "trades" ? "on" : ""} onClick={() => go("trades")}>Insider trades</button>
-        <button role="tab" aria-selected={view === "funds"} className={view === "funds" ? "on" : ""} onClick={() => go("funds")}>Big funds</button>
+      <div className="tabs scroll-tabs" role="tablist">
+        {VIEWS.map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
       </div>
-      {view === "trades" ? <InsiderTrades /> : <FundsView />}
+      {view === "funds" ? <FundsView /> : <InsiderTrades view={view} go={go} />}
     </div>
   );
 }

@@ -175,7 +175,7 @@ export default function DigestPage() {
           <YourWatchlist a={a} />
           <div className="twocol">
             <section className="card">
-              <div className="card-head"><h2>Biggest insider buys</h2><Link href="/insiders" className="small">All trades ›</Link></div>
+              <div className="card-head"><h2>Biggest insider buys</h2><Link href="/insiders?view=trades" className="small">All trades ›</Link></div>
               <p className="muted small">Filed {d.filed ? day(d.filed) : "recently"} by executives and directors.</p>
               {d.topBuys.length ? <ul className="rows">{d.topBuys.map((t, i) => (
                 <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
@@ -185,7 +185,7 @@ export default function DigestPage() {
               ))}</ul> : <p className="muted">None filed.</p>}
             </section>
             <section className="card">
-              <div className="card-head"><h2>Several insiders buying</h2><Link href="/insiders" className="small">More ›</Link></div>
+              <div className="card-head"><h2>Several insiders buying</h2><Link href="/insiders?view=groups" className="small">More ›</Link></div>
               <p className="muted small">2+ executives or directors buying the same stock this week, the strongest signal.</p>
               {d.clusters.length ? <ul className="rows">{d.clusters.map((c) => (
                 <li key={c.symbol}><Link href={`/stock/${c.symbol}`} className="row-link">

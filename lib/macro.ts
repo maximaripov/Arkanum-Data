@@ -1,7 +1,8 @@
 // The market numbers Foresight shows itself, from sources that allow public display:
 //   - 10-year Treasury yield: Federal Reserve (H.15), fetched through FRED's public CSV download.
-//   - Crypto: CoinGecko's public API, which requires a visible "Powered by CoinGecko" credit.
-// Stock and index prices are deliberately absent: exchanges license those for display.
+//   - Bitcoin and gold: CoinGecko's public API, which requires a visible "Powered by CoinGecko" credit.
+// Stock and index prices (S&P 500, Nasdaq-100) are licensed for display, so the Markets page
+// shows those through TradingView quote widgets instead.
 export type Point = [string, number];
 export type Series = {
   id: string;
@@ -57,9 +58,9 @@ async function fredSeries({ fred: id, ...base }: Def): Promise<Series | null> {
 // ---- Crypto (CoinGecko) ------------------------------------------------------------------
 const COINS = [
   ["bitcoin", "Bitcoin", "The largest cryptocurrency."],
-  ["ethereum", "Ethereum", "The second-largest cryptocurrency; many crypto apps run on it."],
-  ["solana", "Solana", "A fast blockchain popular for trading apps."],
-  ["ripple", "XRP", "A cryptocurrency built for moving money between banks."],
+  // No free source may republish the official gold price (LBMA), so we use PAX Gold, a token
+  // backed one-for-one by an ounce of London gold; it trades within about 1% of spot.
+  ["pax-gold", "Gold", "Price of one ounce of gold, tracked by the PAX Gold token (each token is backed by an ounce of gold held in London vaults)."],
 ] as const;
 const cg = (path: string, revalidate: number) => fetch(`https://api.coingecko.com/api/v3${path}`, {
   headers: process.env.COINGECKO_API_KEY ? { "x-cg-demo-api-key": process.env.COINGECKO_API_KEY } : {},
@@ -85,6 +86,6 @@ export async function crypto(): Promise<Series[]> {
 
 export async function markets(): Promise<Group[]> {
   const [tenYear, coins] = await Promise.all([fredSeries(TEN_YEAR), crypto()]);
-  const series = [tenYear, ...coins].filter((x): x is Series => !!x);
+  const series = [...coins, tenYear].filter((x): x is Series => !!x);
   return series.length ? [{ id: "markets", title: "Markets", blurb: "", source: { text: "Federal Reserve via FRED; crypto powered by CoinGecko", href: "https://www.coingecko.com/" }, series }] : [];
 }

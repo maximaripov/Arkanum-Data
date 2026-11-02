@@ -189,3 +189,12 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Markets page:** "Insiders buying this week" is a bar chart by amount; watchlist cards are simpler (no sector line or intro text).
 - **Stock page:** bought vs sold bars above the insider trade list.
 - Digest and notification: the markets line is now 10Y · BTC · ETH.
+
+## Round 13: market strip order, Insiders sections (2026-11-02)
+
+- **Markets strip**, in the owner's order: S&P 500, Nasdaq 100, bitcoin, gold, 10-year Treasury yield.
+  - The two indexes are owned by S&P and Nasdaq (FRED marks the S&P 500 "copyrighted: pre-approval required"), so they are TradingView mini-overview widgets (FOREXCOM index CFDs) sized to match the native cards. The owner chose this over dropping them or republishing FRED's copyrighted series.
+  - Gold is the PAX Gold token from CoinGecko (one token = one ounce held in London vaults; trades within about 1% of spot), because no free source may republish the LBMA gold price. Ether, solana and XRP were removed.
+  - Fix: TradingView frames don't declare a color scheme, so on a dark page the browser painted transparent widgets white. `.tradingview-widget-container iframe { color-scheme: light; }` matches the frame to its document and keeps it transparent.
+- **Insiders page** split into four tabs instead of one long page: Overview (30-day totals, buying-by-day bars, biggest buys, top 3 group buys), Group buys, All trades (filters and list; tapping a day bar opens this tab filtered to that day), and Big funds, itself split into "What funds are buying" and "Look up a fund". URLs: `/insiders?view=groups|trades|funds`; old filter links still open All trades.
+- Digest notification line: BTC · Gold · 10Y.

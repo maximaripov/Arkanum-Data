@@ -32,6 +32,6 @@ export function weekSummary(groups: Group[]): string[] {
   };
   say("t10y", "The 10-year Treasury yield", 0.05);
   say("bitcoin", "Bitcoin", 2);
-  say("ethereum", "Ether", 2);
+  say("pax-gold", "Gold", 1);
   return out;
 }

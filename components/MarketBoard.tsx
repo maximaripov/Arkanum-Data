@@ -1,10 +1,17 @@
 "use client";
-// The markets strip: the 10-year Treasury yield and four major cryptocurrencies.
-// Tap a card to open its chart. Data: lib/macro.ts via /api/markets.
+// The markets strip, in this order: S&P 500, Nasdaq-100, bitcoin, gold, 10-year Treasury yield.
+// The two indexes are licensed, so they come as TradingView quote widgets; the rest are drawn
+// by Foresight (lib/macro.ts via /api/markets) and open a chart when tapped.
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Spark } from "./Charts";
+import { TradingView } from "./TradingView";
 import type { Group, Series } from "@/lib/macro";
 import { fmtChange, fmtValue, weekSummary } from "@/lib/macroFormat";
+
+const INDEXES = ["FOREXCOM:SPXUSD", "FOREXCOM:NSXUSD"]; // S&P 500, Nasdaq 100
+function IndexQuote({ symbol }: { symbol: string }) {
+  return <div className="mcard tvq"><TradingView widget="mini-symbol-overview" height={130} config={{ symbol, width: "100%", height: "100%", dateRange: "1M", isTransparent: true, chartOnly: false, noTimeScale: true }} label="TradingView" /></div>;
+}
 
 const RANGES: [string, number][] = [["1W", 8], ["1M", 31], ["3M", 92], ["1Y", 366]];
 const NEUTRAL = "var(--ma50)";
@@ -54,10 +61,13 @@ export function MarketBoard() {
   const s = series.find((x) => x.id === open);
   return (
     <section className="card">
-      <div className="card-head"><h2>Markets</h2><span className="muted small">Tap one for its chart</span></div>
-      {groups === null ? <div className="mstrip">{Array.from({ length: 5 }, (_, i) => <div key={i} className="mcard skeleton" />)}</div>
-        : !series.length ? <p className="muted">Market data is unavailable right now. Try again in a few minutes.</p>
-        : <div className="mstrip">{series.map((x) => <Card key={x.id} s={x} on={x.id === open} pick={() => setOpen(x.id === open ? null : x.id)} />)}</div>}
+      <div className="card-head"><h2>Markets</h2><span className="muted small">Tap bitcoin, gold or the 10-year for a chart</span></div>
+      <div className="mstrip">
+        {INDEXES.map((sym) => <IndexQuote key={sym} symbol={sym} />)}
+        {groups === null ? Array.from({ length: 3 }, (_, i) => <div key={i} className="mcard skeleton" />)
+          : series.map((x) => <Card key={x.id} s={x} on={x.id === open} pick={() => setOpen(x.id === open ? null : x.id)} />)}
+      </div>
+      {groups !== null && !series.length ? <p className="muted small">Bitcoin, gold and Treasury data are unavailable right now. Try again in a few minutes.</p> : null}
       {s ? (() => {
         const pts = since(s.history, days);
         const c = fmtChange(s, pts[0]?.[1] ?? null, s.value);
@@ -72,7 +82,7 @@ export function MarketBoard() {
           </div>
         );
       })() : null}
-      <p className="muted small credit">Change vs the day before. Treasury yield: Federal Reserve via <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" rel="noreferrer">FRED</a>, updated each business day. Crypto: <a href="https://www.coingecko.com/" target="_blank" rel="noreferrer">Powered by CoinGecko</a>, every few minutes.</p>
+      <p className="muted small credit">Change vs the day before. S&amp;P 500 and Nasdaq 100 by TradingView (index CFDs, may differ slightly from the official index). Bitcoin and gold (PAX Gold token): <a href="https://www.coingecko.com/" target="_blank" rel="noreferrer">Powered by CoinGecko</a>. 10-year yield: Federal Reserve via <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" rel="noreferrer">FRED</a>, each business day.</p>
     </section>
   );
 }

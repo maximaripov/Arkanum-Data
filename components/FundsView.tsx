@@ -43,6 +43,7 @@ export function FundsView() {
   const [funds, setFunds] = useState<Fund[] | null>(null);
   const [sel, setSel] = useState(0);
   const [tab, setTab] = useState<(typeof TABS)[number][0]>("new");
+  const [part, setPart] = useState<"popular" | "fund">("popular");
   useEffect(() => { fetch("/data/funds.json").then((r) => r.json()).then((d) => setFunds(d.funds)).catch(() => setFunds([])); }, []);
 
   // Across all tracked funds: which stocks were bought or sold by the most funds.
@@ -73,9 +74,10 @@ export function FundsView() {
             <li>&quot;% of portfolio&quot; is the holding&apos;s share of everything the fund reported.</li>
           </ul>
         </details>
+        <div className="seg big part-seg"><button className={part === "popular" ? "on" : ""} onClick={() => setPart("popular")}>What funds are buying</button><button className={part === "fund" ? "on" : ""} onClick={() => setPart("fund")}>Look up a fund</button></div>
       </section>
 
-      {consensus.bought.length || consensus.sold.length ? (
+      {part === "popular" ? (consensus.bought.length || consensus.sold.length ? (
         <div className="twocol">
           <section className="card"><h2>Bought by several funds <span className="muted small">new or added, latest quarter</span></h2>
             <ul className="compact-list">{consensus.bought.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="up">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
@@ -84,8 +86,9 @@ export function FundsView() {
             <ul className="compact-list">{consensus.sold.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="down">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
           </section>
         </div>
-      ) : null}
+      ) : <section className="card"><p className="muted">No stock was bought or sold by several tracked funds this quarter.</p></section>) : null}
 
+      {part === "fund" ? <>
       <section className="card">
         <h2>Pick a fund</h2>
         <div className="scroller">{funds.map((x, i) => <button key={x.cik} className={`chip${i === sel ? " on" : ""}`} onClick={() => { setSel(i); setTab("new"); }}>{x.name}</button>)}</div>
@@ -111,6 +114,7 @@ export function FundsView() {
           <HoldingRows items={f.top} maxPct={f.top[0]?.pct} />
         </section>
       </div>
+      </> : null}
     </>
   );
 }
