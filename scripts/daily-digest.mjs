@@ -67,6 +67,23 @@ const digest = {
   clusters, fundFilings: newFilings, events,
 };
 
+// ---- One line on markets: 10-year yield, oil and bitcoin, each vs the day before ------------
+const marketLine = await (async () => {
+  try {
+    const r = await fetch(`${SITE}/api/markets`, { signal: AbortSignal.timeout(30_000) });
+    const all = new Map((await r.json()).groups.flatMap((g) => g.series.map((x) => [x.id, x])));
+    const part = (id, name, pct) => {
+      const x = all.get(id);
+      if (!x) return null;
+      const v = x.unit === "pct" ? `${x.value.toFixed(2)}%` : x.value >= 1000 ? `$${(x.value / 1000).toFixed(1)}K` : `$${x.value.toFixed(2)}`;
+      if (x.prev == null) return `${name} ${v}`;
+      const d = pct ? (x.value / x.prev - 1) * 100 : x.value - x.prev;
+      return `${name} ${v} (${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(pct ? 1 : 2)}${pct ? "%" : ""})`;
+    };
+    return [part("t10y", "10Y", false), part("wti", "Oil", true), part("bitcoin", "BTC", true)].filter(Boolean).join(" · ") || null;
+  } catch { return null; }
+})();
+
 // ---- Each device's own message ----------------------------------------------------------
 const auth = await token();
 let devices = [];
@@ -129,7 +146,8 @@ for (const d of devices) {
   if (!lines.length && clusters[0]) lines.push(`${clusters[0].insiders} insiders bought ${clusters[0].symbol} this week (${money(clusters[0].value)})`);
   if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Biggest insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
   if (lines.length < 4 && events[0]) lines.push(`Next: ${events[0].title} ${weekday(events[0].date)}`);
-  messages.push({ id: d.id, title: digest.title, body: lines.slice(0, 4).join("\n") });
+  const body = marketLine ? [...lines.slice(0, 3), marketLine] : lines.slice(0, 4);
+  messages.push({ id: d.id, title: digest.title, body: body.join("\n") });
 }
 
 if (DRY || !auth) {

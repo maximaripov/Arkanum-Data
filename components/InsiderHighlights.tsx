@@ -21,7 +21,8 @@ export function InsiderHighlights() {
         if (t.code !== "P" || !isExecOrDirector(t) || t.filed < since || !t.value) continue;
         const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, people: [], owners: new Set<string>() };
         x.value += t.value;
-        if (!x.owners.has(t.owner)) { x.owners.add(t.owner); x.people.push(`${personName(t.owner)} (${roleLabel(t.role)})`); }
+        const who = personName(t.owner); // one filer can appear under slightly different names
+        if (!x.owners.has(who)) { x.owners.add(who); x.people.push(`${who} (${roleLabel(t.role)})`); }
         by.set(t.symbol, x);
       }
       // Several insiders averaging under ~$25K each is usually an employee share-purchase plan.

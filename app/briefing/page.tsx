@@ -5,6 +5,7 @@ import { deviceId, notificationsOn, register } from "@/lib/device";
 import { useWatchlist } from "@/components/useWatchlist";
 import { TradeList, personName, roleLabel } from "@/components/TradeList";
 import { ComingUp } from "@/components/ComingUp";
+import { WeekSummary, useMarkets } from "@/components/MarketBoard";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
@@ -146,6 +147,7 @@ export default function DigestPage() {
   const [d, setD] = useState<Digest | null | "none">(null);
   const [notifOn, setNotifOn] = useState(true);
   const a = useWatchlistActivity();
+  const markets = useMarkets();
   useEffect(() => { fetch("/api/alerts/digest").then((r) => r.json()).then((x) => setD(x.empty ? "none" : x)).catch(() => setD("none")); }, []);
 
   const summary = d && d !== "none" ? [
@@ -164,9 +166,10 @@ export default function DigestPage() {
         <>
           <section className="card">
             <h1>Daily digest</h1>
-            <p className="muted small">{day(d.date)} · what company insiders and big funds did, from official SEC filings</p>
+            <p className="muted small">{day(d.date)} · what company insiders and big funds did, plus the week in markets</p>
             <h2 className="subhead">In 30 seconds</h2>
             <ul className="summary">{summary.map((s) => <li key={s}>{s}</li>)}</ul>
+            {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /><Link href="/" className="small">Rates, oil, currencies and crypto ›</Link></> : null}
             {!notifOn ? <a href="#notify" className="btn primary">Get this on your phone every weekday ›</a> : null}
           </section>
           <YourWatchlist a={a} />

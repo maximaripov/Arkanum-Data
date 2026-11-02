@@ -4,7 +4,6 @@ import Link from "next/link";
 import { fmtBig, fmtPct, tone } from "@/lib/format";
 import { execBuysBySymbol, matchesFilter } from "@/lib/screen.mjs";
 import { useScreens, type SavedScreen } from "@/components/useScreens";
-import { TradingView } from "@/components/TradingView";
 
 type Row = {
   t: string; n: string; x: string; rev: number | null; ni: number | null; margin: number | null; growth: number | null; roe: number | null;
@@ -55,7 +54,6 @@ export default function Screener() {
   const [industry, setIndustry] = useState("All");
   const [text, setText] = useState("");
   const [sort, setSort] = useState<{ k: Key; dir: 1 | -1 }>({ k: "rev", dir: -1 });
-  const [tab, setTab] = useState<"sec" | "tv">("sec");
   const [page, setPage] = useState(0);
   const [active, setActive] = useState<string | null>(null);
   const [saveName, setSaveName] = useState("");
@@ -106,17 +104,8 @@ export default function Screener() {
       <section className="card">
         <h1>Stock screener</h1>
         <p className="muted">Find companies by how their business is doing: growth, profits, debt and cash, from their official filings.</p>
-        <div className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === "sec"} className={tab === "sec" ? "on" : ""} onClick={() => setTab("sec")}>Business fundamentals</button>
-          <button role="tab" aria-selected={tab === "tv"} className={tab === "tv" ? "on" : ""} onClick={() => setTab("tv")}>Price &amp; valuation</button>
-        </div>
       </section>
-      {tab === "tv" ? (
-        <section className="card">
-          <p className="muted small">TradingView&apos;s screener filters on price-based measures: market cap, P/E, dividend yield, performance and more. Prices are delayed 15 minutes.</p>
-          <TradingView widget="screener" height={720} config={{ width: "100%", height: "100%", defaultColumn: "overview", defaultScreen: "most_capitalized", market: "america", showToolbar: true }} label="Screener by TradingView" />
-        </section>
-      ) : (<>
+      <>
       <section className="card">
         <h2>Quick screens</h2>
         {screens.length ? (
@@ -194,7 +183,7 @@ export default function Screener() {
           </div>
         ) : null}
       </section>
-      </>)}
+      </>
     </div>
   );
 }

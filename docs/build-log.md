@@ -170,3 +170,14 @@ Decision: one free public version in this repo; the personal-only features were 
 - **Digest:** "In 30 seconds" summary; your watchlist's insider trades as sentences and fund moves grouped by stock; market-wide sections as tappable rows; "Get this on your phone" prompt when notifications are off; arrival time stated as about 4:30 PM ET (GitHub starts scheduled runs late).
 - **Stock page:** "What do these mean?" glossary for the fundamentals.
 - TradingView credit kept under every widget (their terms ask for attribution as designed).
+
+## Round 11: Foresight's own market data instead of TradingView boxes (2026-11-02)
+
+The owner asked to show market data in Foresight's own design rather than embedded TradingView boxes. Stock and index prices are licensed by the exchanges for display, and no free source permits showing them on a public site, so they stay with TradingView, now only as the price chart on stock pages. Everything else is native:
+
+- **Markets & economy board** ([components/MarketBoard.tsx](../components/MarketBoard.tsx), [lib/macro.ts](../lib/macro.ts), `/api/markets`): interest rates (Fed funds, 3-month to 30-year Treasuries), energy (WTI, Brent, natural gas, pump gasoline), currencies (euro, pound, yen, yuan), crypto (bitcoin, ether, solana, XRP) and economic reports (inflation, unemployment, jobs, GDP growth). Cards with sparklines; tap one for an interactive chart (drag to read any day) with ranges. A plain-English "this week" summary at the top.
+  - US government data comes through FRED's CSV download, which needs a recognizable User-Agent. Exchange rates come from the ECB data API, crypto from CoinGecko's public API with a "Powered by CoinGecko" credit (an optional `COINGECKO_API_KEY` uses a free Demo key). CoinGecko doesn't say whether its free plan covers public sites; if it objects, drop the crypto group.
+- **Watchlist** cards built from Foresight's own data (`/api/watch`): insider buying/selling (30 days), funds that bought or sold last quarter, sales growth and margin.
+- **Stock page:** native header with a watchlist button; the TradingView chart uses the page's colors with toolbars hidden, our own range buttons, and an "Indicators & compare" switch that brings the tools back. TradingView headlines removed (SEC announcements remain).
+- Removed: ticker tape, market overview, the price screener tab and the worldwide calendar widget.
+- **Digest:** a "Markets this week" section, and the 4 PM notification ends with a line like "10Y 4.94% (−0.04) · Oil $103.37 (−1.8%) · BTC $76.8K (−1.0%)".

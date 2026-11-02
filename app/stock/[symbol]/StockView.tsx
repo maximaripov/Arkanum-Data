@@ -11,6 +11,9 @@ import type { Announcement } from "@/lib/news";
 import type { RetailFlow } from "@/lib/retail";
 
 type Company = { ticker: string; name: string | null; exchange: string | null };
+const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+// [label, TradingView range, bar interval]
+const RANGES: [string, string, string][] = [["1D", "1D", "5"], ["1M", "1M", "60"], ["6M", "6M", "D"], ["1Y", "12M", "D"], ["5Y", "60M", "W"]];
 const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
 
 export function StockView({ symbol }: { symbol: string }) {
@@ -20,6 +23,8 @@ export function StockView({ symbol }: { symbol: string }) {
   const [news, setNews] = useState<Announcement[] | null>(null);
   const [flow, setFlow] = useState<RetailFlow | null | undefined>(undefined);
   const { has, toggle } = useWatchlist();
+  const [range, setRange] = useState("1Y");
+  const [tools, setTools] = useState(false);
 
   useEffect(() => {
     setCo(null); setFund(null); setInsiders(null); setNews(null); setFlow(undefined);
@@ -43,22 +48,23 @@ export function StockView({ symbol }: { symbol: string }) {
   return (
     <div className="stack">
       <section className="card">
-        <div className="head">
+        <div className="stock-head">
           <div>
-            <h1>{symbol} <button className={`star ${has(symbol) ? "on" : ""}`} onClick={() => toggle(symbol)} aria-label="Toggle watchlist">{has(symbol) ? "★" : "☆"}</button></h1>
-            <div className="muted">{co?.name ?? ""}{co?.exchange ? ` · ${co.exchange}` : ""}</div>
-            {fund?.sector ? <div className="muted small">{fund.sector}{fund.ind ? ` · ${fund.ind}` : ""}</div> : null}
+            <h1>{co?.name ? titleCase(co.name) : symbol}</h1>
+            <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""}</div>
           </div>
+          <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "★ On your watchlist" : "☆ Add to watchlist"}</button>
         </div>
-        {tv ? <TradingView widget="symbol-info" height={190} config={{ symbol: tv, width: "100%" }} /> : null}
-      </section>
-
-      <section className="card">
-        {tv ? <TradingView widget="advanced-chart" height={520} config={{
-          symbol: tv, autosize: true, interval: "D", timezone: "America/New_York", style: "1", allow_symbol_change: false,
-          hide_side_toolbar: false, studies: [], support_host: "https://www.tradingview.com",
-        }} label="Chart by TradingView" /> : <p className="muted">Loading chart…</p>}
-        <p className="muted small">Stock prices are delayed 15 minutes. Use the chart&apos;s Indicators button for moving averages, RSI and more, and Compare to add other symbols.</p>
+        <div className="chart-bar">
+          <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => setRange(l)}>{l}</button>)}</div>
+          <button className="linkbtn" onClick={() => setTools(!tools)}>{tools ? "Simple chart" : "Indicators & compare"}</button>
+        </div>
+        {tv ? <TradingView key={`${tv}${range}${tools}`} widget="advanced-chart" height={tools ? 520 : 380} blend config={{
+          symbol: tv, autosize: true, timezone: "America/New_York", allow_symbol_change: false, save_image: false, calendar: false,
+          interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
+          hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
+        }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
+        <p className="muted small">Prices are delayed 15 minutes. Drag across the chart to see past prices.</p>
       </section>
 
       {fund ? (
@@ -79,7 +85,7 @@ export function StockView({ symbol }: { symbol: string }) {
         </section>
       ) : null}
 
-      <div className="twocol">
+      <div>
         <section className="card">
           <h2>Company announcements <span className="muted small">SEC 8-K filings</span></h2>
           {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
@@ -88,12 +94,6 @@ export function StockView({ symbol }: { symbol: string }) {
             ))}</ul>
           )}
         </section>
-        {tv ? (
-          <section className="card">
-            <h2>Headlines</h2>
-            <TradingView widget="timeline" height={460} config={{ feedMode: "symbol", symbol: tv, displayMode: "regular", width: "100%", height: "100%" }} label="News by TradingView" />
-          </section>
-        ) : null}
       </div>
 
       <FundHolders symbol={symbol} />

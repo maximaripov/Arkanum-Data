@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { TradingView } from "@/components/TradingView";
 import { EVENT_INFO } from "@/lib/events";
 
 type Ev = { date: string; time: string | null; kind: "econ" | "fed"; title: string; source: string };
@@ -62,10 +61,6 @@ export default function CalendarPage() {
           })}</ul>
         </section>
       ))}
-      <section className="card">
-        <h2>Worldwide <span className="muted small">all major economies</span></h2>
-        <TradingView widget="events" height={600} config={{ width: "100%", height: "100%", importanceFilter: "0,1", countryFilter: "us,eu,gb,jp,cn" }} label="Economic calendar by TradingView" />
-      </section>
     </div>
   );
 }
