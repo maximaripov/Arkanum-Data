@@ -86,7 +86,7 @@ export async function pushTo(subs: PushSubscription[], msg: PushMessage) {
 const clean = (sym: unknown) => String(sym ?? "").toUpperCase().trim().slice(0, 20);
 export function sanitizeWatchlist(w: unknown): string[] | undefined {
   if (!Array.isArray(w)) return undefined;
-  return [...new Set(w.map(clean).filter(Boolean))].slice(0, 100);
+  return [...new Set(w.map(clean).filter(Boolean))].slice(0, 100); // keeps the Markets tab order
 }
 export function sanitizeLevels(l: unknown): Record<string, Level[]> | undefined {
   if (!l || typeof l !== "object") return undefined;

@@ -11,7 +11,7 @@ Personal market tracker: live quotes across stocks, indices, FX, commodities and
 | Markets | Watchlist (saved in your browser), indices, rates & FX, commodities, crypto | Yahoo, polled every 5–15 s; crypto streams tick-by-tick from Coinbase |
 | Stock page | Chart (1D–5Y, line or candles) with your own price levels and notes, key stats, sector, fundamentals, headlines, the company's SEC 8-K announcements, its insider trades | Yahoo + SEC EDGAR |
 | Screener | ~7,000 NYSE/Nasdaq/Cboe stocks: sector and industry, market cap, P/E, P/S, margin, revenue growth, ROE, 1Y return, distance from 52-week high, officer/director buying (30 days). Presets included | Rebuilt nightly |
-| Briefing | Daily summary after the US close, also sent as a phone notification: indices, rates, oil, gold, bitcoin, sectors, breadth, biggest movers, your watchlist and price levels, officer/director buys, and the next 7 days of catalysts (GDP, PCE, trade, Fed decisions, earnings; jobs report and CPI with a FRED key) | Yahoo, SEC, BEA, Federal Reserve, Nasdaq, FRED |
+| Briefing | Daily summary at the 4 PM Eastern close, also sent as a phone notification (GitHub starts the job at 4:02 PM; it usually arrives 4:05–4:20): indices, rates, oil, gold, bitcoin, sectors, breadth, biggest movers, your watchlist and price levels, officer/director buys, and the next 7 days of catalysts (GDP, PCE, trade, Fed decisions, earnings; jobs report and CPI with a FRED key) | Yahoo, SEC, BEA, Federal Reserve, Nasdaq, FRED |
 | Insiders | Every insider open-market buy and every sale over $250K for the last 30 days, filterable to officers & directors or funds & 10% owners, "cluster buys" (2+ insiders, same stock), plus a live feed | SEC Form 4 |
 
 On a phone, open the site and use **Share → Add to Home Screen** (iOS) or **Install app** (Android). It runs full-screen like an app.
@@ -36,15 +36,15 @@ node scripts/build-insiders.mjs --days 30 # first run ~30 min, then ~2 min/day
 1. Push this folder to a **private** GitHub repo.
 2. Import the repo on [Vercel](https://vercel.com/new) (Hobby plan is free). Add the environment variable `SEC_USER_AGENT`, e.g. `Foresight personal app you@example.com`.
 3. In GitHub → Settings → Secrets and variables → Actions, add the same `SEC_USER_AGENT` as a secret.
-4. The workflow in `.github/workflows/data.yml` rebuilds the data every weekday after the US close and commits it; Vercel redeploys on each commit. Run it once by hand from the Actions tab.
+4. The workflow in `.github/workflows/data.yml` runs every weekday at 4:02 PM New York time (two UTC schedules cover daylight saving; a gate job keeps the right one): closing prices, the briefing, insider trades, then a commit. Vercel redeploys on each commit. Run it once by hand from the Actions tab.
 
 ## Phone notifications (daily briefing)
 
 1. On iPhone: open the site in Safari → Share → **Add to Home Screen**, then open Foresight from the Home Screen icon (iOS only allows notifications for Home Screen apps).
 2. Go to **Briefing**, enter the passcode (Vercel setting `ALERTS_PASSCODE`), tap **Turn on notifications**, then **Send a test**.
-3. The nightly GitHub job (`scripts/daily-briefing.mjs`) builds the briefing and calls `/api/alerts/send`. It proves its identity with a GitHub-signed token (no secret to copy); the site only accepts tokens from this repo's `main` branch. Optional: `FRED_API_KEY` (free at fred.stlouisfed.org) adds jobs report, CPI, PPI, retail sales and jobless claims dates.
+3. The 4 PM GitHub job (`scripts/daily-briefing.mjs`) builds the briefing and calls `/api/alerts/send`. It proves its identity with a GitHub-signed token (no secret to copy); the site only accepts tokens from this repo's `main` branch. Optional: `FRED_API_KEY` (free at fred.stlouisfed.org) adds jobs report, CPI, PPI, retail sales and jobless claims dates.
 
-Your watchlist and price levels sync to a private Vercel Blob store once the passcode is saved on a device, so the briefing knows what you follow.
+Every time the app opens (and on every change), a device with the passcode sends its Markets-tab watchlist and price levels to a private Vercel Blob store, so the briefing lists the same stocks in the same order.
 
 ## Known limits
 

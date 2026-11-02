@@ -93,7 +93,7 @@ function Setup({ onPasscode }: { onPasscode: () => void }) {
         </div>
       ) : (
         <>
-          <p className="muted small">One notification each weekday after the US close: markets, your watchlist and price levels, insider buys, and the week&apos;s catalysts.</p>
+          <p className="muted small">One notification each weekday at the 4 PM Eastern close (usually arrives 4:05–4:20): the day&apos;s markets, your Markets-tab watchlist and price levels, insider buys, and the week&apos;s catalysts.</p>
           <div className="toolbar">
             {endpoint ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary" onClick={enable}>Turn on notifications</button>}
           </div>
@@ -132,7 +132,7 @@ export default function BriefingPage() {
             <ul className="headline">{b.headline.map((l) => <li key={l}>{l}</li>)}</ul>
           </section>
           <div className="grid">
-            {b.watchlist.length ? <section className="card"><h2>Your watchlist</h2><MoveRows items={b.watchlist} /></section> : null}
+            {b.watchlist.length ? <section className="card"><h2>Your watchlist <span className="muted small">as of the briefing</span></h2><MoveRows items={b.watchlist} /></section> : null}
             {b.markets.map((g) => <section className="card" key={g.title}><h2>{g.title}</h2><MoveRows items={g.items} /></section>)}
             <section className="card">
               <h2>Sectors</h2><MoveRows items={b.sectors} />

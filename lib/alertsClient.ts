@@ -1,6 +1,8 @@
 "use client";
 // Browser side of alerts: the passcode for this device, and syncing the watchlist and
 // price levels to the server so the nightly briefing knows what you follow.
+import { DEFAULT_WATCHLIST } from "./markets";
+
 const PASS = "foresight.alertsPasscode";
 
 export const getPasscode = () => { try { return localStorage.getItem(PASS) ?? ""; } catch { return ""; } };
@@ -8,7 +10,9 @@ export const setPasscode = (p: string) => { try { localStorage.setItem(PASS, p);
 
 function localState() {
   const read = (k: string, d: unknown) => { try { return JSON.parse(localStorage.getItem(k) ?? "null") ?? d; } catch { return d; } };
-  return { watchlist: read("foresight.watchlist", null), levels: read("foresight.levels", {}) };
+  // Exactly what the Markets tab shows: the saved list, or the default list if none was saved.
+  const w = read("foresight.watchlist", null);
+  return { watchlist: Array.isArray(w) ? w : DEFAULT_WATCHLIST, levels: read("foresight.levels", {}) };
 }
 
 export async function register(extra: Record<string, unknown> = {}) {
@@ -18,7 +22,7 @@ export async function register(extra: Record<string, unknown> = {}) {
   const res = await fetch("/api/alerts/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ passcode, ...(watchlist ? { watchlist } : {}), levels, ...extra }),
+    body: JSON.stringify({ passcode, watchlist, levels, ...extra }),
   });
   const d = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(d.error ?? `Server error ${res.status}`);

@@ -1,15 +1,38 @@
-name: Nightly market data
-# Rebuilds the screener (prices + SEC fundamentals) and the 30-day insider-trade file,
-# then commits them. Vercel redeploys on the commit, so the site picks them up.
+name: Market close briefing and data
+# Weekdays at 4:02 PM New York time: refresh prices, send the daily briefing to your
+# phone, then refresh insider trades and commit the data (Vercel redeploys on commit).
+#
+# GitHub schedules run in UTC, and 4 PM in New York is 21:02 UTC in winter (EST) but
+# 20:02 UTC in summer (EDT). Both are scheduled; the gate job keeps the one that is
+# 4 PM in New York today. GitHub often starts scheduled runs a few minutes late.
 on:
   schedule:
-    - cron: "17 23 * * 1-5" # 23:17 UTC on weekdays, after the US close
+    - cron: "2 21 * * 1-5" # 4:02 PM EST (winter)
+    - cron: "2 20 * * 1-5" # 4:02 PM EDT (summer)
   workflow_dispatch:
 permissions:
   contents: write
   id-token: write # lets the briefing step prove to the site that it is this repo's job
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          # -0500 in winter → the 21:02 UTC schedule is 4 PM; -0400 in summer → 20:02 UTC.
+          offset=$(TZ=America/New_York date +%z)
+          if [ "$offset" = "-0500" ]; then want="2 21 * * 1-5"; else want="2 20 * * 1-5"; fi
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "${{ github.event.schedule }}" = "$want" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not 4 PM in New York for this schedule; skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -21,7 +44,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Closing prices first: the briefing's market breadth and movers come from them.
       - run: node scripts/build-screener.mjs
+      - name: Send daily briefing
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SITE_URL: https://foresightscreener.vercel.app
+        run: node scripts/daily-briefing.mjs
       - run: node scripts/build-insiders.mjs --days 30
       - name: Commit data
         run: |
@@ -30,10 +59,5 @@ jobs:
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
           git add public/data data
-          git diff --cached --quiet || git commit -m "data: nightly refresh $(date -u +%F)"
+          git diff --cached --quiet || git commit -m "data: market close refresh $(date -u +%F)"
           git push
-      - name: Send daily briefing
-        env:
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-          SITE_URL: https://foresightscreener.vercel.app
-        run: node scripts/daily-briefing.mjs

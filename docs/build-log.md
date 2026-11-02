@@ -114,3 +114,8 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 - **Builder:** [scripts/daily-briefing.mjs](../scripts/daily-briefing.mjs), last step of the nightly job. Catalysts from BEA (GDP, PCE, trade), the Fed calendar, Nasdaq earnings (watchlist + top 5 companies over $100B per day) and, with `FRED_API_KEY`, BLS releases. The Labor Department's own calendar blocks automated readers, so it isn't scraped.
 - **Fix found while building:** banks file exchange-traded notes under their own company number, so BMO's 47 notes showed BMO's market cap. Extra tickers now keep the company's valuation only if they trade within 20% of the main stock's price.
 - **Verified:** passcode/secret checks, watchlist and level sync, the job reading them, send and read-back, and push encryption and signing (decrypted with a device key). Not verifiable here: delivery to a real phone.
+
+## Round 4: 4 PM briefing, Markets-tab watchlist (2026-11-02)
+
+- The job now runs at 4:02 PM New York time instead of 6:17 PM: closing prices → briefing → insider trades → commit. Two UTC schedules (20:02 and 21:02) cover daylight saving; a gate job keeps the one that is 4 PM in New York. GitHub usually starts scheduled runs a few minutes late, so the notification typically lands 4:05–4:20.
+- The briefing's watchlist is the Markets tab's list, in order: the app syncs it every time it opens, not only when it changes, and sends the default list when none was saved (exactly what the Markets tab shows).

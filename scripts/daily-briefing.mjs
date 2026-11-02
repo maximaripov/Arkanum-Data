@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Builds the daily market briefing after the US close and sends it to your phone.
-// Runs in the nightly GitHub job right after the screener and insider data are rebuilt.
+// Builds the daily market briefing at the 4 PM Eastern close and sends it to your phone.
+// Runs in the 4:02 PM GitHub job right after closing prices are refreshed.
 //
 //   node scripts/daily-briefing.mjs            build + send (needs ALERTS_SECRET, SITE_URL)
 //   node scripts/daily-briefing.mjs --dry-run  build and print, send nothing
@@ -51,7 +51,9 @@ if (SECRET) {
   if (s) state = s;
   else notes.push("Couldn't read your watchlist from the site.");
 }
-const watchlist = state.watchlist?.length ? state.watchlist : ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "TSLA"];
+// Your Markets-tab watchlist as last synced from your phone, in the same order. The
+// default list is only used if no device has ever synced (an empty list stays empty).
+const watchlist = state.updated ? state.watchlist ?? [] : ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "TSLA"];
 
 // ---- Prices -----------------------------------------------------------------------
 const MARKETS = [
