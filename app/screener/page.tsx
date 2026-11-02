@@ -1,43 +1,39 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
+import { fmtBig, fmtPct, tone } from "@/lib/format";
 import { execBuysBySymbol, matchesFilter } from "@/lib/screen.mjs";
 import { useScreens, type SavedScreen } from "@/components/useScreens";
+import { TradingView } from "@/components/TradingView";
 
 type Row = {
-  t: string; n: string; x: string; p: number; chg: number | null; mcap: number | null; pe: number | null; ps: number | null;
-  margin: number | null; growth: number | null; roe: number | null; ret1y: number | null; offHigh: number | null; ins: number | null;
-  sector: string | null; ind: string | null; basis: string | null; dy: number | null; de: number | null; fcfy: number | null;
+  t: string; n: string; x: string; rev: number | null; ni: number | null; margin: number | null; growth: number | null; roe: number | null;
+  de: number | null; fcf: number | null; fcfMargin: number | null; div: number | null; payout: number | null; ins: number | null;
+  sector: string | null; ind: string | null; basis: string | null;
 };
 type Range = [number | "", number | ""];
-type Key = "mcap" | "pe" | "ps" | "margin" | "growth" | "roe" | "dy" | "de" | "fcfy" | "ret1y" | "offHigh" | "chg" | "ins";
+type Key = "rev" | "ni" | "margin" | "growth" | "roe" | "de" | "fcf" | "fcfMargin" | "payout" | "ins";
 
 const num = (v: any) => (v ?? "—").toString();
 const COLS: { k: Key; label: string; fmt: (v: any) => string; unit: string; tip?: string }[] = [
-  { k: "mcap", label: "Market cap", fmt: fmtBig, unit: "$B" },
-  { k: "pe", label: "P/E", fmt: num, unit: "" },
-  { k: "ps", label: "P/S", fmt: num, unit: "" },
+  { k: "rev", label: "Revenue", fmt: (v) => (v == null ? "—" : "$" + fmtBig(v)), unit: "$M", tip: "Last 4 quarters where available, else last fiscal year" },
+  { k: "ni", label: "Net income", fmt: (v) => (v == null ? "—" : "$" + fmtBig(v)), unit: "$M" },
   { k: "margin", label: "Net margin", fmt: (v) => fmtPct(v, 1), unit: "%" },
-  { k: "growth", label: "Rev growth", fmt: (v) => fmtPct(v, 1), unit: "%" },
-  { k: "roe", label: "ROE", fmt: (v) => fmtPct(v, 1), unit: "%" },
-  { k: "dy", label: "Div yield", fmt: (v) => (v == null ? "—" : `${v.toFixed(2)}%`), unit: "%", tip: "Dividends paid in the last fiscal year ÷ market cap" },
+  { k: "growth", label: "Rev growth", fmt: (v) => fmtPct(v, 1), unit: "%", tip: "Versus the same period a year earlier" },
+  { k: "roe", label: "ROE", fmt: (v) => fmtPct(v, 1), unit: "%", tip: "Net income ÷ shareholders' equity" },
   { k: "de", label: "Debt/equity", fmt: num, unit: "", tip: "Debt ÷ shareholders' equity, latest balance sheet. Not shown for banks, insurers and funds." },
-  { k: "fcfy", label: "FCF yield", fmt: (v) => fmtPct(v, 1), unit: "%", tip: "(Operating cash flow − capital spending) in the last fiscal year ÷ market cap" },
-  { k: "ret1y", label: "1Y return", fmt: (v) => fmtPct(v, 1), unit: "%" },
-  { k: "offHigh", label: "From 52W high", fmt: (v) => fmtPct(v, 1), unit: "%" },
-  { k: "chg", label: "Day", fmt: (v) => fmtPct(v), unit: "%" },
-  { k: "ins", label: "Exec buys 30d", fmt: (v) => (v ? "$" + fmtBig(v) : "—"), unit: "$K" },
+  { k: "fcf", label: "Free cash flow", fmt: (v) => (v == null ? "—" : "$" + fmtBig(v)), unit: "$M", tip: "Operating cash flow − capital spending, last fiscal year" },
+  { k: "fcfMargin", label: "FCF margin", fmt: (v) => fmtPct(v, 1), unit: "%", tip: "Free cash flow ÷ revenue, last fiscal year" },
+  { k: "payout", label: "Payout ratio", fmt: (v) => (v == null ? "—" : `${v}%`), unit: "%", tip: "Dividends paid ÷ net income, last fiscal year (0 = pays no dividend)" },
+  { k: "ins", label: "Exec buys 30d", fmt: (v) => (v ? "$" + fmtBig(v) : "—"), unit: "$K", tip: "Officers' and directors' open-market purchases, last 30 days" },
 ];
 const empty = (): Record<Key, Range> => Object.fromEntries(COLS.map((c) => [c.k, ["", ""]])) as Record<Key, Range>;
 const PRESETS: Record<string, Partial<Record<Key, Range>>> = {
-  "Profitable growers": { growth: [20, ""], margin: [10, ""], mcap: [2, ""] },
-  "Value": { pe: [0, 15], roe: [12, ""], mcap: [1, ""] },
-  "Dividend payers": { dy: [3, ""], fcfy: [4, ""], de: ["", 1.5], mcap: [2, ""] },
-  "Cash machines": { fcfy: [6, ""], margin: [10, ""], mcap: [5, ""] },
-  "Near 52-week high": { offHigh: [-3, ""], mcap: [1, ""] },
-  "Beaten down quality": { offHigh: ["", -30], margin: [15, ""], mcap: [5, ""] },
-  "Mega caps": { mcap: [200, ""] },
+  "Profitable growers": { growth: [20, ""], margin: [10, ""], rev: [500, ""] },
+  "Quality": { roe: [20, ""], margin: [15, ""], de: ["", 1], rev: [1000, ""] },
+  "Dividend payers": { payout: [20, 75], fcfMargin: [10, ""], de: ["", 1.5], rev: [1000, ""] },
+  "Cash machines": { fcfMargin: [20, ""], margin: [10, ""], rev: [1000, ""] },
+  "Fast growers": { growth: [50, ""], rev: [100, ""] },
   "Insider buying": { ins: [100, ""] },
 };
 
@@ -49,7 +45,8 @@ export default function Screener() {
   const [sector, setSector] = useState("All");
   const [industry, setIndustry] = useState("All");
   const [text, setText] = useState("");
-  const [sort, setSort] = useState<{ k: Key; dir: 1 | -1 }>({ k: "mcap", dir: -1 });
+  const [sort, setSort] = useState<{ k: Key; dir: 1 | -1 }>({ k: "rev", dir: -1 });
+  const [tab, setTab] = useState<"sec" | "tv">("sec");
   const [page, setPage] = useState(0);
   const [active, setActive] = useState<string | null>(null);
   const [saveName, setSaveName] = useState("");
@@ -97,9 +94,18 @@ export default function Screener() {
     <div className="stack">
       <section className="card">
         <h1>Stock screener</h1>
+        <div className="seg big"><button className={tab === "sec" ? "on" : ""} onClick={() => setTab("sec")}>Fundamentals (SEC)</button><button className={tab === "tv" ? "on" : ""} onClick={() => setTab("tv")}>Prices &amp; valuation (TradingView)</button></div>
+      </section>
+      {tab === "tv" ? (
+        <section className="card">
+          <p className="muted small">TradingView&apos;s screener filters on price-based measures: market cap, P/E, dividend yield, performance and more. Prices are delayed 15 minutes.</p>
+          <TradingView widget="screener" height={720} config={{ width: "100%", height: "100%", defaultColumn: "overview", defaultScreen: "most_capitalized", market: "america", showToolbar: true }} label="Screener by TradingView" />
+        </section>
+      ) : (<>
+      <section className="card">
         <p className="muted small">
           {rows ? `${rows.length.toLocaleString()} US stocks` : "Loading…"}
-          {meta ? ` · prices from ${new Date(meta.updated).toLocaleString()} · fundamentals from SEC filings: the last 4 reported quarters where available, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year` : ""}
+          {meta ? ` · updated ${new Date(meta.updated).toLocaleDateString()} from SEC filings: the last 4 reported quarters where available, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year` : ""}
         </p>
         {screens.length ? (
           <div className="chips">
@@ -139,15 +145,15 @@ export default function Screener() {
           <input className="note" placeholder="Name this screen to save it" value={saveName} onChange={(e) => setSaveName(e.target.value)} maxLength={30} aria-label="Screen name" />
           <button type="submit">Save screen</button>
         </form>
-        <p className="muted small">Saved screens sync to your devices with the passcode, and the 4 PM briefing tells you when new stocks start matching one.</p>
+        <p className="muted small">Saved screens stay on this device. With notifications on, your daily digest tells you when new companies start matching one.</p>
       </section>
       <section className="card">
         <h2>{result.length.toLocaleString()} matches</h2>
-        <p className="muted small">P/E, margin and growth use reported net income, so a one-time gain or loss (an asset sale, an investment revaluation) can make a stock look much cheaper or pricier than its business is. Check the stock page before acting.</p>
+        <p className="muted small">Margins and ROE use reported net income, so a one-time gain or loss (an asset sale, an investment revaluation) can distort them. Check the stock page before drawing conclusions.</p>
         <div className="tablewrap">
           <table className="table">
             <thead><tr>
-              <th>Symbol</th><th>Sector</th><th className="r">Price</th>
+              <th>Symbol</th><th>Sector</th>
               {COLS.map((c) => <th key={c.k} title={c.tip} className="r sortable" onClick={() => setSort((s) => ({ k: c.k, dir: s.k === c.k ? (-s.dir as 1 | -1) : -1 }))}>{c.label}{sort.k === c.k ? (sort.dir < 0 ? " ↓" : " ↑") : ""}</th>)}
             </tr></thead>
             <tbody>
@@ -155,8 +161,7 @@ export default function Screener() {
                 <tr key={r.t}>
                   <td><Link href={`/stock/${r.t}`}><strong>{r.t}</strong></Link><div className="muted small ellipsis">{r.n}</div></td>
                   <td><div className="ellipsis small">{r.sector ?? "—"}</div><div className="muted small ellipsis" title={r.ind ?? ""}>{r.ind ?? ""}</div></td>
-                  <td className="r mono">{fmtPrice(r.p)}</td>
-                  {COLS.map((c) => <td key={c.k} className={`r mono ${["chg", "ret1y", "growth"].includes(c.k) ? tone(r[c.k]) : ""}`}>{c.fmt(r[c.k])}</td>)}
+                  {COLS.map((c) => <td key={c.k} className={`r mono ${["growth"].includes(c.k) ? tone(r[c.k]) : ""}`}>{c.fmt(r[c.k])}</td>)}
                 </tr>
               ))}
             </tbody>
@@ -170,6 +175,7 @@ export default function Screener() {
           </div>
         ) : null}
       </section>
+      </>)}
     </div>
   );
 }

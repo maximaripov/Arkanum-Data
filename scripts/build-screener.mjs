@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Builds public/data/screener.json: every NYSE/Nasdaq/Cboe stock with price stats
-// (Yahoo, unofficial) and fundamentals (SEC EDGAR XBRL "frames", official).
+// Builds public/data/screener.json: fundamentals for every NYSE/Nasdaq/Cboe company from
+// SEC EDGAR XBRL "frames" (official, public domain). No prices (see below).
 // Runs nightly from GitHub Actions. Usage: node scripts/build-screener.mjs [--limit 200]
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { sectorForSic } from "../lib/sectors.mjs";
@@ -148,22 +148,7 @@ for (let i = QTRS.length - 1; i >= 0; i--) {
 for (let i = QTRS.length - 1; i >= 0; i--) {
   for (const [cik, v] of await frame("us-gaap", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "USD", `${QTRS[i]}I`)) if (!equity.has(cik)) equity.set(cik, v);
 }
-// Shares outstanding: newest quarter wins.
-const shares = new Map();
-const quarters = [];
-for (let y = Y; y >= FY; y--) for (let q = 4; q >= 1; q--) quarters.push(`CY${y}Q${q}I`);
-for (const p of quarters) {
-  const m = await frame("dei", "EntityCommonStockSharesOutstanding", "shares", p);
-  for (const [cik, v] of m) if (!shares.has(cik)) shares.set(cik, v);
-  if (shares.size > 6000) break;
-}
-// Fallback for multi-class companies (GOOGL, META…), whose cover-page share count is
-// reported per class and dropped from frames: weighted diluted shares from recent quarters.
-for (const p of [...quarters.map((q) => q.slice(0, -1)), `CY${FY}`]) {
-  for (const [cik, v] of await frame("us-gaap", "WeightedAverageNumberOfDilutedSharesOutstanding", "shares", p))
-    if (!shares.has(cik)) shares.set(cik, v);
-}
-console.log(`equity ${equity.size}, shares ${shares.size}`);
+console.log(`equity ${equity.size}`);
 
 const tickers = await sec("https://www.sec.gov/files/company_tickers_exchange.json");
 const universe = [];
@@ -199,87 +184,55 @@ await mkdir("data", { recursive: true });
 await Promise.all([sicWorker(), sicWorker(), sicWorker(), sicWorker()]);
 await writeFile(SIC_FILE, JSON.stringify(sicCache));
 
-console.log(`Prices for ${list.length} tickers…`);
-
-const prices = new Map();
-const batches = [];
-for (let i = 0; i < list.length; i += 20) batches.push(list.slice(i, i + 20).map((x) => x.ticker));
-let done = 0;
-async function worker() {
-  while (batches.length) {
-    const b = batches.shift();
-    const d = await getJson(
-      `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(b.join(","))}&range=1y&interval=1d`,
-      { "User-Agent": "Mozilla/5.0 (Foresight personal app)" }
-    );
-    for (const [sym, s] of Object.entries(d ?? {})) {
-      const c = (s?.close ?? []).filter((x) => x != null);
-      if (c.length < 2) continue;
-      prices.set(sym, { price: c.at(-1), prev: c.at(-2), first: c[0], hi: Math.max(...c), lo: Math.min(...c) });
-    }
-    done += b.length;
-    if (done % 1000 < 20) console.log(`  ${done}/${list.length}`);
-    await sleep(250);
-  }
-}
-await Promise.all([worker(), worker(), worker()]);
-
 const r = (x, d = 2) => (x == null || !Number.isFinite(x) ? null : Number(x.toFixed(d)));
-const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni", "sector", "ind", "basis", "dy", "de", "fcfy", "fcf"];
+// Everything here comes from SEC filings (public domain). No prices: those are shown by
+// TradingView's widgets, which may be displayed publicly; price data from other free
+// sources may not.
+const fields = ["t", "n", "x", "rev", "ni", "margin", "growth", "roe", "de", "fcf", "fcfMargin", "div", "payout", "sector", "ind", "basis"];
 const rows = [];
 let ttmCount = 0;
-// SEC lists a company's main stock first, then any other tickers filed under it:
-// share classes (GOOG), preferreds (JPM-PC) and, for banks, exchange-traded notes
-// (BMO issues dozens). Only tickers trading near the main stock's price are the same
-// equity, so only those get the company's market cap and valuation ratios. 5% keeps
-// GOOG/GOOGL together but excludes listed bonds (AT&T's TBB trades within 20% of T).
-const mainPrice = new Map();
+// SEC lists a company's main stock first, then any other tickers filed under it (share
+// classes, preferreds, and for banks dozens of exchange-traded notes). Fundamentals are
+// per company, so one row per company under its main ticker.
+const seenCik = new Set();
 for (const u of list) {
-  const p = prices.get(u.ticker);
-  if (!p) continue;
+  if (seenCik.has(u.cik)) continue;
+  seenCik.add(u.cik);
   // Prefer the last four quarters; fall back to the last full fiscal year.
   const rT = ttm(revQ, u.cik), nT = ttm(niQ, u.cik);
   const useTtm = rT && nT && rT.end === nT.end;
-  if (useTtm) ttmCount++;
   const rF = fiscal(revQ, u.cik), nF = fiscal(niQ, u.cik);
   const R = useTtm ? rT.value : rF?.value, Rp = useTtm ? rT.prior : rF?.prior;
   const N = useTtm ? nT.value : nF?.value;
   const basis = useTtm ? `Last 4 quarters to ${fmtEnd(rT.end)}` : rF || nF ? `Fiscal year to ${fmtEnd((rF ?? nF).end)}` : null;
-  const sh = shares.get(u.cik), E = equity.get(u.cik);
-  if (!mainPrice.has(u.cik)) mainPrice.set(u.cik, p.price);
-  const sameEquity = Math.abs(p.price / mainPrice.get(u.cik) - 1) <= 0.05;
-  const mcap = sh && sameEquity ? p.price * sh : null;
+  if (!basis) continue; // nothing to screen on
+  if (useTtm) ttmCount++;
+  const E = equity.get(u.cik);
   const [sic, ind] = sicCache[u.cik] ?? ["", ""];
   // Last fiscal year: dividends paid, free cash flow (operating cash flow − capital spending).
   const ocf = fiscal(ocfY, u.cik), capex = fiscal(capexY, u.cik), div = fiscal(divY, u.cik);
+  // SEC lists closed-end funds and BDCs (lending funds) with no industry code.
   const sector = sic ? sectorForSic(sic) : u.cik in sicCache ? "Funds & investment companies" : null;
   // Free cash flow and debt-to-equity aren't meaningful for banks, insurers and funds,
   // whose cash flows and balance sheets are their business.
   const meaningful = sector !== "Financials" && sector !== "Funds & investment companies";
-  // Free cash flow needs both numbers for the same fiscal year.
   const fcf = meaningful && ocf && capex && capex.end === ocf.end ? ocf.value - capex.value : null;
   const D = meaningful ? debt.get(u.cik) : undefined;
+  const yearRev = rF?.value;
+  const paid = div?.value ?? (ocf ? 0 : null); // 0 = files cash flows but paid no dividend
+  const yearNi = nF?.value;
   rows.push([
-    u.ticker, u.name, u.exchange, r(p.price),
-    r(((p.price - p.prev) / p.prev) * 100),
-    mcap ? Math.round(mcap) : null,
-    mcap && N > 0 ? r(mcap / N, 1) : null,
-    mcap && R > 0 ? r(mcap / R, 2) : null,
-    R > 0 && N != null ? r((N / R) * 100, 1) : null,
-    R > 0 && Rp > 0 ? r(((R - Rp) / Rp) * 100, 1) : null,
-    E > 0 && N != null ? r((N / E) * 100, 1) : null,
-    r(((p.price - p.first) / p.first) * 100, 1),
-    r(((p.price - p.hi) / p.hi) * 100, 1),
+    u.ticker, u.name, u.exchange,
     R ?? null, N ?? null,
-    // SEC lists closed-end funds and BDCs (lending funds) with no industry code.
-    sector, ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
-    // Dividend yield %: 0 when the company files cash flows but reports no dividends paid;
-    // unknown (null) when it files no cash-flow data at all.
-    // Above 25% is almost always a one-off special dividend or a share-count mismatch.
-    mcap && div ? (div.value / mcap > 0.25 ? null : r((div.value / mcap) * 100, 2)) : mcap && ocf ? 0 : null,
+    R > 0 && N != null ? r((N / R) * 100, 1) : null, // net margin %
+    R > 0 && Rp > 0 ? r(((R - Rp) / Rp) * 100, 1) : null, // revenue growth %
+    E > 0 && N != null ? r((N / E) * 100, 1) : null, // ROE %
     E > 0 && D != null ? r(D / E, 2) : null, // debt-to-equity
-    mcap && fcf != null ? r((fcf / mcap) * 100, 1) : null, // free-cash-flow yield %
     fcf,
+    fcf != null && yearRev > 0 && ocf.end === rF.end ? r((fcf / yearRev) * 100, 1) : null, // FCF margin %
+    paid,
+    paid != null && yearNi > 0 ? r((paid / yearNi) * 100, 0) : null, // payout ratio %
+    sector, ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
   ]);
 }
 console.log(`TTM fundamentals for ${ttmCount} of ${rows.length}`);

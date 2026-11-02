@@ -28,15 +28,34 @@ async function secFetch(url: string, revalidate: number, as: "json" | "text" = "
 
 export const secJson = (url: string, revalidate: number) => secFetch(url, revalidate, "json");
 
-let tickerMap: { at: number; map: Map<string, { cik: number; name: string }> } | null = null;
-export async function cikForTicker(ticker: string) {
+export type Company = { cik: number; name: string; ticker: string; exchange: string | null };
+let tickerMap: { at: number; map: Map<string, Company>; list: Company[] } | null = null;
+async function companies() {
   if (!tickerMap || Date.now() - tickerMap.at > 86_400_000) {
     const d = await secFetch("https://www.sec.gov/files/company_tickers_exchange.json", 86400);
-    const map = new Map<string, { cik: number; name: string }>();
-    for (const [cik, name, t] of d.data as [number, string, string, string][]) map.set(t.toUpperCase(), { cik, name });
-    tickerMap = { at: Date.now(), map };
+    const map = new Map<string, Company>();
+    const list: Company[] = [];
+    for (const [cik, name, t, exchange] of d.data as [number, string, string, string | null][]) {
+      const c = { cik, name, ticker: t.toUpperCase(), exchange };
+      if (!map.has(c.ticker)) { map.set(c.ticker, c); list.push(c); }
+    }
+    tickerMap = { at: Date.now(), map, list };
   }
-  return tickerMap.map.get(ticker.toUpperCase().replace(".", "-")) ?? null;
+  return tickerMap;
+}
+export async function cikForTicker(ticker: string) {
+  return (await companies()).map.get(ticker.toUpperCase().replace(".", "-")) ?? null;
+}
+/** Company search over SEC's list of US-listed companies: ticker first, then name. */
+export async function searchCompanies(q: string, limit = 8): Promise<Company[]> {
+  const s = q.trim().toUpperCase();
+  if (!s) return [];
+  const { map, list } = await companies();
+  const exact = map.get(s.replace(".", "-"));
+  const listed = (c: Company) => c.exchange && c.exchange !== "OTC";
+  const starts = list.filter((c) => c !== exact && listed(c) && c.ticker.startsWith(s));
+  const named = list.filter((c) => c !== exact && listed(c) && !c.ticker.startsWith(s) && c.name.toUpperCase().includes(s));
+  return [...(exact ? [exact] : []), ...starts, ...named].slice(0, limit);
 }
 
 export type InsiderTrade = {

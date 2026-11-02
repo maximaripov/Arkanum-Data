@@ -1,27 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getPasscode, joinSync, register, setPasscode } from "@/lib/alertsClient";
-import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
-import type { Briefing, Move } from "@/lib/briefing";
-import type { MarketStatus } from "@/lib/marketStatus";
+import { deviceId, notificationsOn, register } from "@/lib/device";
+import { useWatchlist } from "@/components/useWatchlist";
+import { fmtBig } from "@/lib/format";
+import { isExecOrDirector } from "@/lib/insider";
+import type { InsiderTrade } from "@/lib/sec";
 
-const dayName = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
-
-/** Which day is shown and why: the previous trading day while the market is open,
- *  today's close once it has closed (or the last trading day on weekends/holidays). */
-function dayNote(b: Briefing, s?: MarketStatus) {
-  if (!s) return null;
-  if (s.open) return `Markets are open, so this is the previous trading day: ${dayName(b.marketDate)}. Today's summary arrives after the 4 PM close.`;
-  const justClosed = s.closesAt != null && Date.now() / 1000 < s.closesAt + 45 * 60;
-  if (s.lastSession === s.today && b.marketDate < s.today && justClosed)
-    return `Markets closed at 4 PM. Today's summary usually arrives by 4:20 PM ET; until then this is ${dayName(b.marketDate)}.`;
-  if (s.lastSession && b.marketDate < s.lastSession)
-    return `⚠ This briefing is out of date: it covers ${dayName(b.marketDate)}, but ${dayName(s.lastSession)} has closed. The 4 PM update may have failed (you'd normally get a notification); check GitHub Actions.`;
-  return `Markets are closed. This is the latest trading day: ${dayName(b.marketDate)}.`;
-}
-
-const KIND = { econ: "Economy", fed: "Fed", earnings: "Earnings", dividend: "Dividend" } as const;
+type Digest = {
+  generated: string; date: string; filed: string | null; title: string;
+  topBuys: { symbol: string; issuer: string; owner: string; role: string; value: number | null }[];
+  clusters: { symbol: string; issuer: string; insiders: number; value: number }[];
+  fundFilings: { fund: string; period: string; filed: string; newPositions: string[]; soldOut: string[] }[];
+  events: { date: string; time: string | null; kind: string; title: string }[];
+};
+const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+const S = ({ s }: { s: string }) => <Link href={`/stock/${encodeURIComponent(s)}`}><strong>{s}</strong></Link>;
 
 function b64ToBytes(b64: string) {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -29,181 +23,133 @@ function b64ToBytes(b64: string) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
-function chg(m: Move) {
-  if (m.changePct == null) return "—";
-  return m.unit === "yield" ? `${m.changePct > 0 ? "+" : ""}${(m.changePct * 100).toFixed(0)} bp` : fmtPct(m.changePct);
-}
-
-function MoveRows({ items }: { items: Move[] }) {
-  return (
-    <>
-      {items.map((m) => (
-        <div className="qrow brow" key={m.symbol}>
-          <Link href={`/stock/${encodeURIComponent(m.symbol)}`} className="qname"><strong>{m.label}</strong><span className="muted">{m.label !== m.symbol ? m.symbol : ""}</span></Link>
-          <div className="qnum"><div className="mono">{m.unit === "yield" ? `${m.price?.toFixed(2)}%` : fmtPrice(m.price)}</div><div className={`mono small ${tone(m.changePct)}`}>{chg(m)}</div></div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-function Setup({ onPasscode }: { onPasscode: () => void }) {
-  const [pass, setPass] = useState("");
-  const [status, setStatus] = useState("");
-  const [endpoint, setEndpoint] = useState<string | null>(null);
-  const [env, setEnv] = useState({ supported: true, ios: false, standalone: false, permission: "default" as string });
-  // Read after the page loads: the server can't see this device's saved passcode.
-  const [hasPass, setHasPass] = useState(false);
-
+/** Your watchlist's insider trades (7 days) and fund moves, computed on this device. */
+function YourWatchlist() {
+  const { list } = useWatchlist();
+  const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
+  const [moves, setMoves] = useState<{ fund: string; symbol: string; change: string }[]>([]);
   useEffect(() => {
-    setHasPass(!!getPasscode());
-    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    const standalone = matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
-    const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-    setEnv({ supported, ios, standalone, permission: supported ? Notification.permission : "unsupported" });
-    if (supported) navigator.serviceWorker.ready.then((r) => r.pushManager.getSubscription()).then((s) => setEndpoint(s?.endpoint ?? null)).catch(() => {});
+    fetch("/data/insiders.json").then((r) => r.json()).then((d) => setTrades(d.trades)).catch(() => setTrades([]));
+    fetch("/data/funds.json").then((r) => r.json()).then((d) => {
+      const out: { fund: string; symbol: string; change: string }[] = [];
+      for (const f of d.funds) for (const h of [...f.new, ...f.added, ...f.reduced, ...f.sold]) if (h.t) out.push({ fund: f.name, symbol: h.t, change: h.change });
+      setMoves(out);
+    }).catch(() => {});
   }, []);
-
-  async function enable() {
-    try {
-      setStatus("Asking for permission…");
-      const perm = await Notification.requestPermission();
-      setEnv((e) => ({ ...e, permission: perm }));
-      if (perm !== "granted") { setStatus("Notifications are blocked. Allow them for Foresight in your phone's Settings → Notifications."); return; }
-      const reg = await navigator.serviceWorker.ready;
-      const sub = (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
-      const r = await register({ subscription: sub.toJSON() });
-      setEndpoint(sub.endpoint);
-      setStatus(`On. ${r.devices} device${r.devices === 1 ? "" : "s"} will get the briefing; your watchlist (${r.watchlist} stocks) and price levels are synced.`);
-    } catch (e: any) { setStatus(`Couldn't turn on notifications: ${e.message ?? e}`); }
-  }
-  async function test() {
-    setStatus("Sending a test…");
-    const r = await fetch("/api/alerts/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passcode: getPasscode(), endpoint }) });
-    const d = await r.json().catch(() => ({}));
-    setStatus(r.ok ? "Test sent. It should arrive in a few seconds." : `Test failed: ${d.error ?? d.errors?.join(", ") ?? r.status}`);
-  }
-  async function disable() {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    if (sub) { await register({ unsubscribe: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
-    setEndpoint(null); setStatus("Notifications are off on this device.");
-  }
-
+  const w = useMemo(() => new Set(list), [list]);
+  const since = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+  const mine = (trades ?? []).filter((t) => w.has(t.symbol) && t.filed >= since && isExecOrDirector(t)).slice(0, 10);
+  const myMoves = moves.filter((m) => w.has(m.symbol)).slice(0, 10);
+  const WORD: Record<string, string> = { new: "opened a position in", added: "added to", reduced: "cut", sold: "sold all of" };
   return (
     <section className="card">
-      <h2>Notifications</h2>
-      {!hasPass ? (
-        <form className="levelform" onSubmit={async (e) => {
-          e.preventDefault(); setPasscode(pass.trim());
-          // Check the passcode, then load the shared watchlist and levels onto this device.
-          const ok = await fetch("/api/alerts/sync", { headers: { "x-passcode": pass.trim() } }).then((r) => r.ok).catch(() => false);
-          if (!ok) { setPasscode(""); setStatus("Wrong passcode."); return; }
-          await joinSync(); onPasscode(); setHasPass(true); setStatus("Passcode saved. Your watchlist and levels now sync with your other devices.");
-        }}>
-          <input className="note" placeholder="Passcode" value={pass} onChange={(e) => setPass(e.target.value)} autoCapitalize="none" autoCorrect="off" aria-label="Passcode" />
-          <button type="submit">Save</button>
-        </form>
-      ) : !env.supported || (env.ios && !env.standalone) ? (
-        <div className="muted">
-          <p>To get notifications on iPhone, Foresight has to be opened from your Home Screen:</p>
-          <ol><li>In Safari, tap Share → <strong>Add to Home Screen</strong>.</li><li>Open Foresight from the new Home Screen icon.</li><li>Come back to this Briefing page and turn notifications on.</li></ol>
-          {!env.supported && !env.ios ? <p>This browser doesn&apos;t support web notifications.</p> : null}
-        </div>
-      ) : (
+      <h2>Your watchlist <span className="muted small">{list.length} stocks on this device</span></h2>
+      {trades === null ? <p className="muted">Loading…</p> : (
         <>
-          <p className="muted small">One notification each weekday at the 4 PM Eastern close (usually arrives 4:05–4:20): the day&apos;s markets, your Markets-tab watchlist and price levels, insider buys, and the week&apos;s catalysts.</p>
-          <div className="toolbar">
-            {endpoint ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary" onClick={enable}>Turn on notifications</button>}
-          </div>
+          <p className="small"><strong>Insider trades, last 7 days:</strong>{mine.length ? "" : " none by officers or directors."}</p>
+          {mine.length ? <ul className="news">{mine.map((t, i) => (
+            <li key={i}><S s={t.symbol} /> {t.owner} <span className="muted">({t.role})</span> {t.code === "P" ? <span className="up">bought</span> : <span className="down">sold</span>} {t.value ? "$" + fmtBig(t.value) : "shares"}<div className="muted small">filed {day(t.filed)}</div></li>
+          ))}</ul> : null}
+          <p className="small"><strong>Big-fund moves, latest 13F filings:</strong>{myMoves.length ? "" : " none of the tracked funds changed these stocks."}</p>
+          {myMoves.length ? <ul className="news">{myMoves.map((m, i) => <li key={i}>{m.fund} {WORD[m.change] ?? m.change} <S s={m.symbol} /></li>)}</ul> : null}
         </>
       )}
-      {status ? <p className="small">{status}</p> : null}
     </section>
   );
 }
 
-export default function BriefingPage() {
-  const [b, setB] = useState<Briefing | null | "none" | "locked">(null);
-  const [status, setStatus] = useState<MarketStatus | undefined>();
-  const [n, setN] = useState(0);
+function Notifications() {
+  const [status, setStatus] = useState("");
+  const [on, setOn] = useState(false);
+  const [owner, setOwner] = useState("");
+  const [env, setEnv] = useState({ supported: true, ios: false, standalone: false });
   useEffect(() => {
-    const pass = getPasscode();
-    if (!pass) { setB("locked"); return; }
-    fetch("/api/alerts/briefing", { headers: { "x-passcode": pass } }).then(async (r) => {
-      if (r.status === 401) return setB("locked");
-      const d = await r.json();
-      setStatus(d.status);
-      if (d.empty) return setB("none");
-      // Fill any missing sections so an older or partial briefing still renders.
-      setB({ headline: [], markets: [], sectors: [], breadth: null, movers: { gainers: [], losers: [] }, watchlist: [], levels: [], insiders: { watchlist: [], top: [], filed: null }, catalysts: [], screens: [], notes: [], ...d });
-    }).catch(() => setB("none"));
-  }, [n]);
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const standalone = matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
+    setEnv({ supported: "serviceWorker" in navigator && "PushManager" in window && "Notification" in window, ios, standalone });
+    setOn(notificationsOn());
+  }, []);
+  async function enable() {
+    try {
+      setStatus("Asking for permission…");
+      if ((await Notification.requestPermission()) !== "granted") { setStatus("Notifications are blocked. Allow them for Foresight in your phone's Settings → Notifications."); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
+      await register({ subscription: sub.toJSON() });
+      setOn(true); setStatus("On. Your digest arrives each weekday after the 4 PM close.");
+    } catch (e: any) { setStatus(`Couldn't turn on notifications: ${e.message ?? e}`); }
+  }
+  async function test() {
+    const r = await fetch("/api/alerts/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: deviceId() }) });
+    const d = await r.json().catch(() => ({}));
+    setStatus(r.ok ? "Test sent. It should arrive in a few seconds." : `Test failed: ${d.error ?? d.errors?.join(", ") ?? r.status}`);
+  }
+  async function disable() {
+    const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+    await register({ unsubscribe: true }).catch(() => {});
+    await sub?.unsubscribe();
+    setOn(false); setStatus("Notifications are off, and this device's data was deleted from the server.");
+  }
+  return (
+    <section className="card">
+      <h2>Daily notification</h2>
+      {!env.supported || (env.ios && !env.standalone) ? (
+        <div className="muted">
+          <p>On iPhone, notifications only work when Foresight is opened from your Home Screen:</p>
+          <ol><li>In Safari, tap Share → <strong>Add to Home Screen</strong>.</li><li>Open Foresight from the new icon.</li><li>Come back to Digest and turn notifications on.</li></ol>
+          {!env.supported && !env.ios ? <p>This browser doesn&apos;t support web notifications.</p> : null}
+        </div>
+      ) : (
+        <>
+          <p className="muted small">One notification each weekday after the 4 PM close: insider trades, company announcements and fund moves in your watchlist, new matches for your saved screens, and what&apos;s coming up. While it&apos;s on, your watchlist and saved screens are stored on our server to personalize it; turning it off deletes them. No account, email or name.</p>
+          <div className="toolbar">{on ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary" onClick={enable}>Turn on notifications</button>}</div>
+        </>
+      )}
+      {status ? <p className="small">{status}</p> : null}
+      {on ? (
+        <details className="small muted"><summary>Site owner</summary>
+          <form className="levelform" onSubmit={async (e) => { e.preventDefault(); try { const r = await register({ ownerCode: owner }); setStatus(r.owner ? "This device will also get alerts if the daily update fails." : "That code isn't right."); setOwner(""); } catch (err: any) { setStatus(err.message); } }}>
+            <input className="note" type="password" placeholder="Owner code" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner code" />
+            <button type="submit">Save</button>
+          </form>
+        </details>
+      ) : null}
+    </section>
+  );
+}
 
+export default function DigestPage() {
+  const [d, setD] = useState<Digest | null | "none">(null);
+  useEffect(() => { fetch("/api/alerts/digest").then((r) => r.json()).then((x) => setD(x.empty ? "none" : x)).catch(() => setD("none")); }, []);
   return (
     <div className="stack">
-      {b === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
-      {b === "locked" ? <section className="card"><h1>Daily briefing</h1><p className="muted">Enter your passcode below to see your briefing on this device.</p></section> : null}
-      {b === "none" ? <section className="card"><h1>Daily briefing</h1><p className="muted">No briefing yet. The first one arrives after today&apos;s US close.</p></section> : null}
-      {b && typeof b === "object" ? (
+      {d === null ? <section className="card"><p className="muted">Loading…</p></section> : d === "none" ? (
+        <section className="card"><h1>Daily digest</h1><p className="muted">The first digest arrives after today&apos;s 4 PM close.</p></section>
+      ) : (
         <>
           <section className="card">
-            <h1>{b.title}</h1>
-            {dayNote(b, status) ? <p className="daynote">{dayNote(b, status)}</p> : null}
-            <p className="muted small">Generated {new Date(b.generated).toLocaleString()}</p>
-            <ul className="headline">{b.headline.map((l) => <li key={l}>{l}</li>)}</ul>
+            <h1>{d.title}</h1>
+            <p className="muted small">What company insiders and big funds did, from official SEC filings{d.filed ? `; insider trades filed through ${day(d.filed)}` : ""}.</p>
           </section>
+          <YourWatchlist />
           <div className="grid">
-            {b.watchlist.length ? <section className="card"><h2>Your watchlist <span className="muted small">as of the briefing</span></h2><MoveRows items={b.watchlist} /></section> : null}
-            {b.markets.map((g) => <section className="card" key={g.title}><h2>{g.title}</h2><MoveRows items={g.items} /></section>)}
-            <section className="card">
-              <h2>Sectors</h2><MoveRows items={b.sectors} />
-              {b.breadth ? <p className="muted small">{b.breadth.up.toLocaleString()} stocks rose, {b.breadth.down.toLocaleString()} fell.</p> : null}
+            <section className="card"><h2>Biggest insider buys <span className="muted small">officers &amp; directors</span></h2>
+              {d.topBuys.length ? <ul className="news">{d.topBuys.map((t, i) => <li key={i}><S s={t.symbol} /> {t.owner} <span className="muted">({t.role})</span> bought {t.value ? "$" + fmtBig(t.value) : "shares"}<div className="muted small">{t.issuer}</div></li>)}</ul> : <p className="muted">None filed.</p>}
             </section>
-            <section className="card"><h2>Biggest movers <span className="muted small">$10B+ companies</span></h2><MoveRows items={[...b.movers.gainers, ...b.movers.losers]} /></section>
+            <section className="card"><h2>Cluster buys this week <span className="muted small">2+ insiders, same stock</span></h2>
+              {d.clusters.length ? <ul className="news">{d.clusters.map((c) => <li key={c.symbol}><S s={c.symbol} /> <span className="up">{c.insiders} insiders</span> bought ${fmtBig(c.value)}<div className="muted small">{c.issuer}</div></li>)}</ul> : <p className="muted">None this week.</p>}
+            </section>
+            <section className="card"><h2>Big-fund filings this week <span className="muted small">13F</span></h2>
+              {d.fundFilings.length ? <ul className="news">{d.fundFilings.map((f) => <li key={f.fund}><strong>{f.fund}</strong> filed its holdings{f.newPositions.length ? <> · new: {f.newPositions.join(", ")}</> : null}{f.soldOut.length ? <> · sold: {f.soldOut.join(", ")}</> : null}</li>)}</ul> : <p className="muted">No new filings from the tracked funds this week.</p>}
+              <Link href="/insiders?view=funds" className="small muted">All funds →</Link>
+            </section>
+            <section className="card"><h2>Coming up <span className="muted small">next 7 days</span></h2>
+              {d.events.length ? <ul className="news">{d.events.map((e) => <li key={e.date + e.title}><span className="pill">{e.kind === "fed" ? "Fed" : "Economy"}</span> {e.title}<div className="muted small">{day(e.date)}{e.time ? ` · ${e.time}` : ""}</div></li>)}</ul> : <p className="muted">No major releases scheduled.</p>}
+            </section>
           </div>
-          {b.levels.length ? (
-            <section className="card">
-              <h2>Your price levels</h2>
-              <ul className="levels">{b.levels.map((l) => (
-                <li key={l.symbol + l.price}><span className="swatch" aria-hidden /><Link href={`/stock/${l.symbol}`}><strong>{l.symbol}</strong></Link>
-                  <span className="mono">{fmtPrice(l.price)}</span><span style={{ flex: 1 }}>{l.note}</span>
-                  <span className={`small ${l.crossed ? "up" : "muted"}`}>{l.crossed ? "crossed today" : `${fmtPct(l.distPct, 1)} away`}</span></li>
-              ))}</ul>
-            </section>
-          ) : null}
-          <section className="card">
-            <h2>Coming up <span className="muted small">next 7 days</span></h2>
-            {b.catalysts.length ? (
-              <ul className="news">{b.catalysts.map((c) => (
-                <li key={c.date + c.title}><span className="pill">{KIND[c.kind]}</span> {c.title}
-                  <div className="muted small">{new Date(c.date + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{c.time ? ` · ${c.time}` : ""}</div></li>
-              ))}</ul>
-            ) : <p className="muted">Nothing major scheduled.</p>}
-          </section>
-          {b.screens?.length ? (
-            <section className="card">
-              <h2>Your saved screens</h2>
-              <ul className="news">{b.screens.map((s) => (
-                <li key={s.name}><strong>{s.name}</strong>: {s.count.toLocaleString()} matches
-                  <div className="muted small">{s.first ? "First check: new matches will be listed from tomorrow." : s.added.length ? <>New today: {s.added.map((t, i) => <span key={t}>{i ? ", " : ""}<Link href={`/stock/${t}`}>{t}</Link></span>)}</> : "No new matches."}{!s.first && s.dropped ? ` ${s.dropped} dropped out.` : ""}</div></li>
-              ))}</ul>
-            </section>
-          ) : null}
-          {b.insiders.watchlist.length || b.insiders.top.length ? (
-            <section className="card">
-              <h2>Insider buying <span className="muted small">officers & directors, filed {b.insiders.filed}</span></h2>
-              <ul className="news">{[...b.insiders.watchlist, ...b.insiders.top].map((t, i) => (
-                <li key={t.symbol + t.owner + i}><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong></Link> {t.owner} <span className="muted">({t.role})</span> bought {t.value ? "$" + fmtBig(t.value) : "shares"}
-                  <div className="muted small">{t.issuer}</div></li>
-              ))}</ul>
-            </section>
-          ) : null}
-          {b.notes.length ? <p className="muted small">{b.notes.join(" ")}</p> : null}
         </>
-      ) : null}
-      <Setup onPasscode={() => setN((x) => x + 1)} />
+      )}
+      <Notifications />
     </div>
   );
 }

@@ -1,13 +1,12 @@
 // Sends a test notification to the device asking for it.
-import { passcodeOk, pushTo, readState, writeState } from "@/lib/alerts";
+import { pushEach, readDevices, updateDevices, validId } from "@/lib/alerts";
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  if (!passcodeOk(req, body)) return Response.json({ error: "Wrong passcode" }, { status: 401 });
-  const state = await readState();
-  const sub = state.subscriptions.find((s) => s.endpoint === body.endpoint);
-  if (!sub) return Response.json({ error: "This device isn't registered yet" }, { status: 404 });
-  const r = await pushTo([sub], { title: "Foresight", body: "Notifications work. Your briefing arrives each weekday at the 4 PM Eastern close.", url: "/briefing", tag: "test" });
-  if (r.gone.length) await writeState({ ...state, subscriptions: state.subscriptions.filter((s) => !r.gone.includes(s.endpoint)) });
+  const { id } = await req.json().catch(() => ({}));
+  if (!validId(id)) return Response.json({ error: "Bad device ID" }, { status: 400 });
+  const dev = (await readDevices()).devices[id];
+  if (!dev?.sub) return Response.json({ error: "This device isn't registered yet" }, { status: 404 });
+  const r = await pushEach([{ id, sub: dev.sub, msg: { title: "Foresight", body: "Notifications work. Your digest arrives each weekday after the 4 PM close.", url: "/briefing", tag: "test" } }]);
+  if (r.gone.length) await updateDevices((s) => { delete s.devices[id]; });
   return Response.json(r, { status: r.sent ? 200 : 502 });
 }

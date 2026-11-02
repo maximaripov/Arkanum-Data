@@ -1,120 +1,44 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { PriceChart, type Candle, type CompareLine, type Indicators } from "@/components/PriceChart";
+import { useEffect, useState } from "react";
+import { TradingView } from "@/components/TradingView";
 import { InsiderTable } from "@/components/InsiderTable";
-import { useQuotes } from "@/components/useQuotes";
-import { useWatchlist } from "@/components/useWatchlist";
-import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
-import type { InsiderTrade } from "@/lib/sec";
-import type { Announcement, Headline } from "@/lib/news";
-import { useLevels } from "@/components/useLevels";
-import { CalendarCard, type CalendarInfo } from "@/components/CalendarCard";
-import { AnalystCard, OptionsCard, RetailCard } from "@/components/ResearchCards";
 import { FundHolders } from "@/components/FundsView";
-import type { Chain } from "@/lib/options";
-import type { Analysts } from "@/lib/analysts";
-import type { RedditInterest, RetailFlow } from "@/lib/retail";
+import { useWatchlist } from "@/components/useWatchlist";
+import { fmtBig, fmtPct } from "@/lib/format";
+import { tvSymbol } from "@/lib/tv";
+import type { InsiderTrade } from "@/lib/sec";
+import type { Announcement } from "@/lib/news";
+import type { RetailFlow } from "@/lib/retail";
 
-const RANGES = ["1d", "5d", "1mo", "6mo", "1y", "5y"];
-const IND_KEY = "foresight.indicators";
-const IND_LABELS: [keyof Indicators, string, string][] = [["ma50", "MA 50", "--ma50"], ["ma200", "MA 200", "--ma200"], ["volume", "Volume", "--muted"], ["rsi", "RSI 14", "--rsi"]];
-const DEFAULT_IND: Indicators = { ma50: false, ma200: false, volume: true, rsi: false };
-type Meta = { name: string; exchange: string; currency: string; type: string; dayHigh: number; dayLow: number; volume: number; high52: number; low52: number };
+type Company = { ticker: string; name: string | null; exchange: string | null };
+const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
 
 export function StockView({ symbol }: { symbol: string }) {
-  const [range, setRange] = useState("1y");
-  const [mode, setMode] = useState<"area" | "candles">("area");
-  const [chart, setChart] = useState<{ meta: Meta; candles: Candle[]; from: number } | null>(null);
-  const [ind, setInd] = useState<Indicators>(DEFAULT_IND);
-  const [cmpSymbols, setCmpSymbols] = useState<string[]>([]);
-  const [cmpData, setCmpData] = useState<Record<string, Candle[]>>({});
-  const [cmpInput, setCmpInput] = useState("");
-  const [cmpErr, setCmpErr] = useState("");
-  const [err, setErr] = useState("");
-  const [insiders, setInsiders] = useState<InsiderTrade[] | null>(null);
+  const [co, setCo] = useState<Company | null>(null);
   const [fund, setFund] = useState<Record<string, any> | null>(null);
-  const { quotes } = useQuotes([symbol], 5_000);
+  const [insiders, setInsiders] = useState<InsiderTrade[] | null>(null);
+  const [news, setNews] = useState<Announcement[] | null>(null);
+  const [flow, setFlow] = useState<RetailFlow | null | undefined>(undefined);
   const { has, toggle } = useWatchlist();
-  const { levels, add: addLevel, remove: removeLevel } = useLevels(symbol);
-  const [levelPrice, setLevelPrice] = useState("");
-  const [levelNote, setLevelNote] = useState("");
-  const [news, setNews] = useState<{ headlines: Headline[]; announcements: Announcement[] } | null>(null);
-  const [cal, setCal] = useState<CalendarInfo | null>(null);
-  const [research, setResearch] = useState<{ options: Chain | null; analysts: Analysts | null; reddit: RedditInterest | null; retailFlow: RetailFlow | null } | null>(null);
-  const q = quotes[symbol];
 
   useEffect(() => {
-    setErr("");
-    fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}&range=${range}`)
-      .then((r) => r.json())
-      .then((d) => (d.error ? setErr(d.error) : setChart(d)))
-      .catch((e) => setErr(String(e)));
-  }, [symbol, range]);
-
-  // Indicator choices are remembered on this device.
-  useEffect(() => { try { setInd({ ...DEFAULT_IND, ...JSON.parse(localStorage.getItem(IND_KEY) ?? "{}") }); } catch {} }, []);
-  const toggleInd = (k: keyof Indicators) => setInd((cur) => {
-    const next = { ...cur, [k]: !cur[k] };
-    try { localStorage.setItem(IND_KEY, JSON.stringify(next)); } catch {}
-    return next;
-  });
-
-  // Comparison lines load for the same period as the main chart.
-  useEffect(() => { setCmpSymbols([]); setCmpData({}); }, [symbol]);
-  useEffect(() => {
-    setCmpData({});
-    for (const s of cmpSymbols) {
-      fetch(`/api/chart?symbol=${encodeURIComponent(s)}&range=${range}`).then((r) => r.json()).then((d) => {
-        if (d.error || !d.candles?.length) { setCmpErr(`No chart data for ${s}.`); setCmpSymbols((xs) => xs.filter((x) => x !== s)); return; }
-        setCmpData((cur) => ({ ...cur, [s]: d.candles }));
-      }).catch(() => {});
-    }
-  }, [cmpSymbols, range]);
-  const compare = useMemo<CompareLine[]>(() => cmpSymbols.filter((s) => cmpData[s]).map((s) => ({ symbol: s, candles: cmpData[s] })), [cmpSymbols, cmpData]);
-  const addCompare = (raw: string) => {
-    const s = raw.trim().toUpperCase();
-    setCmpErr("");
-    if (!s || s === symbol || cmpSymbols.includes(s)) return;
-    if (cmpSymbols.length >= 3) { setCmpErr("Compare up to 3 symbols at a time."); return; }
-    setCmpSymbols((xs) => [...xs, s]);
-    setCmpInput("");
-  };
-
-  useEffect(() => {
-    setResearch(null);
-    fetch(`/api/research?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setResearch).catch(() => {});
-  }, [symbol]);
-
-  useEffect(() => {
-    setCal(null);
-    fetch(`/api/calendar?symbols=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setCal(d[symbol] ?? null)).catch(() => {});
-  }, [symbol]);
-
-  useEffect(() => {
-    setNews(null);
-    fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setNews).catch(() => setNews({ headlines: [], announcements: [] }));
-  }, [symbol]);
-
-  useEffect(() => {
-    const isEquity = !/[=^]|-USD$/.test(symbol);
-    if (!isEquity) { setInsiders([]); return; }
-    fetch(`/api/insiders?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setInsiders(Array.isArray(d) ? d : [])).catch(() => setInsiders([]));
+    setCo(null); setFund(null); setInsiders(null); setNews(null); setFlow(undefined);
+    fetch(`/api/company?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setCo).catch(() => setCo({ ticker: symbol, name: null, exchange: null }));
     fetch("/data/screener.json").then((r) => r.json()).then((d) => {
       const row = d.rows.find((r: any[]) => r[0] === symbol);
       if (row) setFund(Object.fromEntries(d.fields.map((f: string, i: number) => [f, row[i]])));
     }).catch(() => {});
+    fetch(`/api/insiders?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setInsiders(Array.isArray(d) ? d : [])).catch(() => setInsiders([]));
+    fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setNews(d.announcements ?? [])).catch(() => setNews([]));
+    fetch(`/api/retail?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setFlow(d.flow)).catch(() => setFlow(null));
   }, [symbol]);
 
-  const m = chart?.meta;
-  const stats: [string, string][] = [
-    ["Day range", m ? `${fmtPrice(m.dayLow)} – ${fmtPrice(m.dayHigh)}` : "—"],
-    ["52-week range", m ? `${fmtPrice(m.low52)} – ${fmtPrice(m.high52)}` : "—"],
-    ["Volume", fmtBig(m?.volume)],
-  ];
-  if (fund) stats.push(
-    ["Market cap", fmtBig(fund.mcap)], ["P/E", fund.pe ?? "—"], ["P/S", fund.ps ?? "—"],
-    ["Revenue", fmtBig(fund.rev)], ["Net income", fmtBig(fund.ni)], ["Net margin", fmtPct(fund.margin, 1)], ["Revenue growth", fmtPct(fund.growth, 1)], ["ROE", fmtPct(fund.roe, 1)],
-  );
+  const tv = co ? tvSymbol(symbol, co.exchange) : null;
+  const stats: [string, string][] = fund ? [
+    ["Revenue", "$" + fmtBig(fund.rev)], ["Net income", "$" + fmtBig(fund.ni)], ["Net margin", fmtPct(fund.margin, 1)], ["Revenue growth", fmtPct(fund.growth, 1)],
+    ["Return on equity", fmtPct(fund.roe, 1)], ["Debt/equity", fund.de ?? "—"], ["Free cash flow", fund.fcf != null ? "$" + fmtBig(fund.fcf) : "—"], ["FCF margin", fmtPct(fund.fcfMargin, 1)],
+    ["Dividends paid", fund.div ? "$" + fmtBig(fund.div) : fund.div === 0 ? "None" : "—"], ["Payout ratio", fund.payout != null ? `${fund.payout}%` : "—"],
+  ] : [];
 
   return (
     <div className="stack">
@@ -122,115 +46,67 @@ export function StockView({ symbol }: { symbol: string }) {
         <div className="head">
           <div>
             <h1>{symbol} <button className={`star ${has(symbol) ? "on" : ""}`} onClick={() => toggle(symbol)} aria-label="Toggle watchlist">{has(symbol) ? "★" : "☆"}</button></h1>
-            <div className="muted">{m?.name} {m ? `· ${m.exchange} · ${m.currency}` : ""}</div>
+            <div className="muted">{co?.name ?? ""}{co?.exchange ? ` · ${co.exchange}` : ""}</div>
             {fund?.sector ? <div className="muted small">{fund.sector}{fund.ind ? ` · ${fund.ind}` : ""}</div> : null}
           </div>
-          <div className="r">
-            <div className="bigprice mono">{fmtPrice(q?.price)}</div>
-            <div className={`mono ${tone(q?.change)}`}>{q?.change != null ? (q.change > 0 ? "+" : "") + fmtPrice(q.change) : ""} ({fmtPct(q?.changePct)})</div>
-          </div>
         </div>
-        <div className="toolbar">
-          <div className="seg">{RANGES.map((r) => <button key={r} className={r === range ? "on" : ""} onClick={() => setRange(r)}>{r.toUpperCase()}</button>)}</div>
-          <div className="seg"><button className={mode === "area" ? "on" : ""} onClick={() => setMode("area")}>Line</button><button className={mode === "candles" ? "on" : ""} onClick={() => setMode("candles")}>Candles</button></div>
-        </div>
-        <div className="legend">
-          {IND_LABELS.map(([k, label, color]) => (
-            <button key={k} className={`toggle${ind[k] && !compare.length ? " on" : ""}`} onClick={() => toggleInd(k)} disabled={compare.length > 0} aria-pressed={ind[k]}>
-              <span className="dot" style={{ background: `var(${color})` }} />{label}
-            </button>
-          ))}
-        </div>
-        <div className="legend">
-          <span className="small muted">Compare:</span>
-          {compare.length ? <span className="toggle on"><span className="dot" style={{ background: "var(--text)" }} />{symbol}</span> : null}
-          {cmpSymbols.map((s, i) => (
-            <button key={s} className="toggle on" onClick={() => setCmpSymbols((xs) => xs.filter((x) => x !== s))} aria-label={`Stop comparing ${s}`}>
-              <span className="dot" style={{ background: `var(--cmp${i + 1})` }} />{s === "^GSPC" ? "S&P 500" : s} ×
-            </button>
-          ))}
-          {symbol !== "^GSPC" && !cmpSymbols.includes("^GSPC") && cmpSymbols.length < 3 ? <button className="toggle" onClick={() => addCompare("^GSPC")}>+ S&amp;P 500</button> : null}
-          {cmpSymbols.length < 3 ? (
-            <form className="cmpform" onSubmit={(e) => { e.preventDefault(); addCompare(cmpInput); }}>
-              <input value={cmpInput} onChange={(e) => setCmpInput(e.target.value)} placeholder="Add symbol" autoCapitalize="characters" aria-label="Symbol to compare" />
-            </form>
-          ) : null}
-        </div>
-        {cmpErr ? <p className="small down">{cmpErr}</p> : null}
-        {compare.length ? <p className="small muted">Showing % change from the start of the period. Indicators and price levels are hidden while comparing.</p> : null}
-        {err ? <p className="down">Couldn&apos;t load chart: {err}</p> : (
-          <PriceChart candles={chart?.candles ?? []} from={chart?.from} mode={mode} levels={levels} indicators={ind} compare={compare}
-            onPick={(p) => setLevelPrice(p.toFixed(p < 1 ? 4 : 2))} />
-        )}
-        <form className="levelform" onSubmit={(e) => {
-          e.preventDefault();
-          const p = parseFloat(levelPrice);
-          if (!Number.isFinite(p) || p <= 0) return;
-          addLevel(p, levelNote); setLevelPrice(""); setLevelNote("");
-        }}>
-          <input className="price mono" inputMode="decimal" placeholder="Price" value={levelPrice} onChange={(e) => setLevelPrice(e.target.value)} aria-label="Level price" />
-          <input className="note" placeholder="Note, e.g. buy zone, stop, resistance" value={levelNote} onChange={(e) => setLevelNote(e.target.value)} maxLength={40} aria-label="Level note" />
-          <button type="submit">Add level</button>
-        </form>
-        <p className="muted small">Tap the chart to fill in a price. Levels sync to your devices that have the passcode.</p>
-        {levels.length ? (
-          <ul className="levels">
-            {levels.map((l) => {
-              const dist = q?.price ? ((l.price - q.price) / q.price) * 100 : null;
-              return (
-                <li key={l.id}>
-                  <span className="swatch" aria-hidden />
-                  <span className="mono">{fmtPrice(l.price)}</span>
-                  <span style={{ flex: 1 }}>{l.note || <span className="muted">No note</span>}</span>
-                  <span className="mono small muted">{dist == null ? "" : `${fmtPct(dist, 1)} from price`}</span>
-                  <button className="icon" onClick={() => removeLevel(l.id)} aria-label={`Remove level ${l.price}`}>×</button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-        <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
-        {fund?.basis ? <p className="muted small">Fundamentals: {fund.basis} (SEC filings). P/E uses reported net income, so one-time gains or losses distort it.</p> : null}
+        {tv ? <TradingView widget="symbol-info" height={190} config={{ symbol: tv, width: "100%" }} /> : null}
       </section>
-      {cal && (cal.earnings || cal.dividends) ? <CalendarCard symbol={symbol} info={cal} /> : null}
-      {research?.options?.expiries.length ? <OptionsCard chain={research.options} earningsDate={cal?.earnings?.next?.date} /> : null}
-      {research && (research.analysts || research.reddit || research.retailFlow) ? (
-        <div className="twocol">
-          {research.analysts ? <AnalystCard a={research.analysts} price={q?.price ?? null} /> : null}
-          {research.reddit || research.retailFlow ? <RetailCard reddit={research.reddit} flow={research.retailFlow} /> : null}
-        </div>
+
+      <section className="card">
+        {tv ? <TradingView widget="advanced-chart" height={520} config={{
+          symbol: tv, autosize: true, interval: "D", timezone: "America/New_York", style: "1", allow_symbol_change: false,
+          hide_side_toolbar: false, studies: [], support_host: "https://www.tradingview.com",
+        }} label="Chart by TradingView" /> : <p className="muted">Loading chart…</p>}
+        <p className="muted small">Stock prices are delayed 15 minutes. Use the chart&apos;s Indicators button for moving averages, RSI and more, and Compare to add other symbols.</p>
+      </section>
+
+      {fund ? (
+        <section className="card">
+          <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
+          <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
+          <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses.</p>
+        </section>
       ) : null}
+
       <div className="twocol">
         <section className="card">
-          <h2>Headlines <span className="muted small">Yahoo Finance</span></h2>
-          {news === null ? <p className="muted">Loading…</p> : news.headlines.length === 0 ? <p className="muted">No headlines found.</p> : (
-            <ul className="news">
-              {news.headlines.map((h) => (
-                <li key={h.link}>
-                  <a href={h.link} target="_blank" rel="noreferrer">{h.title}</a>
-                  <div className="muted small">{h.publisher} · {h.time ? new Date(h.time * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}{h.aboutCompany ? "" : " · general market"}</div>
-                </li>
-              ))}
-            </ul>
+          <h2>Company announcements <span className="muted small">SEC 8-K filings</span></h2>
+          {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
+            <ul className="news">{news.map((a) => (
+              <li key={a.link}><a href={a.link} target="_blank" rel="noreferrer">{a.items.length ? a.items.join(" · ") : "Announcement"}</a><div className="muted small">{day(a.date, true)}</div></li>
+            ))}</ul>
           )}
         </section>
-        {news === null || news.announcements.length > 0 ? (
+        {tv ? (
           <section className="card">
-            <h2>Company announcements <span className="muted small">SEC 8-K filings</span></h2>
-            {news === null ? <p className="muted">Loading…</p> : (
-              <ul className="news">
-                {news.announcements.map((a) => (
-                  <li key={a.link}>
-                    <a href={a.link} target="_blank" rel="noreferrer">{a.items.length ? a.items.join(" · ") : "Announcement"}</a>
-                    <div className="muted small">{new Date(a.date + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <h2>Headlines</h2>
+            <TradingView widget="timeline" height={460} config={{ feedMode: "symbol", symbol: tv, displayMode: "regular", width: "100%", height: "100%" }} label="News by TradingView" />
           </section>
         ) : null}
       </div>
+
       <FundHolders symbol={symbol} />
+
+      {flow ? (
+        <section className="card">
+          <h2>Retail trading <span className="muted small">FINRA, 2–4 weeks delayed</span></h2>
+          <p className="small">
+            Brokers like Robinhood, Schwab and Fidelity send most customer orders to a few wholesalers (Citadel Securities, Virtu, G1, Jane Street…), which fill them off-exchange.
+            Their weekly volume is the best free gauge of retail trading. It shows how much retail-type trading happened, not whether it was buying or selling.
+          </p>
+          <div className="tablewrap">
+            <table className="table compact">
+              <thead><tr><th>Week of</th><th className="r">Wholesaler shares</th><th className="r">Share of off-exchange</th><th className="r">Trades</th><th className="r hide-sm">Avg size</th></tr></thead>
+              <tbody>{flow.map((w) => (
+                <tr key={w.week}><td>{day(w.week)}</td><td className="r mono">{fmtBig(w.shares)}</td><td className="r mono">{w.wholesalerSharePct == null ? "—" : `${w.wholesalerSharePct.toFixed(0)}%`}</td><td className="r mono">{fmtBig(w.trades)}</td><td className="r mono hide-sm">{w.avgTradeSize}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+          <p className="muted small">Source: FINRA OTC Transparency data. Provided for personal, non-commercial use; not for redistribution.</p>
+        </section>
+      ) : null}
+
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
           <h2>Insider transactions <span className="muted small">SEC Form 4, latest 25 filings</span></h2>

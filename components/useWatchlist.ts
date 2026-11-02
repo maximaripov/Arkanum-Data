@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_WATCHLIST } from "@/lib/markets";
-import { syncSoon } from "@/lib/alertsClient";
+import { syncSoon } from "@/lib/device";
 
 const KEY = "foresight.watchlist";
 const read = (): string[] => {

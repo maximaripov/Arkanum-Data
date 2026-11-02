@@ -127,3 +127,8 @@ footer { max-width: 1280px; margin: 0 auto; padding: 1rem 1rem calc(1rem + env(s
 .ratingbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin: .5rem 0 .25rem; }
 .seg.big { align-self: start; }
 .seg.big button { padding: .45rem .9rem; font-size: .92rem; }
+.tv { width: 100%; }
+.tradingview-widget-copyright { text-align: right; padding-top: 4px; }
+.tvlink { color: var(--muted); }
+.prose ul { padding-left: 1.2rem; } .prose li { margin: .35rem 0; } .prose p { line-height: 1.55; }
+footer a { color: inherit; text-decoration: underline; }

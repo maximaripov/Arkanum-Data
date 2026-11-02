@@ -1,58 +1,79 @@
-// Server-side alert state, kept in a private Vercel Blob store:
-//   alerts/state.json    → phones registered for notifications, watchlist, price levels
-//   alerts/briefing.json → the latest daily briefing
-import { get, put } from "@vercel/blob";
+// Server side of notifications, for anyone who turns them on. No accounts: each device
+// has a random ID (generated on the device, never shown) and stores only what's needed
+// to send its daily digest — its push address, watchlist and saved screens.
+//
+// Private Vercel Blob store:
+//   alerts/devices.json → { devices: { [id]: Device } }
+//   alerts/digest.json  → the latest public daily digest
+import { BlobPreconditionFailedError, get, put } from "@vercel/blob";
 import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
-export type Level = { id: string; price: number; note: string };
-export type AlertState = {
-  subscriptions: (PushSubscription & { added: string })[];
-  watchlist: string[];
-  levels: Record<string, Level[]>;
-  screens: Screen[];
-  screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last briefing
-  updated: string | null;
-};
 export type Screen = { id: string; name: string; filter: { text?: string; exch?: string; sector?: string; industry?: string; ranges: Record<string, [number | "", number | ""]> } };
+export type Device = {
+  id: string;
+  sub: PushSubscription | null;
+  watchlist: string[];
+  screens: Screen[];
+  screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last digest
+  owner?: boolean; // the site owner's device: also gets "update failed" health alerts
+  added: string;
+  seen: string;
+};
+type Store = { devices: Record<string, Device> };
 
-const STATE = "alerts/state.json";
-const BRIEFING = "alerts/briefing.json";
+const DEVICES = "alerts/devices.json";
+const DIGEST = "alerts/digest.json";
+export const MAX_DEVICES = 5000;
 
-async function readJson<T>(path: string): Promise<T | null> {
+async function readJson<T>(path: string): Promise<{ data: T | null; etag: string | null }> {
   const r = await get(path, { access: "private", useCache: false });
-  if (!r) return null;
-  return JSON.parse(await new Response(r.stream).text()) as T;
+  if (!r || r.statusCode !== 200) return { data: null, etag: null };
+  return { data: JSON.parse(await new Response(r.stream).text()) as T, etag: r.blob.etag };
 }
-const writeJson = (path: string, data: unknown) =>
-  put(path, JSON.stringify(data), { access: "private", allowOverwrite: true, addRandomSuffix: false, contentType: "application/json" });
+const writeJson = (path: string, data: unknown, ifMatch?: string | null) =>
+  put(path, JSON.stringify(data), { access: "private", allowOverwrite: true, addRandomSuffix: false, contentType: "application/json", ...(ifMatch ? { ifMatch } : {}) });
 
-export async function readState(): Promise<AlertState> {
-  const s = await readJson<AlertState>(STATE);
-  return { subscriptions: [], watchlist: [], levels: {}, screens: [], screenMatches: {}, updated: null, ...s };
+export async function readDevices(): Promise<Store> {
+  return (await readJson<Store>(DEVICES)).data ?? { devices: {} };
 }
-export async function writeState(s: AlertState) {
-  const updated = new Date().toISOString();
-  await writeJson(STATE, { ...s, updated });
-  return updated;
-}
-export const readBriefing = () => readJson<Record<string, unknown>>(BRIEFING);
-export const writeBriefing = (b: unknown) => writeJson(BRIEFING, b);
 
+/** Read-modify-write that retries if another request changed the file in between,
+ *  so two people turning on notifications at the same moment can't erase each other. */
+export async function updateDevices<T>(fn: (s: Store) => T): Promise<T> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, etag } = await readJson<Store>(DEVICES);
+    const store = data ?? { devices: {} };
+    const result = fn(store);
+    try {
+      await writeJson(DEVICES, store, etag);
+      return result;
+    } catch (e) {
+      if (!(e instanceof BlobPreconditionFailedError)) throw e;
+      await new Promise((r) => setTimeout(r, 100 + Math.random() * 300));
+    }
+  }
+  throw new Error("Busy, try again");
+}
+
+export const readDigest = async () => (await readJson<Record<string, unknown>>(DIGEST)).data;
+export const writeDigest = (d: unknown) => writeJson(DIGEST, d);
+
+// ---- Who may send ------------------------------------------------------------------
 function same(a: string | null | undefined, b: string | undefined) {
   if (!a || !b) return false;
   const x = Buffer.from(a), y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }
-/** The passcode you type once on each device. */
-export const passcodeOk = (req: Request, body?: { passcode?: string }) =>
-  same(body?.passcode ?? req.headers.get("x-passcode"), process.env.ALERTS_PASSCODE);
-// The nightly GitHub job proves who it is with a GitHub-signed token (OIDC), so no
-// shared secret has to be copied into GitHub. ALERTS_SECRET still works for manual runs.
+// The 4 PM GitHub job proves who it is with a GitHub-signed token (OIDC), so no shared
+// secret is stored in GitHub. ALERTS_SECRET still works for manual runs.
 const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
-const OWNER_ID = "351230404"; // github.com/maximaripov
-const REPO = "maximaripov/foresight";
+const OWNER_ID = process.env.GITHUB_OWNER_ID ?? "351230404";
+const REPO = (process.env.GITHUB_REPO ?? "maximaripov/foresight").toLowerCase();
+
+/** The owner code (ALERTS_PASSCODE) marks a device as the site owner's. */
+export const ownerCodeOk = (code: unknown) => typeof code === "string" && same(code, process.env.ALERTS_PASSCODE);
 
 export async function secretOk(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer /, "");
@@ -66,57 +87,50 @@ export async function secretOk(req: Request) {
   }
 }
 
+// ---- Sending -------------------------------------------------------------------------
 export type PushMessage = { title: string; body: string; url: string; tag?: string };
 
-/** Sends to each subscription; returns the endpoints the push service says are gone. */
-export async function pushTo(subs: PushSubscription[], msg: PushMessage) {
-  webpush.setVapidDetails(
-    "https://foresightscreener.vercel.app",
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-  );
+/** Sends each message to its device; returns the device IDs whose push address is gone. */
+export async function pushEach(items: { id: string; sub: PushSubscription; msg: PushMessage }[]) {
+  webpush.setVapidDetails(process.env.SITE_URL ?? "https://foresightscreener.vercel.app", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   const gone: string[] = [];
-  let sent = 0;
   const errors: string[] = [];
-  await Promise.all(subs.map(async (s) => {
-    try {
-      await webpush.sendNotification(s, JSON.stringify(msg), { TTL: 60 * 60 * 12, urgency: "normal" });
-      sent++;
-    } catch (e: any) {
-      if (e?.statusCode === 404 || e?.statusCode === 410) gone.push(s.endpoint);
-      else errors.push(`${e?.statusCode ?? ""} ${e?.body ?? e?.message ?? e}`.trim());
-    }
-  }));
+  let sent = 0;
+  for (let i = 0; i < items.length; i += 50) {
+    await Promise.all(items.slice(i, i + 50).map(async ({ id, sub, msg }) => {
+      try {
+        await webpush.sendNotification(sub, JSON.stringify(msg), { TTL: 60 * 60 * 12, urgency: "normal" });
+        sent++;
+      } catch (e: any) {
+        if (e?.statusCode === 404 || e?.statusCode === 410) gone.push(id);
+        else if (errors.length < 5) errors.push(`${e?.statusCode ?? ""} ${e?.body ?? e?.message ?? e}`.trim());
+      }
+    }));
+  }
   return { sent, gone, errors };
 }
 
-const clean = (sym: unknown) => String(sym ?? "").toUpperCase().trim().slice(0, 20);
+// ---- Input cleaning ------------------------------------------------------------------
+const clean = (sym: unknown) => String(sym ?? "").toUpperCase().trim().slice(0, 12);
+export const validId = (id: unknown): id is string => typeof id === "string" && /^[A-Za-z0-9_-]{16,40}$/.test(id);
 export function sanitizeWatchlist(w: unknown): string[] | undefined {
   if (!Array.isArray(w)) return undefined;
-  return [...new Set(w.map(clean).filter(Boolean))].slice(0, 100); // keeps the Markets tab order
+  return [...new Set(w.map(clean).filter((s) => /^[A-Z0-9.\-^=]{1,12}$/.test(s)))].slice(0, 50);
 }
-export function sanitizeLevels(l: unknown): Record<string, Level[]> | undefined {
-  if (!l || typeof l !== "object") return undefined;
-  const out: Record<string, Level[]> = {};
-  for (const [sym, list] of Object.entries(l as Record<string, unknown>).slice(0, 200)) {
-    if (!Array.isArray(list)) continue;
-    const ok = list
-      .filter((x: any) => x && Number.isFinite(+x.price) && +x.price > 0)
-      .slice(0, 20)
-      .map((x: any) => ({ id: String(x.id ?? "").slice(0, 12), price: +x.price, note: String(x.note ?? "").slice(0, 40) }));
-    if (ok.length) out[clean(sym)] = ok;
-  }
-  return out;
+export function sanitizeSub(s: any): PushSubscription | null {
+  if (!s?.endpoint || !s?.keys?.p256dh || !s?.keys?.auth) return null;
+  const endpoint = String(s.endpoint);
+  if (!/^https:\/\//.test(endpoint) || endpoint.length > 600) return null;
+  return { endpoint, keys: { p256dh: String(s.keys.p256dh).slice(0, 200), auth: String(s.keys.auth).slice(0, 100) } };
 }
-
 const bound = (v: unknown): number | "" => (v === "" || v == null ? "" : Number.isFinite(+v!) ? +v! : "");
 const str = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : undefined);
 export function sanitizeScreens(x: unknown): Screen[] | undefined {
   if (!Array.isArray(x)) return undefined;
-  return x.slice(0, 20).flatMap((s: any) => {
+  return x.slice(0, 10).flatMap((s: any) => {
     if (!s || typeof s.name !== "string" || !s.filter) return [];
     const ranges: Screen["filter"]["ranges"] = {};
-    for (const [k, v] of Object.entries(s.filter.ranges ?? {}).slice(0, 30)) {
+    for (const [k, v] of Object.entries(s.filter.ranges ?? {}).slice(0, 20)) {
       if (!/^[a-zA-Z0-9]{1,12}$/.test(k) || !Array.isArray(v)) continue;
       ranges[k] = [bound(v[0]), bound(v[1])];
     }

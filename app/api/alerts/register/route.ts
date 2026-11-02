@@ -1,25 +1,31 @@
-// Called by your phone: registers it for notifications and/or syncs watchlist + levels.
-import { passcodeOk, readState, sanitizeLevels, sanitizeScreens, sanitizeWatchlist, writeState } from "@/lib/alerts";
+// A device turns notifications on/off or updates its watchlist and saved screens.
+// No account: the random device ID (kept on the device) is what identifies it.
+import { MAX_DEVICES, ownerCodeOk, sanitizeScreens, sanitizeSub, sanitizeWatchlist, updateDevices, validId } from "@/lib/alerts";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-  if (!passcodeOk(req, body)) return Response.json({ error: "Wrong passcode" }, { status: 401 });
-  const state = await readState();
-  const sub = body.subscription;
-  if (sub?.endpoint && sub?.keys?.p256dh && sub?.keys?.auth) {
-    state.subscriptions = [
-      ...state.subscriptions.filter((s) => s.endpoint !== sub.endpoint),
-      { endpoint: String(sub.endpoint), keys: { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) }, added: new Date().toISOString() },
-    ].slice(-10); // at most 10 devices
+  if (!validId(body.id)) return Response.json({ error: "Bad device ID" }, { status: 400 });
+  const now = new Date().toISOString();
+  try {
+    const r = await updateDevices((store) => {
+      const d = store.devices;
+      if (body.unsubscribe) { delete d[body.id]; return { ok: true, on: false }; }
+      if (!d[body.id] && Object.keys(d).length >= MAX_DEVICES) return { error: "Notifications are full right now. Please try again later." };
+      const cur = d[body.id] ?? { id: body.id, sub: null, watchlist: [], screens: [], screenMatches: {}, added: now, seen: now };
+      const sub = sanitizeSub(body.subscription);
+      if (sub) cur.sub = sub;
+      const w = sanitizeWatchlist(body.watchlist);
+      if (w) cur.watchlist = w;
+      const sc = sanitizeScreens(body.screens);
+      if (sc) cur.screens = sc;
+      if (body.ownerCode !== undefined) cur.owner = ownerCodeOk(body.ownerCode);
+      cur.seen = now;
+      if (!cur.sub) return { ok: true, on: false }; // only devices with notifications on are stored
+      d[body.id] = cur;
+      return { ok: true, on: true, owner: !!cur.owner };
+    });
+    return Response.json(r, { status: "error" in r ? 503 : 200 });
+  } catch (e: any) {
+    return Response.json({ error: e.message ?? "Server error" }, { status: 503 });
   }
-  if (body.unsubscribe && typeof body.unsubscribe === "string")
-    state.subscriptions = state.subscriptions.filter((s) => s.endpoint !== body.unsubscribe);
-  const w = sanitizeWatchlist(body.watchlist);
-  if (w) state.watchlist = w;
-  const l = sanitizeLevels(body.levels);
-  if (l) state.levels = l;
-  const sc = sanitizeScreens(body.screens);
-  if (sc) state.screens = sc;
-  const updated = await writeState(state);
-  return Response.json({ ok: true, devices: state.subscriptions.length, watchlist: state.watchlist.length, updated });
 }

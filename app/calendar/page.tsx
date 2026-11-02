@@ -1,50 +1,37 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useWatchlist } from "@/components/useWatchlist";
-import { CalendarCard, daysUntil, money, when, type CalendarInfo as Info } from "@/components/CalendarCard";
+import { useEffect, useState } from "react";
+import { TradingView } from "@/components/TradingView";
 
-type Event = { date: string; symbol: string; kind: "earnings" | "ex" | "pay"; text: string; tentative: boolean };
+type Ev = { date: string; time: string | null; kind: "econ" | "fed"; title: string; source: string };
+const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+const daysUntil = (d: string) => Math.round((Date.parse(d + "T12:00:00Z") - Date.parse(today() + "T12:00:00Z")) / 86_400_000);
+const when = (d: string) => {
+  const n = daysUntil(d);
+  const label = new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return n === 0 ? `Today · ${label}` : n === 1 ? `Tomorrow · ${label}` : `${label} · in ${n} days`;
+};
 
 export default function CalendarPage() {
-  const { list } = useWatchlist();
-  const [data, setData] = useState<Record<string, Info> | null>(null);
-  const key = list.join(",");
-  useEffect(() => {
-    if (!key) return;
-    setData(null);
-    fetch(`/api/calendar?symbols=${encodeURIComponent(key)}`).then((r) => r.json()).then(setData).catch(() => setData({}));
-  }, [key]);
-
-  const events = useMemo(() => {
-    const out: Event[] = [];
-    for (const [s, i] of Object.entries(data ?? {})) {
-      const e = i.earnings?.next, d = i.dividends?.next;
-      if (e) out.push({ date: e.date, symbol: s, kind: "earnings", text: `Earnings${e.time ? `, ${e.time}` : ""}${e.epsEstimate != null ? ` · EPS est. ${money(e.epsEstimate)}` : ""}`, tentative: !e.confirmed });
-      if (d) {
-        out.push({ date: d.ex, symbol: s, kind: "ex", text: `Ex-dividend${d.amount ? ` · ~${money(d.amount)}/share` : ""} (buy before this date to get it)`, tentative: d.estimated });
-        if (d.pay) out.push({ date: d.pay, symbol: s, kind: "pay", text: `Dividend paid${d.amount ? ` · ${money(d.amount)}/share` : ""}`, tentative: false });
-      }
-    }
-    return out.filter((x) => daysUntil(x.date) >= 0 && daysUntil(x.date) <= 90).sort((a, b) => a.date.localeCompare(b.date));
-  }, [data]);
-
+  const [ev, setEv] = useState<Ev[] | null>(null);
+  useEffect(() => { fetch("/data/events.json").then((r) => r.json()).then((d) => setEv(d.events)).catch(() => setEv([])); }, []);
   return (
     <div className="stack">
       <section className="card">
         <h1>Calendar</h1>
-        <p className="muted">Earnings and dividends for your watchlist over the next 90 days. Dates marked &quot;estimated&quot; aren&apos;t announced yet: earnings dates come from analysts&apos; models, dividend dates from each company&apos;s past payments.</p>
-        {!list.length ? <p className="muted">Your watchlist is empty. Add stocks with ☆ on any stock page.</p> : data === null ? <p className="muted">Loading…</p> : events.length ? (
-          <ul className="news">{events.map((x, i) => (
-            <li key={i}>
-              <span className={`pill${x.kind === "earnings" ? " up" : ""}`}>{x.kind === "earnings" ? "Earnings" : x.kind === "ex" ? "Ex-dividend" : "Payment"}</span>{" "}
-              <Link href={`/stock/${encodeURIComponent(x.symbol)}`}><strong>{x.symbol}</strong></Link> {x.text}{x.tentative ? <span className="muted"> · estimated</span> : null}
-              <div className="muted small">{when(x.date)}</div>
+        <p className="muted">The US economic releases and Fed decisions that move markets, for the next 60 days, straight from the government&apos;s published schedules.</p>
+        {ev === null ? <p className="muted">Loading…</p> : !ev.filter((e) => daysUntil(e.date) >= 0).length ? <p className="muted">Nothing scheduled.</p> : (
+          <ul className="news">{ev.filter((e) => daysUntil(e.date) >= 0).map((e) => (
+            <li key={e.date + e.title}>
+              <span className={`pill${e.kind === "fed" ? " up" : ""}`}>{e.kind === "fed" ? "Fed" : "Economy"}</span> {e.title}
+              <div className="muted small">{when(e.date)}{e.time ? ` · ${e.time}` : ""} · {e.source}</div>
             </li>
           ))}</ul>
-        ) : <p className="muted">Nothing scheduled in the next 90 days.</p>}
+        )}
       </section>
-      {data ? <div className="grid">{list.filter((s) => data[s]).map((s) => <CalendarCard key={s} symbol={s} info={data[s]} />)}</div> : null}
+      <section className="card">
+        <h2>Global economic calendar</h2>
+        <TradingView widget="events" height={600} config={{ width: "100%", height: "100%", importanceFilter: "0,1", countryFilter: "us,eu,gb,jp,cn" }} label="Economic calendar by TradingView" />
+      </section>
     </div>
   );
 }

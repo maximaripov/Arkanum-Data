@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { syncSoon } from "@/lib/alertsClient";
+import { syncSoon } from "@/lib/device";
 
 export type ScreenFilter = { text?: string; exch?: string; sector?: string; industry?: string; ranges: Record<string, [number | "", number | ""]> };
 export type SavedScreen = { id: string; name: string; filter: ScreenFilter };

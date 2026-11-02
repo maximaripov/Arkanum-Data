@@ -1,6 +1,7 @@
-name: Market close briefing and data
-# Weekdays at 4:02 PM New York time: refresh prices, send the daily briefing to your
-# phone, then refresh insider trades and commit the data (Vercel redeploys on commit).
+name: Daily digest and data
+# Weekdays at 4:02 PM New York time: rebuild the SEC-based data (fundamentals, insider
+# trades, 13F fund holdings) and the economic calendar, check it, send each subscribed
+# device its digest, then commit the data (Vercel redeploys on commit).
 #
 # GitHub schedules run in UTC, and 4 PM in New York is 21:02 UTC in winter (EST) but
 # 20:02 UTC in summer (EDT). Both are scheduled; the gate job keeps the one that is
@@ -12,16 +13,16 @@ on:
   workflow_dispatch:
     inputs:
       notify:
-        description: "Send the briefing notification to your phone"
+        description: "Send the digest notification to subscribed devices"
         type: boolean
         default: true
       test_alert:
-        description: "Also send a test of the failure alert"
+        description: "Also send a test of the failure alert (owner devices only)"
         type: boolean
         default: false
 permissions:
   contents: write
-  id-token: write # lets the briefing step prove to the site that it is this repo's job
+  id-token: write # lets the job prove to the site that it is this repo's job
 jobs:
   gate:
     runs-on: ubuntu-latest
@@ -46,6 +47,7 @@ jobs:
     timeout-minutes: 90
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      SITE_URL: https://foresightscreener.vercel.app
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -55,35 +57,28 @@ jobs:
       - run: npm ci
       - name: Test failure alert
         if: github.event_name == 'workflow_dispatch' && inputs.test_alert
-        env:
-          SITE_URL: https://foresightscreener.vercel.app
         run: |
-          node scripts/notify.mjs "Foresight: test alert" "This is a test. If a 4 PM update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      # Closing prices first: the briefing's market breadth and movers come from them.
+          node scripts/notify.mjs "Foresight: test alert" "This is a test. If a daily update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - id: screener
-        name: Build screener (closing prices + SEC fundamentals)
+        name: Build screener (SEC fundamentals)
         run: node scripts/build-screener.mjs
-      - id: check_screener
-        name: Check screener data
-        run: node scripts/health-check.mjs screener
-      - id: briefing
-        name: Send daily briefing
+      - id: insiders
+        name: Update insider trades (SEC Form 4)
+        run: node scripts/build-insiders.mjs --days 30
+      - id: funds
+        name: Update big-fund holdings (SEC 13F)
+        run: node scripts/build-funds.mjs
+      - id: events
+        name: Update economic calendar
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-          SITE_URL: https://foresightscreener.vercel.app
-        run: node scripts/daily-briefing.mjs ${{ github.event_name == 'workflow_dispatch' && !inputs.notify && '--no-push' || '' }}
-      - id: insiders
-        name: Update insider trades
-        run: node scripts/build-insiders.mjs --days 30
-      - id: dividends
-        name: Update dividend calendar
-        run: node scripts/build-dividends.mjs
-      - id: funds
-        name: Update big-fund holdings (13F)
-        run: node scripts/build-funds.mjs
+        run: node scripts/build-events.mjs
       - id: check_all
-        name: Check all data before publishing
+        name: Check all data before sending or publishing
         run: node scripts/health-check.mjs all
+      - id: digest
+        name: Send daily digest
+        run: node scripts/daily-digest.mjs ${{ github.event_name == 'workflow_dispatch' && !inputs.notify && '--no-push' || '' }}
       - name: Commit data
         run: |
           # Vercel's Hobby plan only deploys commits authored by the project owner,
@@ -91,22 +86,19 @@ jobs:
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
           git add public/data data
-          git diff --cached --quiet || git commit -m "data: market close refresh $(date -u +%F)"
+          git diff --cached --quiet || git commit -m "data: daily refresh $(date -u +%F)"
           git push
-      # Health check: if any step failed, nothing above was published (the site keeps
-      # the last good data) and you get a notification saying which step broke.
+      # If any step failed, nothing was sent or published (the site keeps the last good
+      # data) and the owner's devices get a notification naming the step.
       - name: Notify on failure
         if: failure()
-        env:
-          SITE_URL: https://foresightscreener.vercel.app
         run: |
           failed=""
-          [ "${{ steps.screener.outcome }}" = "failure" ] && failed="$failed screener prices/fundamentals,"
-          [ "${{ steps.check_screener.outcome }}" = "failure" ] && failed="$failed screener data check,"
-          [ "${{ steps.briefing.outcome }}" = "failure" ] && failed="$failed daily briefing,"
+          [ "${{ steps.screener.outcome }}" = "failure" ] && failed="$failed SEC fundamentals,"
           [ "${{ steps.insiders.outcome }}" = "failure" ] && failed="$failed insider trades,"
-          [ "${{ steps.dividends.outcome }}" = "failure" ] && failed="$failed dividend calendar,"
           [ "${{ steps.funds.outcome }}" = "failure" ] && failed="$failed big-fund holdings,"
+          [ "${{ steps.events.outcome }}" = "failure" ] && failed="$failed economic calendar,"
           [ "${{ steps.check_all.outcome }}" = "failure" ] && failed="$failed data check,"
+          [ "${{ steps.digest.outcome }}" = "failure" ] && failed="$failed digest,"
           failed="${failed%,}"
-          node scripts/notify.mjs "Foresight: 4 PM update failed" "Failed:${failed:- setup}. The site keeps yesterday's data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/notify.mjs "Foresight: daily update failed" "Failed:${failed:- setup}. The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

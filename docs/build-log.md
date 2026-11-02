@@ -142,3 +142,16 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 - **Analysts** ([lib/analysts.ts](../lib/analysts.ts)): Zacks consensus via Nasdaq — rating, buy/hold/sell, average/low/high target, change vs 3 months ago. Nasdaq's upgrade/downgrade list was empty for every stock tried, so it isn't shown.
 - **Retail interest** ([lib/retail.ts](../lib/retail.ts)): Robinhood's popularity data ("40k users bought X") was shut down in 2020 and nothing free replaces it. Shown instead: Reddit mentions (ApeWisdom) and weekly off-exchange volume through retail wholesalers (Citadel Securities, Virtu, G1, Jane Street, Two Sigma, HRT) from FINRA, as a share of total volume — retail-type trading, not buy vs sell, 2–4 weeks delayed. The briefing flags watchlist stocks whose Reddit mentions double (≥15).
 - **Big funds (13F)** ([scripts/build-funds.mjs](../scripts/build-funds.mjs)): 13 funds (Berkshire, Bridgewater, Pershing Square, Renaissance, Appaloosa, Duquesne, Third Point, Baupost, Tiger Global, Coatue, Soros, ARK, Icahn); Greenlight and Scion dropped (stopped filing). Top 100 holdings + new/added/cut/sold, on the Insiders tab and per stock. CUSIP → ticker via OpenFIGI, with a fallback that matches company names against SEC's ticker list only when exactly one company fits (fixes foreign-registered Chubb, Seagate, ASML). Only re-read when a fund files.
+
+## Round 8: going public (2026-11-02)
+
+Decision: one free public version in this repo; the personal-only features were removed, not kept.
+
+- **Licensing checked:** TradingView widgets may be embedded with attribution intact; FINRA data may be shown for non-commercial use with credit; Coinbase market data may not be redistributed. Yahoo and Nasdaq-API data are gone everywhere (pages, screener, digest), as are Coinbase streaming and ApeWisdom.
+- **Prices, charts, news, price screener, global calendar:** TradingView widgets ([components/TradingView.tsx](../components/TradingView.tsx)). The symbol-info widget also brings back next earnings date, market cap, P/E and yield.
+- **Screener:** SEC-only, one row per company (~4,600), new FCF margin and payout ratio; price-based screening via TradingView's screener tab.
+- **Removed:** options, analyst ratings, earnings/dividend calendars, price levels, Reddit mentions, own chart (lightweight-charts), passcode sync, market-close numbers.
+- **Notifications for anyone:** no accounts; each device has a random ID and stores its push address, watchlist and saved screens on the server only while notifications are on ([lib/alerts.ts](../lib/alerts.ts)); concurrent sign-ups are safe (conditional writes); 5,000-device cap; stale devices deleted after ~4 months. The old passcode is now the **owner code**: devices that enter it get failure alerts.
+- **Daily digest** ([scripts/daily-digest.mjs](../scripts/daily-digest.mjs)) replaces the market-close briefing: biggest insider buys, cluster buys, 13F filings and coming events for everyone; per device, insider trades, today's 8-Ks and fund moves in the watchlist, plus saved-screen changes.
+- **Economic calendar** is its own data file ([scripts/build-events.mjs](../scripts/build-events.mjs)).
+- **About page:** disclaimer, data sources/attribution, privacy.
