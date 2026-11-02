@@ -24,7 +24,6 @@ function Card({ w, remove }: { w: WatchItem; remove: () => void }) {
         <div className="wcard-id"><strong>{w.t}</strong><span className="muted small ellipsis">{w.name ? titleCase(w.name) : ""}</span></div>
         <button className="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); remove(); }} aria-label={`Remove ${w.t} from watchlist`} title="Remove">×</button>
       </div>
-      {w.sector ? <div className="muted small ellipsis">{w.sector}</div> : null}
       <div className="wcard-pills">
         <Insiders x={w.insiders} />
         {f.bought.length ? <span className="pill up" title={f.bought.join(", ")}>{f.bought.length} fund{f.bought.length > 1 ? "s" : ""} bought</span> : null}
@@ -47,7 +46,7 @@ export function Watchlist() {
   }, [key]);
   return (
     <section className="card">
-      <div className="card-head"><h2>Your watchlist</h2><button className="linkbtn" onClick={focusSearch}>+ Add a stock</button></div>
+      <div className="card-head"><h2>Your watchlist <span className="muted small">insiders: 30 days · funds: last quarter</span></h2><button className="linkbtn" onClick={focusSearch}>+ Add a stock</button></div>
       {!list.length ? (
         <div className="empty">
           <p><strong>Your watchlist is empty.</strong></p>
@@ -55,7 +54,6 @@ export function Watchlist() {
         </div>
       ) : (
         <>
-          <p className="muted small">Insider trades from the last 30 days; fund moves from the latest quarterly filings. Tap a stock for its price chart and details.</p>
           <div className="wgrid">
             {list.map((s) => (items[s] ? <Card key={s} w={items[s]} remove={() => toggle(s)} /> : <div key={s} className="wcard skeleton" />))}
           </div>

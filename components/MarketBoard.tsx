@@ -1,21 +1,14 @@
 "use client";
-// Markets & economy, drawn by Foresight: interest rates, energy, currencies, crypto and
-// the big economic reports. Tap a card to see its chart. Data: lib/macro.ts.
+// The markets strip: the 10-year Treasury yield and four major cryptocurrencies.
+// Tap a card to open its chart. Data: lib/macro.ts via /api/markets.
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Spark } from "./Charts";
 import type { Group, Series } from "@/lib/macro";
-import { asOf, fmtChange, fmtValue, sinceLabel, weekSummary } from "@/lib/macroFormat";
+import { fmtChange, fmtValue, weekSummary } from "@/lib/macroFormat";
 
-const RANGES: Record<Series["freq"], [string, number][]> = {
-  daily: [["1M", 31], ["3M", 92], ["6M", 183], ["1Y", 366]],
-  weekly: [["3M", 92], ["6M", 183], ["1Y", 366]],
-  monthly: [["1Y", 366], ["5Y", 1827], ["10Y", 3653]],
-  quarterly: [["2Y", 731], ["5Y", 1827], ["10Y", 3653]],
-};
+const RANGES: [string, number][] = [["1W", 8], ["1M", 31], ["3M", 92], ["1Y", 366]];
 const NEUTRAL = "var(--ma50)";
-// Which card each tab opens on: the one people check first.
-const LEAD: Record<string, string> = { rates: "t10y", energy: "wti", fx: "eurusd", crypto: "bitcoin", economy: "cpi" };
-export const colorOf = (s: Series, from: number | null) => (s.tone === "neutral" || from == null ? NEUTRAL : s.value >= from ? "var(--up)" : "var(--down)");
+const colorOf = (s: Series, from: number | null) => (s.tone === "neutral" || from == null ? NEUTRAL : s.value >= from ? "var(--up)" : "var(--down)");
 const since = (pts: Series["history"], days: number) => {
   const cut = new Date(Date.parse(pts.at(-1)![0] + "T12:00:00Z") - days * 86_400_000).toISOString().slice(0, 10);
   return pts.filter(([d]) => d >= cut);
@@ -39,17 +32,15 @@ export function WeekSummary({ groups }: { groups: Group[] | null }) {
   return <ul className="weeksum">{lines.map((l) => <li key={l}>{l}</li>)}</ul>;
 }
 
-function Tile({ s, on, pick }: { s: Series; on: boolean; pick: () => void }) {
+function Card({ s, on, pick }: { s: Series; on: boolean; pick: () => void }) {
   const c = fmtChange(s, s.prev, s.value);
-  const pts = since(s.history, s.freq === "monthly" || s.freq === "quarterly" ? 1827 : 92);
+  const pts = since(s.history, 31);
+  const cls = s.tone === "price" && c ? (c.dir > 0 ? "up" : c.dir < 0 ? "down" : "") : "";
   return (
-    <button className={`tile${on ? " on" : ""}`} onClick={pick} aria-pressed={on}>
-      <span className="tile-label">{s.label}</span>
-      <span className="tile-value mono">{fmtValue(s, s.value)}</span>
-      <span className="tile-foot">
-        {c ? <span className={`mono ${s.tone === "price" ? (c.dir > 0 ? "up" : c.dir < 0 ? "down" : "muted") : "muted"}`}>{c.dir > 0 ? "▲" : c.dir < 0 ? "▼" : "•"} {c.text}</span> : null}
-        <span className="muted">{asOf(s)}</span>
-      </span>
+    <button className={`mcard${on ? " on" : ""}`} onClick={pick} aria-expanded={on}>
+      <span className="mcard-label">{s.label}</span>
+      <span className="mcard-value mono">{fmtValue(s, s.value)}</span>
+      {c ? <span className={`mcard-chg mono ${cls}`}>{c.dir > 0 ? "▲" : c.dir < 0 ? "▼" : ""} {c.text}</span> : <span />}
       <Spark points={pts} color={colorOf(s, pts[0]?.[1] ?? null)} />
     </button>
   );
@@ -57,41 +48,31 @@ function Tile({ s, on, pick }: { s: Series; on: boolean; pick: () => void }) {
 
 export function MarketBoard() {
   const groups = useMarkets();
-  const [gid, setGid] = useState("rates");
-  const [sid, setSid] = useState<string | null>(null);
-  const [range, setRange] = useState<number | null>(null);
-  if (groups === null) return <section className="card"><h2>Markets &amp; economy</h2><div className="tiles">{Array.from({ length: 4 }, (_, i) => <div key={i} className="tile skeleton" />)}</div></section>;
-  if (!groups.length) return <section className="card"><h2>Markets &amp; economy</h2><p className="muted">Market data is unavailable right now. Try again in a few minutes.</p></section>;
-  const g = groups.find((x) => x.id === gid) ?? groups[0];
-  const s = g.series.find((x) => x.id === sid) ?? g.series.find((x) => x.id === LEAD[g.id]) ?? g.series[0];
-  const ranges = RANGES[s.freq];
-  const days = ranges.find(([, d]) => d === range)?.[1] ?? ranges.at(-1)![1];
-  const pts = since(s.history, days);
-  const c = fmtChange(s, pts[0]?.[1] ?? null, s.value);
+  const [open, setOpen] = useState<string | null>(null);
+  const [days, setDays] = useState(92);
+  const series = groups?.flatMap((g) => g.series) ?? [];
+  const s = series.find((x) => x.id === open);
   return (
     <section className="card">
-      <div className="card-head"><h2>Markets &amp; economy</h2></div>
-      <WeekSummary groups={groups} />
-      <div className="scroller tabs-chips" role="tablist">
-        {groups.map((x) => <button key={x.id} role="tab" aria-selected={x.id === g.id} className={`chip${x.id === g.id ? " on" : ""}`} onClick={() => { setGid(x.id); setSid(null); setRange(null); }}>{x.title}</button>)}
-      </div>
-      <p className="muted small blurb">{g.blurb}</p>
-      <div className="tiles">{g.series.map((x) => <Tile key={x.id} s={x} on={x.id === s.id} pick={() => { setSid(x.id); setRange(null); }} />)}</div>
-
-      <div className="detail">
-        <div className="detail-head">
-          <div>
-            <h3>{s.label}</h3>
-            <p className="muted small">{s.about}</p>
+      <div className="card-head"><h2>Markets</h2><span className="muted small">Tap one for its chart</span></div>
+      {groups === null ? <div className="mstrip">{Array.from({ length: 5 }, (_, i) => <div key={i} className="mcard skeleton" />)}</div>
+        : !series.length ? <p className="muted">Market data is unavailable right now. Try again in a few minutes.</p>
+        : <div className="mstrip">{series.map((x) => <Card key={x.id} s={x} on={x.id === open} pick={() => setOpen(x.id === open ? null : x.id)} />)}</div>}
+      {s ? (() => {
+        const pts = since(s.history, days);
+        const c = fmtChange(s, pts[0]?.[1] ?? null, s.value);
+        return (
+          <div className="detail">
+            <div className="detail-head">
+              <div><h3>{s.label}</h3><p className="muted small">{s.about}</p></div>
+              <div className="seg">{RANGES.map(([l, d]) => <button key={l} className={d === days ? "on" : ""} onClick={() => setDays(d)}>{l}</button>)}</div>
+            </div>
+            <LineChart points={pts} fmt={(v) => fmtValue(s, v)} color={colorOf(s, pts[0]?.[1] ?? null)} />
+            {c ? <p className="muted small">Change over this period: <span className="mono">{c.text}</span></p> : null}
           </div>
-          <div className="seg">{ranges.map(([l, d]) => <button key={l} className={d === days ? "on" : ""} onClick={() => setRange(d)}>{l}</button>)}</div>
-        </div>
-        <LineChart points={pts} fmt={(v) => fmtValue(s, v)} color={colorOf(s, pts[0]?.[1] ?? null)} monthly={s.freq === "monthly" || s.freq === "quarterly"} />
-        <p className="muted small">
-          {c ? <>Over this period: <span className="mono">{c.text}</span> · </> : null}
-          Latest: {asOf(s)} ({sinceLabel(s)}: {fmtChange(s, s.prev, s.value)?.text ?? "—"}) · Source: <a href={g.source.href} target="_blank" rel="noreferrer">{g.source.text}</a>
-        </p>
-      </div>
+        );
+      })() : null}
+      <p className="muted small credit">Change vs the day before. Treasury yield: Federal Reserve via <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" rel="noreferrer">FRED</a>, updated each business day. Crypto: <a href="https://www.coingecko.com/" target="_blank" rel="noreferrer">Powered by CoinGecko</a>, every few minutes.</p>
     </section>
   );
 }

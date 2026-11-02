@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
 import { TradeList } from "@/components/TradeList";
+import { HBars } from "@/components/Bars";
+import { isExecOrDirector } from "@/lib/insider";
 import { FundHolders } from "@/components/FundsView";
 import { useWatchlist } from "@/components/useWatchlist";
 import { fmtBig, fmtPct } from "@/lib/format";
@@ -121,6 +123,15 @@ export function StockView({ symbol }: { symbol: string }) {
         <section className="card">
           <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
           <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Buys by several insiders are the strongest signal; grants and option exercises are routine pay.</p>
+          {insiders?.length ? (() => {
+            const ex = insiders.filter(isExecOrDirector);
+            const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
+            const b = sum("P"), sd = sum("S");
+            return b || sd ? <HBars rows={[
+              { key: "b", label: <strong>Bought</strong>, sub: `${ex.filter((t) => t.code === "P").length} trades`, value: b, text: `$${fmtBig(b)}`, tone: "up" },
+              { key: "s", label: <strong>Sold</strong>, sub: `${ex.filter((t) => t.code === "S").length} trades`, value: sd, text: `$${fmtBig(sd)}`, tone: "down" },
+            ]} /> : null;
+          })() : null}
           {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} />}
         </section>
       ) : null}

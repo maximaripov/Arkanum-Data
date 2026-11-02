@@ -67,7 +67,7 @@ const digest = {
   clusters, fundFilings: newFilings, events,
 };
 
-// ---- One line on markets: 10-year yield, oil and bitcoin, each vs the day before ------------
+// ---- One line on markets: 10-year yield, bitcoin and ether, each vs the day before ------------
 const marketLine = await (async () => {
   try {
     const r = await fetch(`${SITE}/api/markets`, { signal: AbortSignal.timeout(30_000) });
@@ -80,7 +80,7 @@ const marketLine = await (async () => {
       const d = pct ? (x.value / x.prev - 1) * 100 : x.value - x.prev;
       return `${name} ${v} (${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(pct ? 1 : 2)}${pct ? "%" : ""})`;
     };
-    return [part("t10y", "10Y", false), part("wti", "Oil", true), part("bitcoin", "BTC", true)].filter(Boolean).join(" · ") || null;
+    return [part("t10y", "10Y", false), part("bitcoin", "BTC", true), part("ethereum", "ETH", true)].filter(Boolean).join(" · ") || null;
   } catch { return null; }
 })();
 

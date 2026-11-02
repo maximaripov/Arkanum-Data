@@ -169,7 +169,7 @@ export default function DigestPage() {
             <p className="muted small">{day(d.date)} · what company insiders and big funds did, plus the week in markets</p>
             <h2 className="subhead">In 30 seconds</h2>
             <ul className="summary">{summary.map((s) => <li key={s}>{s}</li>)}</ul>
-            {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /><Link href="/" className="small">Rates, oil, currencies and crypto ›</Link></> : null}
+            {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /><Link href="/" className="small">Charts ›</Link></> : null}
             {!notifOn ? <a href="#notify" className="btn primary">Get this on your phone every weekday ›</a> : null}
           </section>
           <YourWatchlist a={a} />

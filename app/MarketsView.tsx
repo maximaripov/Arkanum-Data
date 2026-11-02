@@ -7,9 +7,9 @@ import { MarketBoard } from "@/components/MarketBoard";
 export function MarketsView() {
   return (
     <div className="stack">
-      <Watchlist />
       <MarketBoard />
-      <div className="twocol">
+      <Watchlist />
+      <div className="twocol wide-left">
         <InsiderHighlights />
         <ComingUp />
       </div>

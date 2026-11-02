@@ -1,4 +1,4 @@
-// Rates, energy, currencies, crypto and economic reports for the Markets page and the digest.
+// The 10-year Treasury yield and crypto prices for the Markets page and the digest.
 import { markets } from "@/lib/macro";
 
 export const revalidate = 300;

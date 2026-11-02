@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { TradeList, personName, roleLabel } from "@/components/TradeList";
 import { FundsView } from "@/components/FundsView";
+import { HBars, VBars } from "@/components/Bars";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
@@ -67,6 +68,8 @@ function InsiderTrades() {
   const [min, setMin] = useState(0);
   const [q, setQ] = useState("");
   const [hidePlanned, setHidePlanned] = useState(false);
+  const [days, setDays] = useState<string[]>([]);
+  const [day, setDay] = useState<string | null>(null);
 
   // Filters live in the address bar, so a view can be shared or bookmarked. The first
   // run only reads them (writing first would wipe other parameters, like ?view=funds).
@@ -92,7 +95,7 @@ function InsiderTrades() {
     setTrades(null); setErr("");
     const url = source === "history" ? "/data/insiders.json" : "/api/insiders";
     fetch(url).then((r) => r.json()).then((d) => {
-      if (source === "history") { setTrades(d.trades); setUpdated(`Last 30 days · updated ${new Date(d.updated).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`); }
+      if (source === "history") { setTrades(d.trades); setDays(Array.isArray(d.days) ? d.days : []); setUpdated(`Last 30 days · updated ${new Date(d.updated).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`); }
       else if (Array.isArray(d)) { setTrades(d.map((t: InsiderTrade) => ({ ...t, filed: t.filed || t.date }))); setUpdated("Newest filings on SEC EDGAR right now"); }
       else setErr(d.error);
     }).catch((e) => setErr(String(e)));
@@ -105,8 +108,30 @@ function InsiderTrades() {
       (!execOnly || isExecOrDirector(t)) &&
       (t.value ?? 0) >= min &&
       !(hidePlanned && t.planned) &&
+      (!day || (t.filed || t.date) === day) &&
       (!s || t.symbol.toLowerCase().startsWith(s) || t.issuer.toLowerCase().includes(s) || t.owner.toLowerCase().includes(s)));
-  }, [trades, kind, execOnly, min, q, hidePlanned]);
+  }, [trades, kind, execOnly, min, q, hidePlanned, day]);
+
+  // Executive and director buys only: the trades that carry a signal.
+  const buys = useMemo(() => (trades ?? []).filter((t) => t.code === "P" && isExecOrDirector(t) && t.value), [trades]);
+  const byDay = useMemo(() => {
+    const m = new Map<string, { value: number; people: Set<string>; cos: Set<string> }>();
+    for (const d of days) m.set(d, { value: 0, people: new Set(), cos: new Set() });
+    for (const t of buys) {
+      const k = t.filed || t.date, x = m.get(k) ?? { value: 0, people: new Set<string>(), cos: new Set<string>() };
+      x.value += t.value ?? 0; x.people.add(t.owner); x.cos.add(t.symbol); m.set(k, x);
+    }
+    return [...m].sort((a, b) => a[0].localeCompare(b[0])).map(([k, x]) => ({
+      key: k, label: shortDay(k), value: x.value,
+      detail: x.value ? `$${fmtBig(x.value)} bought by ${x.people.size} ${x.people.size === 1 ? "insider" : "insiders"} at ${x.cos.size} ${x.cos.size === 1 ? "company" : "companies"}` : "no insider buys",
+    }));
+  }, [buys, days]);
+  const totals = useMemo(() => ({ value: buys.reduce((a, t) => a + (t.value ?? 0), 0), people: new Set(buys.map((t) => t.owner)).size, cos: new Set(buys.map((t) => t.symbol)).size }), [buys]);
+  const topStocks = useMemo(() => {
+    const m = new Map<string, { symbol: string; issuer: string; value: number; people: Set<string> }>();
+    for (const t of buys) { const x = m.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, people: new Set<string>() }; x.value += t.value ?? 0; x.people.add(personName(t.owner)); m.set(t.symbol, x); }
+    return [...m.values()].sort((a, b) => b.value - a.value).slice(0, 10);
+  }, [buys]);
 
   const clusters = useMemo<Cluster[]>(() => {
     const by = new Map<string, Cluster & { names: Set<string> }>();
@@ -130,9 +155,31 @@ function InsiderTrades() {
         <HowToRead />
       </section>
 
+      {source === "history" && buys.length ? (
+        <div className="twocol">
+          <section className="card">
+            <h2>Insider buying by day</h2>
+            <div className="bigstats">
+              <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>
+              <div><span className="mono">{totals.people}</span><span className="muted small">insiders</span></div>
+              <div><span className="mono">{totals.cos}</span><span className="muted small">companies</span></div>
+            </div>
+            <VBars cols={byDay} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); document.getElementById("trades")?.scrollIntoView({ behavior: "smooth", block: "start" }); } }} />
+          </section>
+          <section className="card">
+            <h2>Biggest buys by company <span className="muted small">last 30 days</span></h2>
+            <HBars rows={topStocks.map((x) => ({ key: x.symbol, href: `/stock/${x.symbol}`, value: x.value, text: `$${fmtBig(x.value)}`,
+              label: <><strong>{x.symbol}</strong> <span className="muted">{titleCase(x.issuer)}</span></>,
+              sub: x.people.size > 1 ? `${x.people.size} insiders` : [...x.people][0] }))} />
+          </section>
+        </div>
+      ) : null}
+
       {source === "history" ? <ClusterCards clusters={clusters} /> : null}
 
-      <section className="card">
+      <section className="card" id="trades">
+        <h2>All trades</h2>
+        {day ? <p className="daychip"><span className="chip on">Showing {shortDay(day)} <button className="icon" onClick={() => setDay(null)} aria-label="Show all days">×</button></span></p> : null}
         <div className="filterbar">
           <div className="seg">{(["buys", "sells", "all"] as Kind[]).map((k) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{k === "buys" ? "Buys" : k === "sells" ? "Sells" : "All"}</button>)}</div>
           <button className={`toggle${execOnly ? " on" : ""}`} onClick={() => setExecOnly(!execOnly)} aria-pressed={execOnly}>{execOnly ? "✓ " : ""}Executives &amp; directors only</button>

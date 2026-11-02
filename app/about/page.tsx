@@ -7,7 +7,7 @@ export default function About() {
     <div className="stack prose">
       <section className="card">
         <h1>About Foresight</h1>
-        <p>Foresight is a free market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English, alongside interest rates, energy, currencies and crypto, with stock price charts from TradingView. No account, no ads.</p>
+        <p>Foresight is a free market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English, alongside the 10-year Treasury yield and crypto prices, with stock price charts from TradingView. No account, no ads.</p>
       </section>
 
       <section className="card">
@@ -19,8 +19,7 @@ export default function About() {
         <h2>Where the data comes from</h2>
         <ul>
           <li><strong>Stock price charts:</strong> an embedded chart by <a href="https://www.tradingview.com/" target="_blank" rel="noopener nofollow">TradingView</a>, delayed 15 minutes. Exchanges license stock prices for display, so Foresight shows them only through TradingView&apos;s chart.</li>
-          <li><strong>Interest rates, energy prices and economic reports:</strong> the Federal Reserve, US Treasury, Energy Information Administration, Bureau of Labor Statistics and Bureau of Economic Analysis (public domain), downloaded from <a href="https://fred.stlouisfed.org/" target="_blank" rel="noreferrer">FRED</a>, Federal Reserve Bank of St. Louis.</li>
-          <li><strong>Exchange rates:</strong> <a href="https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" target="_blank" rel="noreferrer">European Central Bank</a> euro reference rates, published each working day around 4 PM Central European Time.</li>
+          <li><strong>10-year Treasury yield:</strong> the Federal Reserve&apos;s H.15 release (public domain), downloaded from <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" rel="noreferrer">FRED</a>, Federal Reserve Bank of St. Louis.</li>
           <li><strong>Crypto prices:</strong> <a href="https://www.coingecko.com/" target="_blank" rel="noreferrer">Powered by CoinGecko</a>, refreshed every few minutes.</li>
           <li><strong>Insider trades, big-fund holdings (13F), company announcements (8-K) and fundamentals:</strong> <a href="https://www.sec.gov/edgar" target="_blank" rel="noreferrer">SEC EDGAR</a> (public domain). Updated each weekday after 4 PM Eastern; 13F filings are due 45 days after each quarter, so fund positions are 6–20 weeks old.</li>
           <li><strong>Retail trading volume:</strong> <a href="https://otctransparency.finra.org/" target="_blank" rel="noreferrer">FINRA OTC Transparency data</a>, published with a 2–4 week delay. Shown for personal, non-commercial use; not for redistribution.</li>

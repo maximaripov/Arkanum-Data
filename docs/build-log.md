@@ -181,3 +181,11 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Stock page:** native header with a watchlist button; the TradingView chart uses the page's colors with toolbars hidden, our own range buttons, and an "Indicators & compare" switch that brings the tools back. TradingView headlines removed (SEC announcements remain).
 - Removed: ticker tape, market overview, the price screener tab and the worldwide calendar widget.
 - **Digest:** a "Markets this week" section, and the 4 PM notification ends with a line like "10Y 4.94% (−0.04) · Oil $103.37 (−1.8%) · BTC $76.8K (−1.0%)".
+
+## Round 12: simpler Markets page, insider bar charts (2026-11-02)
+
+- **Markets** cut to what the owner wants: the 10-year Treasury yield and four coins (bitcoin, ether, solana, XRP), as one strip of cards at the top of the page (swipe on phones). Tap a card for its chart (1W–1Y). Energy, other rates, currencies and economic reports are gone; `lib/macro.ts` keeps only FRED's DGS10 and CoinGecko.
+- **Insiders page:** "Insider buying by day" bar chart with 30-day totals (tap a bar to filter the trade list to that day), and "Biggest buys by company" as ranked bars ([components/Bars.tsx](../components/Bars.tsx)). Counts executive and director open-market buys only.
+- **Markets page:** "Insiders buying this week" is a bar chart by amount; watchlist cards are simpler (no sector line or intro text).
+- **Stock page:** bought vs sold bars above the insider trade list.
+- Digest and notification: the markets line is now 10Y · BTC · ETH.

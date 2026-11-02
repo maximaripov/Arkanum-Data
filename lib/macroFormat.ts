@@ -18,15 +18,7 @@ export function fmtChange(s: Pick<Series, "unit" | "decimals">, from: number | n
   return { text: `${p >= 0 ? "+" : "−"}${Math.abs(p).toFixed(Math.abs(p) < 10 ? 2 : 1)}%`, dir: Math.sign(+p.toFixed(2)) };
 }
 
-export const asOf = (s: Series) => {
-  const d = new Date(s.date + "T12:00:00Z");
-  if (s.freq === "monthly") return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-  if (s.freq === "quarterly") return `Q${Math.floor(d.getUTCMonth() / 3) + 1} ${d.getUTCFullYear()}`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-};
-export const sinceLabel = (s: Series) => ({ daily: "vs day before", weekly: "vs week before", monthly: "vs month before", quarterly: "vs quarter before" })[s.freq];
-
-/** Short sentences about the past week's notable moves, e.g. "The 10-year Treasury yield fell to 4.94% (−0.11 pts)." */
+/** Short sentences about the past week's moves, e.g. "The 10-year Treasury yield fell to 4.94% (−0.11 pts)." */
 export function weekSummary(groups: Group[]): string[] {
   const all = new Map(groups.flatMap((g) => g.series.map((s) => [s.id, s] as const)));
   const out: string[] = [];
@@ -39,8 +31,7 @@ export function weekSummary(groups: Group[]): string[] {
     out.push(`${name} ${verb} ${fmtValue(s, s.value)}${moved ? ` (${c.text})` : ""} this week.`);
   };
   say("t10y", "The 10-year Treasury yield", 0.05);
-  say("wti", "Oil", 1);
-  say("eurusd", "The euro", 0.5);
   say("bitcoin", "Bitcoin", 2);
+  say("ethereum", "Ether", 2);
   return out;
 }
