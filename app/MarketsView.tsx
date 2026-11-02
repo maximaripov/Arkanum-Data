@@ -7,7 +7,7 @@ import { OVERVIEW_TABS, TICKER_TAPE } from "@/lib/markets";
 export function MarketsView() {
   return (
     <div className="stack">
-      <TradingView widget="ticker-tape" height={72} config={{ symbols: TICKER_TAPE, showSymbolLogo: true, displayMode: "adaptive" }} />
+      <TradingView widget="ticker-tape" height={100} config={{ symbols: TICKER_TAPE, showSymbolLogo: true, displayMode: "adaptive" }} />
       <div className="twocol">
         <Watchlist />
         <InsiderHighlights />

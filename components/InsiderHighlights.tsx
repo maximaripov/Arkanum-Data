@@ -18,7 +18,9 @@ export function InsiderHighlights() {
         const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, insiders: new Set<string>() };
         x.value += t.value; x.insiders.add(t.owner); by.set(t.symbol, x);
       }
-      setRows([...by.values()].sort((a, b) => b.insiders.size - a.insiders.size || b.value - a.value).slice(0, 8).map((x) => ({ ...x, insiders: [...x.insiders] })));
+      // Several insiders averaging under ~$25K each is usually an employee share-purchase plan.
+      const strong = (x: { value: number; insiders: Set<string> }) => x.insiders.size < 2 || x.value / x.insiders.size >= 25_000;
+      setRows([...by.values()].filter(strong).sort((a, b) => b.insiders.size - a.insiders.size || b.value - a.value).slice(0, 8).map((x) => ({ ...x, insiders: [...x.insiders] })));
     }).catch(() => setRows([]));
   }, []);
   return (

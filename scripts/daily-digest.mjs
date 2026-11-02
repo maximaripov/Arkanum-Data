@@ -51,7 +51,8 @@ const clusters = (() => {
     const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, owners: new Set(), value: 0 };
     x.owners.add(t.owner); x.value += t.value ?? 0; by.set(t.symbol, x);
   }
-  return [...by.values()].filter((x) => x.owners.size > 1).sort((a, b) => b.owners.size - a.owners.size || b.value - a.value).slice(0, 5).map((x) => ({ symbol: x.symbol, issuer: x.issuer, insiders: x.owners.size, value: x.value }));
+  // Several insiders averaging under ~$25K each is usually an employee share-purchase plan.
+  return [...by.values()].filter((x) => x.owners.size > 1 && x.value / x.owners.size >= 25_000).sort((a, b) => b.owners.size - a.owners.size || b.value - a.value).slice(0, 5).map((x) => ({ symbol: x.symbol, issuer: x.issuer, insiders: x.owners.size, value: x.value }));
 })();
 const newFilings = funds.funds.filter((f) => f.filed >= weekAgo).map((f) => ({
   fund: f.name, period: f.period, filed: f.filed,

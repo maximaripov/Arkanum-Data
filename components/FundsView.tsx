@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fmtBig, fmtPct } from "@/lib/format";
 
@@ -7,49 +7,109 @@ type Holding = { cusip: string; t: string | null; name: string; cls: string; val
 type Fund = { cik: number; name: string; who: string; period: string; filed: string; prevPeriod: string | null; total: number; count: number; top: Holding[]; new: Holding[]; added: Holding[]; reduced: Holding[]; sold: Holding[] };
 
 const q = (d: string) => { const [y, m] = d.split("-"); return `Q${Math.ceil(+m / 3)} ${y}`; };
-const label = (h: Holding) => (h.t ? <Link href={`/stock/${h.t}`}><strong>{h.t}</strong></Link> : <strong>{h.name}</strong>);
-const share = (pct: number) => (pct < 0.1 ? "under 0.1%" : `${pct.toFixed(1)}%`);
-const CHANGE: Record<string, string> = { new: "New", added: "Added", reduced: "Cut", sold: "Sold all", same: "Unchanged" };
+const share = (pct: number) => (pct < 0.1 ? "<0.1%" : `${pct.toFixed(1)}%`);
+const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
 
-function HoldingList({ items, show }: { items: Holding[]; show: "pct" | "chg" }) {
-  if (!items.length) return <p className="muted small">None.</p>;
+function Badge({ h }: { h: Holding }) {
+  if (h.change === "new") return <span className="badge up">New</span>;
+  if (h.change === "added") return <span className="badge up">Added {fmtPct(h.chgPct, 0)}</span>;
+  if (h.change === "reduced") return <span className="badge down">Cut {fmtPct(h.chgPct, 0).replace("-", "−")}</span>;
+  if (h.change === "sold") return <span className="badge down">Sold all</span>;
+  return null;
+}
+
+function HoldingRows({ items, max = 10, maxPct }: { items: Holding[]; max?: number; maxPct?: number }) {
+  if (!items.length) return <p className="muted small">None this quarter.</p>;
   return (
-    <ul className="news">{items.slice(0, 10).map((h) => (
+    <ul className="holdings">{items.slice(0, max).map((h) => (
       <li key={h.cusip}>
-        {label(h)} <span className="muted small">{h.t ? h.name : h.cls}</span>
-        <div className="muted small">
-          ${fmtBig(h.value)}{h.change !== "sold" ? ` · ${share(h.pct)} of portfolio` : ""}
-          {show === "chg" && h.chgPct != null && h.change !== "sold" ? ` · shares ${fmtPct(h.chgPct, 0)}` : ""}
-          {show === "pct" && h.change !== "same" ? ` · ${CHANGE[h.change]}${h.chgPct != null && h.change !== "new" ? ` ${fmtPct(h.chgPct, 0)}` : ""}` : ""}
+        <div className="h-name">
+          {h.t ? <Link href={`/stock/${h.t}`}><strong>{h.t}</strong></Link> : <strong>{titleCase(h.name)}</strong>}
+          <span className="muted small ellipsis">{h.t ? titleCase(h.name) : h.cls}</span>
         </div>
+        <div className="h-right">
+          <div className="mono">${fmtBig(h.value)}{h.change !== "sold" ? <span className="muted small"> · {share(h.pct)}</span> : null}</div>
+          <Badge h={h} />
+        </div>
+        {maxPct ? <div className="h-bar" style={{ width: `${Math.max(2, (h.pct / maxPct) * 100)}%` }} /> : null}
       </li>
     ))}</ul>
   );
 }
 
+const TABS = [["new", "New positions"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold completely"]] as const;
+
 export function FundsView() {
   const [funds, setFunds] = useState<Fund[] | null>(null);
   const [sel, setSel] = useState(0);
+  const [tab, setTab] = useState<(typeof TABS)[number][0]>("new");
   useEffect(() => { fetch("/data/funds.json").then((r) => r.json()).then((d) => setFunds(d.funds)).catch(() => setFunds([])); }, []);
+
+  // Across all tracked funds: which stocks were bought or sold by the most funds.
+  const consensus = useMemo(() => {
+    const bought = new Map<string, { t: string; name: string; funds: string[] }>(), sold = new Map<string, { t: string; name: string; funds: string[] }>();
+    for (const f of funds ?? []) {
+      // A fund can hold several securities of one company (share classes, notes): count it once.
+      for (const h of [...f.new, ...f.added]) if (h.t) { const x = bought.get(h.t) ?? { t: h.t, name: h.name, funds: [] }; if (!x.funds.includes(f.name)) x.funds.push(f.name); bought.set(h.t, x); }
+      for (const h of [...f.sold, ...f.reduced]) if (h.t) { const x = sold.get(h.t) ?? { t: h.t, name: h.name, funds: [] }; if (!x.funds.includes(f.name)) x.funds.push(f.name); sold.set(h.t, x); }
+    }
+    const top = (m: Map<string, { t: string; name: string; funds: string[] }>) => [...m.values()].filter((x) => x.funds.length > 1).sort((a, b) => b.funds.length - a.funds.length).slice(0, 6);
+    return { bought: top(bought), sold: top(sold) };
+  }, [funds]);
+
   if (funds === null) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!funds.length) return <section className="card"><p className="muted">Fund data isn&apos;t available yet.</p></section>;
   const f = funds[sel];
+  const changes = { new: f.new, added: f.added, reduced: f.reduced, sold: f.sold }[tab];
   return (
     <>
       <section className="card">
-        <p className="muted small">From each fund&apos;s quarterly SEC 13F filing: US stocks they held at quarter end. Filings are due 45 days after each quarter, so these positions are 6–20 weeks old, and short positions aren&apos;t reported.</p>
-        <div className="chips">{funds.map((x, i) => <button key={x.cik} className={`chip${i === sel ? " on" : ""}`} onClick={() => setSel(i)}>{x.name}</button>)}</div>
+        <h1>What big funds are doing</h1>
+        <p className="muted">Every quarter, investment funds managing over $100M must publish their US stock holdings (an SEC &quot;13F&quot; filing). Compare two quarters and you see what they bought and sold.</p>
+        <details className="howto"><summary>How to read this</summary>
+          <ul>
+            <li>Filings are due 45 days after each quarter ends, so positions are <strong>6–20 weeks old</strong> when you see them. The fund may have traded since.</li>
+            <li>Only US stocks and ETFs they own are reported. Short bets, cash and most foreign holdings aren&apos;t.</li>
+            <li>&quot;% of portfolio&quot; is the holding&apos;s share of everything the fund reported.</li>
+          </ul>
+        </details>
       </section>
+
+      {consensus.bought.length || consensus.sold.length ? (
+        <div className="twocol">
+          <section className="card"><h2>Bought by several funds <span className="muted small">new or added, latest quarter</span></h2>
+            <ul className="compact-list">{consensus.bought.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="up">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
+          </section>
+          <section className="card"><h2>Sold by several funds <span className="muted small">cut or exited</span></h2>
+            <ul className="compact-list">{consensus.sold.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="down">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
+          </section>
+        </div>
+      ) : null}
+
       <section className="card">
-        <h2>{f.name} <span className="muted small">{f.who}</span></h2>
-        <p className="small">{q(f.period)} filing (filed {new Date(f.filed + "T12:00:00").toLocaleDateString()}): {f.count.toLocaleString()} stocks worth ${fmtBig(f.total)}{f.prevPeriod ? `, compared with ${q(f.prevPeriod)}` : ""}.</p>
+        <h2>Pick a fund</h2>
+        <div className="scroller">{funds.map((x, i) => <button key={x.cik} className={`chip${i === sel ? " on" : ""}`} onClick={() => { setSel(i); setTab("new"); }}>{x.name}</button>)}</div>
+        <div className="fund-head">
+          <div><h2 className="fund-name">{f.name}</h2><div className="muted small">{f.who}</div></div>
+          <dl className="stats compact">
+            <div><dt>Reported holdings</dt><dd className="mono">${fmtBig(f.total)}</dd></div>
+            <div><dt>Stocks</dt><dd className="mono">{f.count.toLocaleString()}</dd></div>
+            <div><dt>As of</dt><dd>{q(f.period)}</dd></div>
+            <div><dt>Filed</dt><dd>{new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</dd></div>
+          </dl>
+        </div>
       </section>
-      <div className="grid">
-        <section className="card"><h2>Largest holdings</h2><HoldingList items={f.top} show="pct" /></section>
-        <section className="card"><h2>New positions</h2><HoldingList items={f.new} show="chg" /></section>
-        <section className="card"><h2>Added to</h2><HoldingList items={f.added} show="chg" /></section>
-        <section className="card"><h2>Cut</h2><HoldingList items={f.reduced} show="chg" /></section>
-        <section className="card"><h2>Sold completely</h2><HoldingList items={f.sold} show="chg" /></section>
+
+      <div className="twocol">
+        <section className="card">
+          <h2>What changed <span className="muted small">{f.prevPeriod ? `vs ${q(f.prevPeriod)}` : ""}</span></h2>
+          <div className="seg wrap">{TABS.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} ({({ new: f.new, added: f.added, reduced: f.reduced, sold: f.sold })[k].length})</button>)}</div>
+          <HoldingRows items={changes} />
+        </section>
+        <section className="card">
+          <h2>Largest holdings</h2>
+          <HoldingRows items={f.top} maxPct={f.top[0]?.pct} />
+        </section>
       </div>
     </>
   );
@@ -73,12 +133,15 @@ export function FundHolders({ symbol }: { symbol: string }) {
   if (!rows?.length) return null;
   return (
     <section className="card">
-      <h2>Big funds <span className="muted small">13F filings, positions 6–20 weeks old</span></h2>
-      <ul className="news">{rows.map(({ fund, period, h }) => (
-        <li key={fund}><strong>{fund}</strong>{" "}
-          {h.change === "sold" ? <span className="down">sold its entire stake</span> : <>holds ${fmtBig(h.value)} ({share(h.pct)} of its portfolio)</>}
-          {h.change === "new" ? <span className="up"> · new position</span> : h.change === "added" ? <span className="up"> · added {fmtPct(h.chgPct, 0)}</span> : h.change === "reduced" ? <span className="down"> · cut {fmtPct(h.chgPct, 0)}</span> : null}
-          <div className="muted small">{q(period)}</div></li>
+      <h2>Big funds <span className="muted small">latest quarterly filings, 6–20 weeks old</span></h2>
+      <ul className="holdings">{rows.map(({ fund, period, h }) => (
+        <li key={fund}>
+          <div className="h-name"><strong>{fund}</strong><span className="muted small">{q(period)}</span></div>
+          <div className="h-right">
+            <div className="mono">{h.change === "sold" ? "—" : <>${fmtBig(h.value)}<span className="muted small"> · {share(h.pct)} of fund</span></>}</div>
+            <Badge h={h} />
+          </div>
+        </li>
       ))}</ul>
       <Link href="/insiders?view=funds" className="small muted">See all funds →</Link>
     </section>

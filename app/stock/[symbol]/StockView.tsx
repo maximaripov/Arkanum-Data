@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
-import { InsiderTable } from "@/components/InsiderTable";
+import { TradeList } from "@/components/TradeList";
 import { FundHolders } from "@/components/FundsView";
 import { useWatchlist } from "@/components/useWatchlist";
 import { fmtBig, fmtPct } from "@/lib/format";
@@ -109,8 +109,9 @@ export function StockView({ symbol }: { symbol: string }) {
 
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
-          <h2>Insider transactions <span className="muted small">SEC Form 4, latest 25 filings</span></h2>
-          {insiders === null ? <p className="muted">Loading from SEC…</p> : <InsiderTable trades={insiders} />}
+          <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
+          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Buys by several insiders are the strongest signal; grants and option exercises are routine pay.</p>
+          {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} />}
         </section>
       ) : null}
     </div>

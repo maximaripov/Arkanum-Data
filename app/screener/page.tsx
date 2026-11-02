@@ -37,6 +37,15 @@ const PRESETS: Record<string, Partial<Record<Key, Range>>> = {
   "Insider buying": { ins: [100, ""] },
 };
 
+const PRESET_HELP: Record<string, string> = {
+  "Profitable growers": "Revenue up 20%+ a year with at least 10% net margin.",
+  "Quality": "High return on equity, solid margins and modest debt.",
+  "Dividend payers": "Pays out 20–75% of profit, generates cash, not over-borrowed.",
+  "Cash machines": "Turns 20%+ of sales into free cash flow.",
+  "Fast growers": "Revenue up 50%+ a year (often unprofitable).",
+  "Insider buying": "Executives or directors bought $100K+ on the open market in the last 30 days.",
+};
+
 export default function Screener() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [meta, setMeta] = useState<{ updated: string } | null>(null);
@@ -80,12 +89,14 @@ export default function Screener() {
     return [...counts].sort((a, b) => a[0].localeCompare(b[0]));
   }, [rows, sector]);
 
-  const changed = () => { setPage(0); setActive(null); };
+  const [preset, setPreset] = useState<string | null>(null);
+  const activeCount = Object.values(f).filter(([lo, hi]) => lo !== "" || hi !== "").length + (industry !== "All" ? 1 : 0) + (exch !== "All" ? 1 : 0);
+  const changed = () => { setPage(0); setActive(null); setPreset(null); };
   const set = (k: Key, i: 0 | 1, v: string) => { changed(); setF((p) => ({ ...p, [k]: (i ? [p[k][0], v === "" ? "" : +v] : [v === "" ? "" : +v, p[k][1]]) as Range })); };
   const apply = (s: SavedScreen) => {
     setF({ ...empty(), ...(s.filter.ranges as Record<Key, Range>) });
     setExch(s.filter.exch ?? "All"); setSector(s.filter.sector ?? "All"); setIndustry(s.filter.industry ?? "All"); setText(s.filter.text ?? "");
-    setPage(0); setActive(s.id);
+    setPage(0); setActive(s.id); setPreset(null);
   };
   const reset = () => { setF(empty()); setExch("All"); setSector("All"); setIndustry("All"); setText(""); changed(); };
   const PAGE = 100;
@@ -94,7 +105,11 @@ export default function Screener() {
     <div className="stack">
       <section className="card">
         <h1>Stock screener</h1>
-        <div className="seg big"><button className={tab === "sec" ? "on" : ""} onClick={() => setTab("sec")}>Fundamentals (SEC)</button><button className={tab === "tv" ? "on" : ""} onClick={() => setTab("tv")}>Prices &amp; valuation (TradingView)</button></div>
+        <p className="muted">Find companies by how their business is doing: growth, profits, debt and cash, from their official filings.</p>
+        <div className="tabs" role="tablist">
+          <button role="tab" aria-selected={tab === "sec"} className={tab === "sec" ? "on" : ""} onClick={() => setTab("sec")}>Business fundamentals</button>
+          <button role="tab" aria-selected={tab === "tv"} className={tab === "tv" ? "on" : ""} onClick={() => setTab("tv")}>Price &amp; valuation</button>
+        </div>
       </section>
       {tab === "tv" ? (
         <section className="card">
@@ -103,10 +118,7 @@ export default function Screener() {
         </section>
       ) : (<>
       <section className="card">
-        <p className="muted small">
-          {rows ? `${rows.length.toLocaleString()} US stocks` : "Loading…"}
-          {meta ? ` · updated ${new Date(meta.updated).toLocaleDateString()} from SEC filings: the last 4 reported quarters where available, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year` : ""}
-        </p>
+        <h2>Quick screens</h2>
         {screens.length ? (
           <div className="chips">
             <span className="small muted">Your screens:</span>
@@ -119,12 +131,17 @@ export default function Screener() {
           </div>
         ) : null}
         <div className="chips">
-          {Object.keys(PRESETS).map((p) => <button key={p} className="chip" onClick={() => { reset(); setF({ ...empty(), ...PRESETS[p] }); }}>{p}</button>)}
-          <button className="chip" onClick={reset}>Reset</button>
+          {Object.keys(PRESETS).map((p) => <button key={p} className={`chip${preset === p ? " on" : ""}`} title={PRESET_HELP[p]} onClick={() => { reset(); setF({ ...empty(), ...PRESETS[p] }); setPreset(p); }}>{p}</button>)}
+          {preset || activeCount || sector !== "All" || text ? <button className="chip" onClick={() => { reset(); setPreset(null); }}>Clear</button> : null}
         </div>
+        {preset ? <p className="small muted">{PRESET_HELP[preset]}</p> : null}
+        <div className="filterbar">
+          <input className="filter-input" value={text} onChange={(e) => { changed(); setText(e.target.value); }} placeholder="Name or ticker, e.g. bank" aria-label="Name or ticker" />
+          <select className="filter-input" style={{ flex: "0 1 14rem" }} value={sector} onChange={(e) => { changed(); setSector(e.target.value); setIndustry("All"); }} aria-label="Sector"><option value="All">All sectors</option>{sectors.map((x) => <option key={x}>{x}</option>)}</select>
+        </div>
+        <details className="more">
+          <summary>Custom filters{activeCount ? ` (${activeCount} active)` : ""}</summary>
         <div className="filters">
-          <label>Name or ticker<input value={text} onChange={(e) => { changed(); setText(e.target.value); }} placeholder="e.g. bank" /></label>
-          <label>Sector<select value={sector} onChange={(e) => { changed(); setSector(e.target.value); setIndustry("All"); }}><option>All</option>{sectors.map((x) => <option key={x}>{x}</option>)}</select></label>
           <label>Industry<select value={industry} onChange={(e) => { changed(); setIndustry(e.target.value); }}><option>All</option>{industries.map(([x, n]) => <option key={x} value={x}>{x} ({n})</option>)}</select></label>
           <label>Exchange<select value={exch} onChange={(e) => { changed(); setExch(e.target.value); }}>{["All", "Nasdaq", "NYSE", "CBOE"].map((x) => <option key={x}>{x}</option>)}</select></label>
           {COLS.map((c) => (
@@ -146,9 +163,11 @@ export default function Screener() {
           <button type="submit">Save screen</button>
         </form>
         <p className="muted small">Saved screens stay on this device. With notifications on, your daily digest tells you when new companies start matching one.</p>
+        </details>
       </section>
       <section className="card">
         <h2>{result.length.toLocaleString()} matches</h2>
+        <p className="muted small">{rows ? `Out of ${rows.length.toLocaleString()} US companies` : "Loading…"}{meta ? ` · from SEC filings, updated ${new Date(meta.updated).toLocaleDateString()}. Figures cover the last 4 reported quarters where available, otherwise the last fiscal year. Tap a column to sort.` : ""}</p>
         <p className="muted small">Margins and ROE use reported net income, so a one-time gain or loss (an asset sale, an investment revaluation) can distort them. Check the stock page before drawing conclusions.</p>
         <div className="tablewrap">
           <table className="table">

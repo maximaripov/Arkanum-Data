@@ -155,3 +155,10 @@ Decision: one free public version in this repo; the personal-only features were 
 - **Daily digest** ([scripts/daily-digest.mjs](../scripts/daily-digest.mjs)) replaces the market-close briefing: biggest insider buys, cluster buys, 13F filings and coming events for everyone; per device, insider trades, today's 8-Ks and fund moves in the watchlist, plus saved-screen changes.
 - **Economic calendar** is its own data file ([scripts/build-events.mjs](../scripts/build-events.mjs)).
 - **About page:** disclaimer, data sources/attribution, privacy.
+
+## Round 9: friendlier UI, especially Insiders (2026-11-02)
+
+- **Insiders:** plain-language intro with "How to read this"; "Several insiders buying" as cards (company, who, when; top 6 + show all); trades as sentences ("James Healy (director) bought 1,938,960 shares at $21.00") grouped by filing day, with "Show more"; one filter bar (Buys/Sells/All, executives-only switch, size buttons, search), extra options folded away; filters kept in the address bar for sharing. Names/titles tidied from SEC's "SURNAME FIRST" capitals ([components/TradeList.tsx](../components/TradeList.tsx)).
+- **Big funds:** intro and "How to read this"; "Bought/Sold by several funds" across all 13 funds (each fund counted once per company); fund picker; summary stats; "What changed" tabs; largest holdings with size bars.
+- **Fixes found while redesigning:** clusters averaging under $25K per insider (employee share-purchase plans, e.g. TSMC's 30 "insiders") no longer top the lists (Insiders, Markets, digest); Form 4s listing several tickers ("HEI, HEI.A") keep the first; "now owns" hidden when smaller than the trade (direct vs indirect holdings); the ?view=funds link no longer gets wiped.
+- **Elsewhere:** stock pages use the same trade sentences; screener leads with described quick screens, search and sector, custom filters folded; phone nav on one line; TradingView ticker-tape credit no longer overlaps.
