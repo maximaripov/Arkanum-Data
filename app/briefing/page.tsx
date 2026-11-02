@@ -4,6 +4,19 @@ import Link from "next/link";
 import { getPasscode, register, setPasscode } from "@/lib/alertsClient";
 import { fmtBig, fmtPct, fmtPrice, tone } from "@/lib/format";
 import type { Briefing, Move } from "@/lib/briefing";
+import type { MarketStatus } from "@/lib/marketStatus";
+
+const dayName = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+
+/** Which day is shown and why: the previous trading day while the market is open,
+ *  today's close once it has closed (or the last trading day on weekends/holidays). */
+function dayNote(b: Briefing, s?: MarketStatus) {
+  if (!s) return null;
+  if (s.open) return `Markets are open, so this is the previous trading day: ${dayName(b.marketDate)}. Today's summary arrives after the 4 PM close.`;
+  if (s.lastSession === s.today && b.marketDate < s.today)
+    return `Markets closed at 4 PM. Today's summary usually arrives by 4:20 PM ET; until then this is ${dayName(b.marketDate)}.`;
+  return `Markets are closed. This is the latest trading day: ${dayName(b.marketDate)}.`;
+}
 
 const KIND = { econ: "Economy", fed: "Fed", earnings: "Earnings" } as const;
 
@@ -106,6 +119,7 @@ function Setup({ onPasscode }: { onPasscode: () => void }) {
 
 export default function BriefingPage() {
   const [b, setB] = useState<Briefing | null | "none" | "locked">(null);
+  const [status, setStatus] = useState<MarketStatus | undefined>();
   const [n, setN] = useState(0);
   useEffect(() => {
     const pass = getPasscode();
@@ -113,6 +127,7 @@ export default function BriefingPage() {
     fetch("/api/alerts/briefing", { headers: { "x-passcode": pass } }).then(async (r) => {
       if (r.status === 401) return setB("locked");
       const d = await r.json();
+      setStatus(d.status);
       if (d.empty) return setB("none");
       // Fill any missing sections so an older or partial briefing still renders.
       setB({ headline: [], markets: [], sectors: [], breadth: null, movers: { gainers: [], losers: [] }, watchlist: [], levels: [], insiders: { watchlist: [], top: [], filed: null }, catalysts: [], notes: [], ...d });
@@ -128,6 +143,7 @@ export default function BriefingPage() {
         <>
           <section className="card">
             <h1>{b.title}</h1>
+            {dayNote(b, status) ? <p className="daynote">{dayNote(b, status)}</p> : null}
             <p className="muted small">Generated {new Date(b.generated).toLocaleString()}</p>
             <ul className="headline">{b.headline.map((l) => <li key={l}>{l}</li>)}</ul>
           </section>

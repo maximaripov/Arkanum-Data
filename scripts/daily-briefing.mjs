@@ -9,6 +9,7 @@
 import { readFile } from "node:fs/promises";
 
 const DRY = process.argv.includes("--dry-run");
+const NO_PUSH = process.argv.includes("--no-push"); // update the Briefing page without notifying
 const SITE = (process.env.SITE_URL || "https://foresightscreener.vercel.app").replace(/\/$/, "");
 // Inside GitHub Actions the job asks GitHub for a signed identity token; the site checks
 // it against GitHub's keys. Locally, ALERTS_SECRET can be used instead.
@@ -64,12 +65,24 @@ const SECTORS = [["XLK", "Technology"], ["XLF", "Financials"], ["XLV", "Health C
 const levelSymbols = Object.keys(state.levels ?? {});
 const all = [...new Set([...MARKETS.flatMap((g) => g.items.map((i) => i[0])), ...SECTORS.map((s) => s[0]), ...watchlist, ...levelSymbols])];
 
+// ---- Which trading day to summarize -------------------------------------------------
+// While the market is open, today's numbers are still moving, so the briefing covers the
+// previous trading day. Once today's session has closed, it covers today. Yahoo reports
+// the S&P 500's actual session hours, so holidays and early closes are handled.
+const spx = await getJson("https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=5d&interval=1d", { "User-Agent": "Mozilla/5.0 (Foresight personal app)" });
+const session = spx?.chart?.result?.[0]?.meta?.currentTradingPeriod?.regular;
+const nowS = Date.now() / 1000;
+const marketOpen = !!session && nowS >= session.start && nowS < session.end;
+const todayDone = !!session && nyDate(new Date(session.start * 1000)) === today && nowS >= session.end;
+// A daily bar dated today only counts once today's session is over.
+const completed = (t) => nyDate(new Date(t * 1000)) < today || todayDone;
+
 const quotes = {};
 for (let i = 0; i < all.length; i += 20) {
   const batch = all.slice(i, i + 20);
   const d = await getJson(`https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(batch.join(","))}&range=5d&interval=1d`, { "User-Agent": "Mozilla/5.0 (Foresight personal app)" });
   for (const [sym, s] of Object.entries(d ?? {})) {
-    const pts = (s?.timestamp ?? []).map((t, k) => [t, s.close?.[k]]).filter(([, c]) => c != null);
+    const pts = (s?.timestamp ?? []).map((t, k) => [t, s.close?.[k]]).filter(([t, c]) => c != null && completed(t));
     if (pts.length < 2) continue;
     const [t, last] = pts.at(-1), prev = pts.at(-2)[1];
     quotes[sym] = { last, prev, date: nyDate(new Date(t * 1000)) };
@@ -81,7 +94,7 @@ const move = (symbol, label, unit) => {
   return { symbol, label, price: q?.last ?? null, changePct, ...(unit ? { unit } : {}) };
 };
 const marketDate = quotes["^GSPC"]?.date ?? today;
-const closed = marketDate !== today;
+const closed = marketDate !== today; // summarizing an earlier day (market open now, weekend or holiday)
 
 const markets = MARKETS.map((g) => ({ title: g.title, items: g.items.map(([s, l, u]) => move(s, l, u)) }));
 const sectors = SECTORS.map(([s, l]) => move(s, l)).filter((m) => m.changePct != null).sort((a, b) => b.changePct - a.changePct);
@@ -91,12 +104,18 @@ const wl = watchlist.map((s) => move(s, s)).filter((m) => m.price != null);
 let breadth = null, movers = { gainers: [], losers: [] };
 try {
   const sc = JSON.parse(await readFile("public/data/screener.json", "utf8"));
+  // The screener's daily change is only for the summarized day if its prices were taken
+  // outside today's open session (an intraday snapshot would mix in today's moves).
+  const builtAt = Date.parse(sc.updated) / 1000;
+  if (session && builtAt >= session.start && builtAt < session.end) throw new Error("intraday");
   const rows = sc.rows.map((r) => Object.fromEntries(sc.fields.map((f, i) => [f, r[i]])));
   breadth = { up: rows.filter((r) => r.chg > 0).length, down: rows.filter((r) => r.chg < 0).length, flat: rows.filter((r) => r.chg === 0).length };
   const big = rows.filter((r) => r.mcap >= 10e9 && r.chg != null).sort((a, b) => b.chg - a.chg);
   const toMove = (r) => ({ symbol: r.t, label: r.t, price: r.p, changePct: r.chg });
   movers = { gainers: big.slice(0, 3).map(toMove), losers: big.slice(-3).reverse().map(toMove) };
-} catch { notes.push("Screener data unavailable, so no market breadth."); }
+} catch (e) {
+  notes.push(e.message === "intraday" ? "Breadth and biggest movers appear in briefings built after the close." : "Screener data unavailable, so no market breadth.");
+}
 
 // ---- Your price levels -------------------------------------------------------------
 const levels = [];
@@ -104,7 +123,7 @@ for (const [symbol, list] of Object.entries(state.levels ?? {})) {
   const q = quotes[symbol];
   if (!q) continue;
   for (const l of list) {
-    const crossed = closed ? false : (q.prev - l.price) * (q.last - l.price) <= 0 && q.prev !== q.last;
+    const crossed = (q.prev - l.price) * (q.last - l.price) <= 0 && q.prev !== q.last;
     const distPct = ((l.price - q.last) / q.last) * 100;
     if (crossed || Math.abs(distPct) <= 5) levels.push({ symbol, price: l.price, note: l.note, last: q.last, distPct, crossed });
   }
@@ -200,7 +219,7 @@ const nextUp = catalysts.filter((c) => c.kind !== "earnings" || wset.has(c.title
 const crossed = levels.filter((l) => l.crossed);
 
 const headline = [
-  closed ? `US markets were closed today. Last close (${pretty(marketDate)}): S&P 500 ${pct(sp)}, Nasdaq ${pct(nq)}.` : `S&P 500 ${pct(sp)}, Nasdaq ${pct(nq)}, 10-year yield ${pct(tnx)}.`,
+  `${closed ? `${pretty(marketDate)}: ` : ""}S&P 500 ${pct(sp)}, Nasdaq ${pct(nq)}, 10-year yield ${pct(tnx)}.`,
   sectors.length ? `Best sector: ${sectors[0].label} ${pct(sectors[0])}. Worst: ${sectors.at(-1).label} ${pct(sectors.at(-1))}.` : null,
   breadth ? `${breadth.up.toLocaleString()} stocks rose and ${breadth.down.toLocaleString()} fell.` : null,
   topWl.length ? `Your biggest movers: ${topWl.map((m) => `${m.symbol} ${pct(m)}`).join(", ")}.` : null,
@@ -210,7 +229,7 @@ const headline = [
 ].filter(Boolean);
 
 const body = [
-  closed ? `Markets closed. Last: S&P ${pct(sp)} · Nasdaq ${pct(nq)}` : `S&P ${pct(sp)} · Nasdaq ${pct(nq)} · 10Y ${pct(tnx)}`,
+  `S&P ${pct(sp)} · Nasdaq ${pct(nq)} · 10Y ${pct(tnx)}`,
   topWl.length ? `You: ${topWl.map((m) => `${m.symbol} ${pct(m)}`).join(", ")}` : null,
   crossed.length ? `Crossed: ${crossed.map((l) => `${l.symbol} ${l.price}`).join(", ")}` : insiders.watchlist.length ? `Insider buy: ${insiders.watchlist.map((t) => t.symbol).join(", ")}` : null,
   nextUp.length ? `Next: ${nextUp.map((c) => `${c.title.replace(/ \(watchlist\)/, "")} ${weekday(c.date)}`).join(" · ")}` : null,
@@ -219,7 +238,7 @@ const body = [
 const briefing = {
   generated: new Date().toISOString(),
   marketDate, closed,
-  title: closed ? `Markets closed · ${pretty(today)}` : `Market close · ${pretty(marketDate)}`,
+  title: `Market close · ${pretty(marketDate)}`,
   body, headline, markets, sectors, breadth, movers, watchlist: wl, levels, insiders, catalysts, notes,
 };
 
@@ -231,7 +250,7 @@ if (DRY || !SECRET) {
 const res = await fetch(`${SITE}/api/alerts/send`, {
   method: "POST",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${SECRET}` },
-  body: JSON.stringify(briefing),
+  body: JSON.stringify({ ...briefing, ...(NO_PUSH ? { notify: false } : {}) }),
 });
 const out = await res.json().catch(() => ({}));
 console.log(`Send: HTTP ${res.status}`, out);

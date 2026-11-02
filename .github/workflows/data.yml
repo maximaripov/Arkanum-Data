@@ -10,6 +10,11 @@ on:
     - cron: "2 21 * * 1-5" # 4:02 PM EST (winter)
     - cron: "2 20 * * 1-5" # 4:02 PM EDT (summer)
   workflow_dispatch:
+    inputs:
+      notify:
+        description: "Send the briefing notification to your phone"
+        type: boolean
+        default: true
 permissions:
   contents: write
   id-token: write # lets the briefing step prove to the site that it is this repo's job
@@ -50,7 +55,7 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           SITE_URL: https://foresightscreener.vercel.app
-        run: node scripts/daily-briefing.mjs
+        run: node scripts/daily-briefing.mjs ${{ github.event_name == 'workflow_dispatch' && !inputs.notify && '--no-push' || '' }}
       - run: node scripts/build-insiders.mjs --days 30
       - name: Commit data
         run: |
