@@ -1,40 +1,51 @@
 "use client";
-// Foresight's own data on the Markets page: this week's biggest officer/director buys
-// and cluster buys (SEC Form 4).
+// Foresight's own data on the Markets page: stocks executives and directors bought this
+// week, strongest first (several insiders, then size). SEC Form 4.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
+import { personName, roleLabel } from "./TradeList";
 import type { InsiderTrade } from "@/lib/sec";
 
+const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+type Row = { symbol: string; issuer: string; value: number; people: string[] };
+
 export function InsiderHighlights() {
-  const [rows, setRows] = useState<{ symbol: string; issuer: string; value: number; insiders: string[] }[] | null>(null);
+  const [rows, setRows] = useState<Row[] | null>(null);
   useEffect(() => {
     fetch("/data/insiders.json").then((r) => r.json()).then((d) => {
       const since = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
-      const by = new Map<string, { symbol: string; issuer: string; value: number; insiders: Set<string> }>();
+      const by = new Map<string, Row & { owners: Set<string> }>();
       for (const t of d.trades as InsiderTrade[]) {
         if (t.code !== "P" || !isExecOrDirector(t) || t.filed < since || !t.value) continue;
-        const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, insiders: new Set<string>() };
-        x.value += t.value; x.insiders.add(t.owner); by.set(t.symbol, x);
+        const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, people: [], owners: new Set<string>() };
+        x.value += t.value;
+        if (!x.owners.has(t.owner)) { x.owners.add(t.owner); x.people.push(`${personName(t.owner)} (${roleLabel(t.role)})`); }
+        by.set(t.symbol, x);
       }
       // Several insiders averaging under ~$25K each is usually an employee share-purchase plan.
-      const strong = (x: { value: number; insiders: Set<string> }) => x.insiders.size < 2 || x.value / x.insiders.size >= 25_000;
-      setRows([...by.values()].filter(strong).sort((a, b) => b.insiders.size - a.insiders.size || b.value - a.value).slice(0, 8).map((x) => ({ ...x, insiders: [...x.insiders] })));
+      const strong = (x: Row) => x.people.length < 2 || x.value / x.people.length >= 25_000;
+      setRows([...by.values()].filter(strong).sort((a, b) => b.people.length - a.people.length || b.value - a.value).slice(0, 6));
     }).catch(() => setRows([]));
   }, []);
   return (
     <section className="card">
-      <h2>Insiders buying this week <span className="muted small">officers &amp; directors, SEC Form 4</span></h2>
+      <div className="card-head"><h2>Insiders buying this week</h2><Link href="/insiders" className="small">See all ›</Link></div>
+      <p className="muted small">Executives and directors buying their own company&apos;s stock with their own money.</p>
       {rows === null ? <p className="muted">Loading…</p> : !rows.length ? <p className="muted">No open-market buys filed in the last 7 days.</p> : (
-        <ul className="news">{rows.map((r) => (
+        <ul className="rows">{rows.map((r) => (
           <li key={r.symbol}>
-            <Link href={`/stock/${r.symbol}`}><strong>{r.symbol}</strong></Link> <span className="muted small">{r.issuer}</span>
-            <div className="small">{r.insiders.length > 1 ? <span className="up">{r.insiders.length} insiders</span> : r.insiders[0]} bought ${fmtBig(r.value)}</div>
+            <Link href={`/stock/${r.symbol}`} className="row-link">
+              <div className="row-main">
+                <div><strong>{r.symbol}</strong> <span className="muted">{titleCase(r.issuer)}</span></div>
+                <div className="small muted ellipsis-1">{r.people.length > 1 ? <span className="up">{r.people.length} insiders · </span> : null}{r.people.slice(0, 2).join(", ")}{r.people.length > 2 ? "…" : ""}</div>
+              </div>
+              <div className="row-value up mono">${fmtBig(r.value)}</div>
+            </Link>
           </li>
         ))}</ul>
       )}
-      <Link href="/insiders" className="small muted">All insider trades and big-fund moves →</Link>
     </section>
   );
 }

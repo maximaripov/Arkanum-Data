@@ -66,6 +66,16 @@ export function StockView({ symbol }: { symbol: string }) {
           <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
           <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
           <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses.</p>
+          <details className="howto"><summary>What do these mean?</summary>
+            <dl className="glossary small">
+              <dt>Net margin</dt><dd>Profit as a share of sales: how many cents of each dollar of revenue the company keeps.</dd>
+              <dt>Revenue growth</dt><dd>Sales compared with the same period a year earlier.</dd>
+              <dt>Return on equity</dt><dd>Profit as a share of the shareholders&apos; money in the business. Above ~15% is generally strong.</dd>
+              <dt>Debt/equity</dt><dd>Debt compared with shareholders&apos; equity. Above ~2 means heavily borrowed (normal for some industries).</dd>
+              <dt>Free cash flow</dt><dd>Cash the business generates after paying for buildings and equipment: what&apos;s left for dividends, buybacks or debt.</dd>
+              <dt>Payout ratio</dt><dd>Share of profit paid out as dividends. Above ~80% can be hard to sustain.</dd>
+            </dl>
+          </details>
         </section>
       ) : null}
 

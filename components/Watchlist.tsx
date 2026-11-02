@@ -1,6 +1,6 @@
 "use client";
-// Your watchlist: prices from TradingView's quotes widget (delayed for stocks), plus a
-// list to open or remove each stock. Stored on this device.
+// Your watchlist: one card per stock with TradingView's quote (price, change, mini chart),
+// a link to the stock's page and a remove button. Stored on this device.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "./useWatchlist";
@@ -9,30 +9,34 @@ import { tvSymbol } from "@/lib/tv";
 
 export function Watchlist() {
   const { list, toggle } = useWatchlist();
-  const [ex, setEx] = useState<Record<string, string | null>>({});
+  const [co, setCo] = useState<Record<string, { name: string | null; exchange: string | null }>>({});
   const key = list.join(",");
   useEffect(() => {
     if (!key) return;
-    fetch(`/api/company?symbols=${encodeURIComponent(key)}`).then((r) => r.json()).then((rows: { ticker: string; exchange: string | null }[]) => {
-      setEx(Object.fromEntries(rows.map((r) => [r.ticker, r.exchange])));
+    fetch(`/api/company?symbols=${encodeURIComponent(key)}`).then((r) => r.json()).then((rows: { ticker: string; name: string | null; exchange: string | null }[]) => {
+      setCo(Object.fromEntries(rows.map((r) => [r.ticker, { name: r.name, exchange: r.exchange }])));
     }).catch(() => {});
   }, [key]);
-  const ready = list.length > 0 && list.every((s) => s in ex);
   return (
     <section className="card">
-      <h2>Your watchlist</h2>
-      {!list.length ? <p className="muted">Empty. Search for a company above and tap ☆ on its page.</p> : (
-        <>
-          {ready ? (
-            <TradingView widget="market-quotes" height={Math.min(80 + list.length * 46, 640)} config={{
-              width: "100%", height: "100%", showSymbolLogo: true,
-              symbolsGroups: [{ name: "Watchlist", symbols: list.map((s) => ({ name: tvSymbol(s, ex[s]), displayName: s })) }],
-            }} />
-          ) : <p className="muted">Loading…</p>}
-          <div className="chips">{list.map((s) => (
-            <span key={s} className="chip saved"><Link href={`/stock/${encodeURIComponent(s)}`}><button>{s}</button></Link><button onClick={() => toggle(s)} aria-label={`Remove ${s}`}>×</button></span>
-          ))}</div>
-        </>
+      <div className="card-head"><h2>Your watchlist</h2><span className="muted small">prices delayed 15 min</span></div>
+      {!list.length ? (
+        <div className="empty">
+          <p><strong>Your watchlist is empty.</strong></p>
+          <p className="muted">Search for a company at the top, open it, and tap ☆ to follow it here. Your daily digest will then tell you when its insiders trade or big funds move.</p>
+        </div>
+      ) : (
+        <div className="quote-grid">
+          {list.map((s) => (
+            <div key={s} className="quote-card">
+              {s in co ? <TradingView widget="mini-symbol-overview" height={140} config={{ symbol: tvSymbol(s, co[s]?.exchange), width: "100%", height: "100%", dateRange: "1D", chartOnly: false, noTimeScale: true }} label="TradingView" /> : <div style={{ height: 140 }} />}
+              <div className="quote-foot">
+                <Link href={`/stock/${encodeURIComponent(s)}`} className="quote-link">Open {s} ›</Link>
+                <button className="icon" onClick={() => toggle(s)} aria-label={`Remove ${s} from watchlist`} title="Remove">×</button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );

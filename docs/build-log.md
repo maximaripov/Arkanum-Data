@@ -162,3 +162,11 @@ Decision: one free public version in this repo; the personal-only features were 
 - **Big funds:** intro and "How to read this"; "Bought/Sold by several funds" across all 13 funds (each fund counted once per company); fund picker; summary stats; "What changed" tabs; largest holdings with size bars.
 - **Fixes found while redesigning:** clusters averaging under $25K per insider (employee share-purchase plans, e.g. TSMC's 30 "insiders") no longer top the lists (Insiders, Markets, digest); Form 4s listing several tickers ("HEI, HEI.A") keep the first; "now owns" hidden when smaller than the trade (direct vs indirect holdings); the ?view=funds link no longer gets wiped.
 - **Elsewhere:** stock pages use the same trade sentences; screener leads with described quick screens, search and sector, custom filters folded; phone nav on one line; TradingView ticker-tape credit no longer overlaps.
+
+## Round 10: same treatment for Markets, Calendar, Digest (2026-11-02)
+
+- **Markets:** watchlist as quote cards (price, change, mini chart via TradingView), two per row on phones, with Open/remove and an empty-state guide; "Insiders buying this week" with readable names and amounts; new "Coming up" card (next 4 economic events).
+- **Calendar:** grouped This week / Next week / Later; date blocks; plain explanation per release ("PCE: the Fed's preferred inflation measure") with "What is this?"; "Add to calendar" (.ics, Eastern time) ([lib/events.ts](../lib/events.ts)).
+- **Digest:** "In 30 seconds" summary; your watchlist's insider trades as sentences and fund moves grouped by stock; market-wide sections as tappable rows; "Get this on your phone" prompt when notifications are off; arrival time stated as about 4:30 PM ET (GitHub starts scheduled runs late).
+- **Stock page:** "What do these mean?" glossary for the fundamentals.
+- TradingView credit kept under every widget (their terms ask for attribution as designed).
