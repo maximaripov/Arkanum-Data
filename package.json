@@ -12,6 +12,7 @@
   "dependencies": {
     "@vercel/blob": "^2.8.2",
     "fast-xml-parser": "^5.2.0",
+    "jose": "^6.2.15",
     "lightweight-charts": "^5.0.0",
     "next": "16.4.3",
     "react": "19.3.1",

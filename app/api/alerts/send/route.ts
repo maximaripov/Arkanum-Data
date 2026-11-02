@@ -4,7 +4,7 @@ import { pushTo, readState, secretOk, writeBriefing, writeState } from "@/lib/al
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  if (!secretOk(req)) return Response.json({ error: "unauthorized" }, { status: 401 });
+  if (!(await secretOk(req))) return Response.json({ error: "unauthorized" }, { status: 401 });
   const briefing = await req.json().catch(() => null);
   if (!briefing?.title || !briefing?.body) return Response.json({ error: "briefing needs title and body" }, { status: 400 });
   await writeBriefing(briefing);

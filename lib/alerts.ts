@@ -4,6 +4,7 @@
 import { get, put } from "@vercel/blob";
 import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 export type Level = { id: string; price: number; note: string };
 export type AlertState = {
@@ -40,9 +41,23 @@ function same(a: string | null | undefined, b: string | undefined) {
 /** The passcode you type once on each device. */
 export const passcodeOk = (req: Request, body?: { passcode?: string }) =>
   same(body?.passcode ?? req.headers.get("x-passcode"), process.env.ALERTS_PASSCODE);
-/** The long secret the nightly GitHub job uses. */
-export const secretOk = (req: Request) =>
-  same(req.headers.get("authorization")?.replace(/^Bearer /, ""), process.env.ALERTS_SECRET);
+// The nightly GitHub job proves who it is with a GitHub-signed token (OIDC), so no
+// shared secret has to be copied into GitHub. ALERTS_SECRET still works for manual runs.
+const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
+const OWNER_ID = "351230404"; // github.com/maximaripov
+const REPO = "maximaripov/foresight";
+
+export async function secretOk(req: Request) {
+  const token = req.headers.get("authorization")?.replace(/^Bearer /, "");
+  if (!token) return false;
+  if (same(token, process.env.ALERTS_SECRET)) return true;
+  try {
+    const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: "https://token.actions.githubusercontent.com", audience: "foresight-alerts" });
+    return payload.repository_owner_id === OWNER_ID && String(payload.repository).toLowerCase() === REPO && payload.ref === "refs/heads/main";
+  } catch {
+    return false;
+  }
+}
 
 export type PushMessage = { title: string; body: string; url: string; tag?: string };
 

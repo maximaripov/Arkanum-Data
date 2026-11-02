@@ -42,7 +42,7 @@ node scripts/build-insiders.mjs --days 30 # first run ~30 min, then ~2 min/day
 
 1. On iPhone: open the site in Safari → Share → **Add to Home Screen**, then open Foresight from the Home Screen icon (iOS only allows notifications for Home Screen apps).
 2. Go to **Briefing**, enter the passcode (Vercel setting `ALERTS_PASSCODE`), tap **Turn on notifications**, then **Send a test**.
-3. The nightly GitHub job (`scripts/daily-briefing.mjs`) builds the briefing and calls `/api/alerts/send`. It needs the GitHub secret `ALERTS_SECRET` (same value as on Vercel). Optional: `FRED_API_KEY` (free at fred.stlouisfed.org) adds jobs report, CPI, PPI, retail sales and jobless claims dates.
+3. The nightly GitHub job (`scripts/daily-briefing.mjs`) builds the briefing and calls `/api/alerts/send`. It proves its identity with a GitHub-signed token (no secret to copy); the site only accepts tokens from this repo's `main` branch. Optional: `FRED_API_KEY` (free at fred.stlouisfed.org) adds jobs report, CPI, PPI, retail sales and jobless claims dates.
 
 Your watchlist and price levels sync to a private Vercel Blob store once the passcode is saved on a device, so the briefing knows what you follow.
 

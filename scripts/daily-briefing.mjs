@@ -10,7 +10,15 @@ import { readFile } from "node:fs/promises";
 
 const DRY = process.argv.includes("--dry-run");
 const SITE = (process.env.SITE_URL || "https://foresightscreener.vercel.app").replace(/\/$/, "");
-const SECRET = process.env.ALERTS_SECRET;
+// Inside GitHub Actions the job asks GitHub for a signed identity token; the site checks
+// it against GitHub's keys. Locally, ALERTS_SECRET can be used instead.
+async function githubToken() {
+  const { ACTIONS_ID_TOKEN_REQUEST_URL: url, ACTIONS_ID_TOKEN_REQUEST_TOKEN: bearer } = process.env;
+  if (!url || !bearer) return null;
+  const r = await fetch(`${url}&audience=foresight-alerts`, { headers: { Authorization: `Bearer ${bearer}` } });
+  return r.ok ? (await r.json()).value : null;
+}
+const SECRET = process.env.ALERTS_SECRET || (await githubToken());
 const FRED = process.env.FRED_API_KEY;
 const UA = process.env.SEC_USER_AGENT || "Foresight personal app (set SEC_USER_AGENT)";
 const notes = [];
@@ -214,7 +222,7 @@ const briefing = {
 };
 
 if (DRY || !SECRET) {
-  if (!SECRET && !DRY) console.log("ALERTS_SECRET not set: printing the briefing instead of sending it.");
+  if (!SECRET && !DRY) console.log("No GitHub identity token or ALERTS_SECRET: printing the briefing instead of sending it.");
   console.log(JSON.stringify({ title: briefing.title, body: briefing.body, headline, catalysts, levels, insiders, notes }, null, 2));
   process.exit(0);
 }

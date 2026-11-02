@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  id-token: write # lets the briefing step prove to the site that it is this repo's job
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,7 +34,6 @@ jobs:
           git push
       - name: Send daily briefing
         env:
-          ALERTS_SECRET: ${{ secrets.ALERTS_SECRET }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           SITE_URL: https://foresightscreener.vercel.app
         run: node scripts/daily-briefing.mjs
