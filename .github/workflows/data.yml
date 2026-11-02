@@ -31,3 +31,9 @@ jobs:
           git add public/data data
           git diff --cached --quiet || git commit -m "data: nightly refresh $(date -u +%F)"
           git push
+      - name: Send daily briefing
+        env:
+          ALERTS_SECRET: ${{ secrets.ALERTS_SECRET }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SITE_URL: https://foresightscreener.vercel.app
+        run: node scripts/daily-briefing.mjs

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { syncSoon } from "@/lib/alertsClient";
 
 export type Level = { id: string; price: number; note: string };
 const KEY = "foresight.levels";
@@ -18,6 +19,7 @@ export function useLevels(symbol: string) {
     if (next.length) all[symbol] = next; else delete all[symbol];
     try { localStorage.setItem(KEY, JSON.stringify(all)); } catch {}
     setLevels(next);
+    syncSoon();
   }, [symbol]);
   const add = (price: number, note: string) =>
     save([...levels, { id: Math.random().toString(36).slice(2, 9), price, note: note.trim() }].sort((a, b) => b.price - a.price));

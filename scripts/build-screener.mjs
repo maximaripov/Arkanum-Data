@@ -189,6 +189,11 @@ const r = (x, d = 2) => (x == null || !Number.isFinite(x) ? null : Number(x.toFi
 const fields = ["t", "n", "x", "p", "chg", "mcap", "pe", "ps", "margin", "growth", "roe", "ret1y", "offHigh", "rev", "ni", "sector", "ind", "basis"];
 const rows = [];
 let ttmCount = 0;
+// SEC lists a company's main stock first, then any other tickers filed under it:
+// share classes (GOOG), preferreds (JPM-PC) and, for banks, exchange-traded notes
+// (BMO issues dozens). Only tickers trading near the main stock's price are the same
+// equity, so only those get the company's market cap and valuation ratios.
+const mainPrice = new Map();
 for (const u of list) {
   const p = prices.get(u.ticker);
   if (!p) continue;
@@ -201,7 +206,9 @@ for (const u of list) {
   const N = useTtm ? nT.value : nF?.value;
   const basis = useTtm ? `Last 4 quarters to ${fmtEnd(rT.end)}` : rF || nF ? `Fiscal year to ${fmtEnd((rF ?? nF).end)}` : null;
   const sh = shares.get(u.cik), E = equity.get(u.cik);
-  const mcap = sh ? p.price * sh : null;
+  if (!mainPrice.has(u.cik)) mainPrice.set(u.cik, p.price);
+  const sameEquity = Math.abs(p.price / mainPrice.get(u.cik) - 1) <= 0.2;
+  const mcap = sh && sameEquity ? p.price * sh : null;
   const [sic, ind] = sicCache[u.cik] ?? ["", ""];
   rows.push([
     u.ticker, u.name, u.exchange, r(p.price),

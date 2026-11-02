@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_WATCHLIST } from "@/lib/markets";
+import { syncSoon } from "@/lib/alertsClient";
 
 const KEY = "foresight.watchlist";
 const read = (): string[] => {
@@ -21,6 +22,7 @@ export function useWatchlist() {
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     setList(next);
     window.dispatchEvent(new Event("foresight-watchlist"));
+    syncSoon();
   }, []);
   const toggle = useCallback((s: string) => { const cur = read(); save(cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]); }, [save]);
   return { list, toggle, save, has: (s: string) => list.includes(s) };
