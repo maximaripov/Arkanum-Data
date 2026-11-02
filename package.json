@@ -1,0 +1,25 @@
+{
+  "name": "foresight",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "screener": "node scripts/build-screener.mjs"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.2.0",
+    "lightweight-charts": "^5.0.0",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.0"
+  }
+}
