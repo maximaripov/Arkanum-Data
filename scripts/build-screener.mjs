@@ -215,7 +215,8 @@ for (const u of list) {
     r(((p.price - p.first) / p.first) * 100, 1),
     r(((p.price - p.hi) / p.hi) * 100, 1),
     R ?? null, N ?? null,
-    sectorForSic(sic), ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
+    // SEC lists closed-end funds and BDCs (lending funds) with no industry code.
+    sic ? sectorForSic(sic) : u.cik in sicCache ? "Funds & investment companies" : null, ind ? ind.replace(/\b([A-Z])([A-Z]+)\b/g, (_, a, b) => a + b.toLowerCase()) : null, basis,
   ]);
 }
 console.log(`TTM fundamentals for ${ttmCount} of ${rows.length}`);
