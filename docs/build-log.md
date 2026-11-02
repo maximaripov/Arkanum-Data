@@ -198,3 +198,8 @@ The owner asked to show market data in Foresight's own design rather than embedd
   - Fix: TradingView frames don't declare a color scheme, so on a dark page the browser painted transparent widgets white. `.tradingview-widget-container iframe { color-scheme: light; }` matches the frame to its document and keeps it transparent.
 - **Insiders page** split into four tabs instead of one long page: Overview (30-day totals, buying-by-day bars, biggest buys, top 3 group buys), Group buys, All trades (filters and list; tapping a day bar opens this tab filtered to that day), and Big funds, itself split into "What funds are buying" and "Look up a fund". URLs: `/insiders?view=groups|trades|funds`; old filter links still open All trades.
 - Digest notification line: BTC · Gold · 10Y.
+
+## Round 14: whole Markets strip from TradingView (2026-11-02)
+
+- The owner preferred one consistent look, so bitcoin, gold and the 10-year are TradingView mini quotes too: `BITSTAMP:BTCUSD`, `TVC:GOLD` (spot gold) and `FRED:DGS10`. Free widgets refuse `TVC:US10Y` and `TVC:TNX` ("only available on TradingView"), so the 10-year is TradingView's daily copy of FRED, which can trail FRED by a day.
+- Foresight's own line charts (`components/Charts.tsx`) are removed. `lib/macro.ts` and `/api/markets` stay for the Digest page's weekly summary and the 4 PM notification line, which TradingView widgets can't supply.

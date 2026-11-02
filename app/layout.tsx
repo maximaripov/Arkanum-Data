@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main>{children}</main>
         <footer className="muted small">
-          Not investment advice. Filings and fundamentals from SEC EDGAR; 10-year Treasury yield from the Federal Reserve via FRED; bitcoin and gold powered by CoinGecko; index quotes and stock charts by TradingView (stocks delayed 15 min). <Link href="/about">About, data &amp; privacy</Link>
+          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link>
         </footer>
       </body>
     </html>
