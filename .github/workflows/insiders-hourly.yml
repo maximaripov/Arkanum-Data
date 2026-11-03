@@ -8,6 +8,11 @@ on:
     - cron: "17 11-23 * * 1-5"
     - cron: "17 0-3 * * 2-6"
   workflow_dispatch:
+    inputs:
+      test_failure:
+        description: "Fail on purpose to test the failure and recovery alerts (changes no data)"
+        type: boolean
+        default: false
 permissions:
   contents: write
   id-token: write # lets the job prove to the site that it is this repo's job
@@ -25,6 +30,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - id: simulate
+        name: Simulated failure (test run only)
+        if: github.event_name == 'workflow_dispatch' && inputs.test_failure
+        run: |
+          echo "Failing on purpose to test the alerts."
+          exit 1
       - id: install
         run: npm ci
       - id: today
@@ -56,6 +67,7 @@ jobs:
             --jq '[.[] | select(.databaseId != ${{ github.run_id }} and .status == "completed")][0].conclusion' || echo "")
           if [ "$prev" = "failure" ]; then echo "The previous run failed too; the owner was already alerted."; exit 0; fi
           failed=""
+          [ "${{ steps.simulate.outcome }}" = "failure" ] && failed="$failed a deliberate test (nothing is actually wrong),"
           [ "${{ steps.install.outcome }}" = "failure" ] && failed="$failed setup,"
           [ "${{ steps.today.outcome }}" = "failure" ] && failed="$failed reading new filings from SEC,"
           [ "${{ steps.commit.outcome }}" = "failure" ] && failed="$failed saving the data,"
