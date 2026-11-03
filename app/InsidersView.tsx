@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { TradeList, personName, roleLabel } from "@/components/TradeList";
+import { TradeList, Signal, personName, roleLabel } from "@/components/TradeList";
+import { loadInsiders } from "@/lib/insiderData";
 import { FundsView } from "@/components/FundsView";
-import { HBars, VBars } from "@/components/Bars";
+import { VBars } from "@/components/Bars";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
@@ -24,6 +25,7 @@ function HowToRead() {
       <ul>
         <li><strong>Insiders</strong> are a company&apos;s executives and board directors (plus anyone owning 10%+). They must report every trade in their own company&apos;s stock to the SEC within 2 business days.</li>
         <li><strong>Buys matter more than sells.</strong> Insiders sell for many reasons (taxes, a house, diversifying), but they usually buy for one: they expect the stock to rise.</li>
+        <li><strong>Signal labels</strong> (Strong signal, Notable, Routine) weigh who bought (a CEO or CFO counts most), how much it grew their own stake, whether it&apos;s their first buy in years, and whether other insiders are buying too. Pre-planned trades and token amounts score low. It&apos;s a guide to what&apos;s unusual, not a prediction.</li>
         <li><strong>Several insiders buying the same stock</strong> at around the same time is the strongest signal.</li>
         <li><strong>&quot;Planned&quot;</strong> trades were scheduled months in advance under a trading plan, so they say less about the insider&apos;s current view.</li>
         <li>Grants, option exercises and tax withholding are routine pay, so they&apos;re hidden unless you choose &quot;All&quot;.</li>
@@ -73,6 +75,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
   const [hidePlanned, setHidePlanned] = useState(false);
   const [days, setDays] = useState<string[]>([]);
   const [day, setDay] = useState<string | null>(null);
+  const [strongOnly, setStrongOnly] = useState(false);
 
   // Filters live in the address bar, so a view can be shared or bookmarked. The first
   // run only reads them (writing first would wipe other parameters, like ?view=funds).
@@ -83,6 +86,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     if (p.get("everyone") === "1") setExecOnly(false);
     if (p.get("min")) setMin(+p.get("min")!);
     if (p.get("q")) setQ(p.get("q")!);
+    if (p.get("signal") === "1") setStrongOnly(true);
   }, []);
   useEffect(() => {
     if (!loaded.current) { loaded.current = true; return; }
@@ -92,15 +96,21 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     if (!execOnly) p.set("everyone", "1");
     if (min) p.set("min", String(min));
     if (q.trim()) p.set("q", q.trim());
+    if (strongOnly) p.set("signal", "1");
     history.replaceState(null, "", p.toString() ? `?${p}` : location.pathname);
-  }, [view, kind, execOnly, min, q]);
+  }, [view, kind, execOnly, min, q, strongOnly]);
 
   useEffect(() => {
     setTrades(null); setErr("");
-    const url = source === "history" ? "/data/insiders.json" : "/api/insiders";
-    fetch(url).then((r) => r.json()).then((d) => {
-      if (source === "history") { setTrades(d.trades); setDays(Array.isArray(d.days) ? d.days : []); setUpdated(`Last 30 days · updated ${new Date(d.updated).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`); }
-      else if (Array.isArray(d)) { setTrades(d.map((t: InsiderTrade) => ({ ...t, filed: t.filed || t.date }))); setUpdated("Newest filings on SEC EDGAR right now"); }
+    if (source === "history") {
+      loadInsiders().then((d) => {
+        setTrades(d.trades); setDays(d.days);
+        setUpdated(`Last 30 days · updated hourly on weekdays, last ${d.updated ? new Date(d.updated).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : "—"}`);
+      }).catch((e) => setErr(String(e)));
+      return;
+    }
+    fetch("/api/insiders").then((r) => r.json()).then((d) => {
+      if (Array.isArray(d)) { setTrades(d.map((t: InsiderTrade) => ({ ...t, filed: t.filed || t.date }))); setUpdated("Newest filings on SEC EDGAR right now"); }
       else setErr(d.error);
     }).catch((e) => setErr(String(e)));
   }, [source]);
@@ -113,8 +123,9 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
       (t.value ?? 0) >= min &&
       !(hidePlanned && t.planned) &&
       (!day || (t.filed || t.date) === day) &&
+      (!strongOnly || (t.conv && t.conv.tier !== "routine")) &&
       (!s || t.symbol.toLowerCase().startsWith(s) || t.issuer.toLowerCase().includes(s) || t.owner.toLowerCase().includes(s)));
-  }, [trades, kind, execOnly, min, q, hidePlanned, day]);
+  }, [trades, kind, execOnly, min, q, hidePlanned, day, strongOnly]);
 
   // Executive and director buys only: the trades that carry a signal.
   const buys = useMemo(() => (trades ?? []).filter((t) => t.code === "P" && isExecOrDirector(t) && t.value), [trades]);
@@ -131,10 +142,11 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     }));
   }, [buys, days]);
   const totals = useMemo(() => ({ value: buys.reduce((a, t) => a + (t.value ?? 0), 0), people: new Set(buys.map((t) => t.owner)).size, cos: new Set(buys.map((t) => t.symbol)).size }), [buys]);
-  const topStocks = useMemo(() => {
-    const m = new Map<string, { symbol: string; issuer: string; value: number; people: Set<string> }>();
-    for (const t of buys) { const x = m.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, value: 0, people: new Set<string>() }; x.value += t.value ?? 0; x.people.add(personName(t.owner)); m.set(t.symbol, x); }
-    return [...m.values()].sort((a, b) => b.value - a.value).slice(0, 10);
+  // Strongest buys: each company's highest-scoring purchase, strongest first.
+  const strongest = useMemo(() => {
+    const best = new Map<string, InsiderTrade>();
+    for (const t of buys) { const b = best.get(t.symbol); if (!b || (t.conv?.score ?? 0) > (b.conv?.score ?? 0)) best.set(t.symbol, t); }
+    return [...best.values()].sort((a, b) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0)).slice(0, 10);
   }, [buys]);
 
   const clusters = useMemo<Cluster[]>(() => {
@@ -165,6 +177,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
         <div className="filterbar">
           <div className="seg">{(["buys", "sells", "all"] as Kind[]).map((k) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{k === "buys" ? "Buys" : k === "sells" ? "Sells" : "All"}</button>)}</div>
           <button className={`toggle${execOnly ? " on" : ""}`} onClick={() => setExecOnly(!execOnly)} aria-pressed={execOnly}>{execOnly ? "✓ " : ""}Executives &amp; directors only</button>
+          <button className={`toggle${strongOnly ? " on" : ""}`} onClick={() => { setStrongOnly(!strongOnly); if (!strongOnly) setKind("buys"); }} aria-pressed={strongOnly}>{strongOnly ? "✓ " : ""}Strong &amp; notable buys only</button>
           <div className="seg">{SIZES.map(([v, l]) => <button key={v} className={min === v ? "on" : ""} onClick={() => setMin(v)}>{l}</button>)}</div>
           <input className="filter-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by ticker, company or name" aria-label="Filter trades" />
         </div>
@@ -185,28 +198,37 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     <>
       <section className="card">
         <h1>What insiders are buying</h1>
-        <p className="muted">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Here&apos;s what they bought in the last 30 days.</p>
+        <p className="muted">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Here&apos;s what they bought in the last 30 days, strongest signals first.</p>
         <HowToRead />
       </section>
       {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
       {source === "history" && buys.length ? (
-        <div className="twocol">
-          <section className="card chart-card">
+        <>
+          <section className="card">
+            <div className="card-head"><h2>Strongest buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={() => { setStrongOnly(true); setKind("buys"); go("trades"); scrollTo({ top: 0 }); }}>All strong buys ›</button></div>
+            <ul className="rows cols2">{strongest.map((t) => (
+              <li key={t.accession}>
+                <Link href={`/stock/${t.symbol}`} className="row-link">
+                  <div className="row-main">
+                    <div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div>
+                    <div className="small muted ellipsis-1">{personName(t.owner)} ({roleLabel(t.role)})</div>
+                    {t.conv ? <Signal c={t.conv} compact /> : null}
+                  </div>
+                  <div className="row-value up mono">${fmtBig(t.value ?? 0)}</div>
+                </Link>
+              </li>
+            ))}</ul>
+          </section>
+          <section className="card">
             <h2>Insider buying by day</h2>
             <div className="bigstats">
               <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>
               <div><span className="mono">{totals.people}</span><span className="muted small">insiders</span></div>
               <div><span className="mono">{totals.cos}</span><span className="muted small">companies</span></div>
             </div>
-            <VBars cols={byDay} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
+            <VBars cols={byDay} height={170} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
           </section>
-          <section className="card">
-            <h2>Biggest buys by company <span className="muted small">last 30 days</span></h2>
-            <HBars rows={topStocks.map((x) => ({ key: x.symbol, href: `/stock/${x.symbol}`, value: x.value, text: `$${fmtBig(x.value)}`,
-              label: <><strong>{x.symbol}</strong> <span className="muted">{titleCase(x.issuer)}</span></>,
-              sub: x.people.size > 1 ? `${x.people.size} insiders` : [...x.people][0] }))} />
-          </section>
-        </div>
+        </>
       ) : null}
 
       <ClusterCards clusters={clusters} preview={3} more={() => { go("groups"); scrollTo({ top: 0 }); }} />
@@ -214,7 +236,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
   );
 }
 
-export default function Insiders() {
+export default function InsidersView() {
   const [view, setView] = useState<View>("overview");
   useEffect(() => {
     const p = new URLSearchParams(location.search);

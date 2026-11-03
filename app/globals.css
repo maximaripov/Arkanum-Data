@@ -321,7 +321,17 @@ a.hb-row:hover { background: var(--chip); }
   .welcome { width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
   .welcome-actions .btn { flex: 1; }
 }
-/* A chart card beside a taller card: the bar chart grows to fill the space. */
-.chart-card { display: flex; flex-direction: column; }
-.chart-card .vbars { flex: 1; display: flex; flex-direction: column; }
-.chart-card .vb-cols { flex: 1; height: auto !important; min-height: 150px; }
+/* Two columns of rows on wide screens (strongest buys). */
+@media (min-width: 900px) { .rows.cols2 { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2rem; } }
+
+/* Conviction: signal label and reasons on each insider buy */
+.signal { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin: .3rem 0 .15rem; }
+.tier { font-size: .72rem; font-weight: 700; padding: .12rem .45rem; border-radius: 4px; letter-spacing: .01em; white-space: nowrap; }
+.tier-strong { background: var(--brand); color: #0a0a0a; }
+.tier-notable { border: 1px solid var(--accent); color: var(--accent); }
+.tier-routine { background: var(--chip); color: var(--muted); }
+.why { font-size: .74rem; padding: .1rem .4rem; border-radius: 4px; background: var(--chip); white-space: nowrap; }
+.why.neg { color: var(--muted); text-decoration: none; font-style: italic; }
+a.person:hover strong { color: var(--accent); }
+.check { display: flex; gap: .55rem; align-items: flex-start; margin: .2rem 0 .8rem; font-size: .9rem; cursor: pointer; }
+.check input { margin-top: .2rem; accent-color: var(--brand); width: 1.05rem; height: 1.05rem; flex: none; }

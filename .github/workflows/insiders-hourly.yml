@@ -1,0 +1,42 @@
+name: Hourly insider trades
+# Weekdays from about 7 AM to 11 PM New York time (when executives file): pick up new
+# Form 4 filings from SEC EDGAR's live feed, publish today's trades, and send instant
+# alerts to watchlists. About 2 minutes a run; well within GitHub's free monthly minutes.
+# Times are UTC: 11:17-23:17 Mon-Fri, then 00:17-03:17 Tue-Sat (the US evening before).
+on:
+  schedule:
+    - cron: "17 11-23 * * 1-5"
+    - cron: "17 0-3 * * 2-6"
+  workflow_dispatch:
+permissions:
+  contents: write
+  id-token: write # lets the job prove to the site that it is this repo's job
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      SITE_URL: https://form4-insiders.vercel.app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Today's insider trades (SEC Form 4 live feed)
+        run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/build-insiders-today.mjs
+      - name: Commit data
+        run: |
+          # Vercel's Hobby plan only deploys commits authored by the project owner.
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
+          git add public/data/insiders-today.json data
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "data: insider trades $(date -u +%FT%H:%MZ)"
+          # The daily job may have pushed meanwhile; on the shared history cache, keep ours.
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          exit 1
+      - name: Instant alerts
+        run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/instant-alerts.mjs

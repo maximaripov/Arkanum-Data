@@ -18,6 +18,7 @@ export type Device = {
   screens: Screen[];
   screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last digest
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
+  instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
   added: string;
   seen: string;
 };

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Search } from "./Search";
 import { LogoMark } from "./Logo";
 
-const LINKS = [["/", "Markets"], ["/screener", "Screener"], ["/insiders", "Insiders"], ["/calendar", "Calendar"], ["/briefing", "Digest"]];
+const LINKS = [["/", "Insiders"], ["/markets", "Markets"], ["/screener", "Screener"], ["/calendar", "Calendar"], ["/briefing", "Digest"]];
 
 export function Nav() {
   const path = usePathname();

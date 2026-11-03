@@ -4,6 +4,7 @@ import { cikForTicker } from "@/lib/sec";
 import type { InsiderTrade } from "@/lib/sec";
 import { isExecOrDirector } from "@/lib/insider";
 import { fmtBig } from "@/lib/format";
+import { loadInsiders } from "@/lib/insiderData";
 
 export const alt = "Insider trades on Form4";
 export const size = { width: 1200, height: 630 };
@@ -16,7 +17,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
   const symbol = decodeURIComponent((await params).symbol).toUpperCase();
   const [co, ins] = await Promise.all([
     cikForTicker(symbol).catch(() => null),
-    fetch("https://form4-insiders.vercel.app/data/insiders.json", { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    loadInsiders("https://form4-insiders.vercel.app", { next: { revalidate: 1800 } }),
   ]);
   const mine = ((ins?.trades ?? []) as InsiderTrade[]).filter((t) => t.symbol === symbol && isExecOrDirector(t));
   const sum = (code: string) => mine.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);

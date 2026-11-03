@@ -58,12 +58,15 @@ export async function searchCompanies(q: string, limit = 8): Promise<Company[]> 
   return [...(exact ? [exact] : []), ...starts, ...named].slice(0, limit);
 }
 
+export type Conviction = { score: number; tier: "strong" | "notable" | "routine"; reasons: { text: string; neg?: boolean }[] };
+
 export type InsiderTrade = {
   accession: string;
   filed: string;
   symbol: string;
   issuer: string;
   owner: string;
+  ownerCik?: string; // SEC ID of the insider (missing on rows saved before it was recorded)
   role: string;
   date: string;
   code: string; // P purchase, S sale, A award, M option exercise, F tax withholding, G gift...
@@ -74,6 +77,9 @@ export type InsiderTrade = {
   ownedAfter: number | null;
   planned: boolean; // 10b5-1 pre-scheduled trade
   url: string;
+  prevBuy?: string | null; // this insider's previous open-market buy of this stock (null: none found)
+  prevBuyYears?: number; // how many years back that search reached
+  conv?: Conviction | null;
 };
 
 export const parseForm4 = parseForm4Js as (xml: string, meta: { accession: string; filed: string; url: string }) => InsiderTrade[];
@@ -125,4 +131,22 @@ export async function latestInsiders(limit = 60): Promise<InsiderTrade[]> {
   }
   const all = await Promise.all(jobs.map((j) => fetchForm4(j.cik, j.acc, j.filed).catch(() => [])));
   return all.flat();
+}
+
+/** One insider's recent Form 4 trades across every company they report for. */
+export async function insiderTradesByOwner(ownerCik: string, limit = 30): Promise<{ name: string; trades: InsiderTrade[] } | null> {
+  const cik = Number(ownerCik);
+  if (!Number.isInteger(cik) || cik <= 0) return null;
+  const sub = await secFetch(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`, 3600).catch(() => null);
+  const r = sub?.filings?.recent;
+  if (!r) return null;
+  const picks: number[] = [];
+  for (let i = 0; i < r.form.length && picks.length < limit; i++) if (r.form[i] === "4" || r.form[i] === "4/A") picks.push(i);
+  const all: InsiderTrade[] = [];
+  // A few at a time: SEC asks clients to stay under 10 requests a second.
+  for (let k = 0; k < picks.length; k += 5) {
+    const batch = await Promise.all(picks.slice(k, k + 5).map((i) => fetchForm4(cik, r.accessionNumber[i], r.filingDate[i], r.primaryDocument[i]).catch(() => [])));
+    all.push(...batch.flat());
+  }
+  return { name: String(sub.name ?? ""), trades: all.sort((a, b) => b.date.localeCompare(a.date)) };
 }

@@ -8,22 +8,16 @@
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 import { readFile } from "node:fs/promises";
 import { execBuysBySymbol, matchesFilter } from "../lib/screen.mjs";
+import { mergeInsiders } from "../lib/insiderMerge.mjs";
+import { SITE, token } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push");
-const SITE = (process.env.SITE_URL || "https://form4-insiders.vercel.app").replace(/\/$/, "");
 const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
 const money = (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`);
 
-async function token() {
-  if (process.env.ALERTS_SECRET) return process.env.ALERTS_SECRET;
-  const { ACTIONS_ID_TOKEN_REQUEST_URL: u, ACTIONS_ID_TOKEN_REQUEST_TOKEN: b } = process.env;
-  if (!u || !b) return null;
-  const r = await fetch(`${u}&audience=foresight-alerts`, { headers: { Authorization: `Bearer ${b}` } });
-  return r.ok ? (await r.json()).value : null;
-}
 async function sec(url) {
   try { const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) }); return r.ok ? r.json() : null; } catch { return null; }
 }
@@ -34,7 +28,8 @@ const pretty = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US",
 const weekday = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
 
 // ---- Shared data built earlier in the job ---------------------------------------------
-const ins = await load("public/data/insiders.json", { trades: [] });
+// The 30-day file plus today's hourly file, with every buy scored for conviction.
+const ins = mergeInsiders(await load("public/data/insiders.json", { trades: [] }), await load("public/data/insiders-today.json", null));
 const funds = await load("public/data/funds.json", { funds: [] });
 const events = (await load("public/data/events.json", { events: [] })).events.filter((e) => e.date >= today && e.date <= addDays(today, 7));
 const sc = await load("public/data/screener.json", null);
@@ -42,7 +37,8 @@ const sc = await load("public/data/screener.json", null);
 const isExec = (role) => String(role).split(",").map((s) => s.trim()).some((p) => p && p !== "10% owner" && p !== "Other");
 const filed = ins.trades.map((t) => t.filed).sort().at(-1) ?? null; // latest filing day in the data
 const latest = ins.trades.filter((t) => t.filed === filed);
-const execBuys = latest.filter((t) => t.code === "P" && isExec(t.role)).sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+// Strongest first (conviction score), then size.
+const execBuys = latest.filter((t) => t.code === "P" && isExec(t.role)).sort((a, b) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0));
 const weekAgo = addDays(today, -7);
 const clusters = (() => {
   const by = new Map();
@@ -58,7 +54,7 @@ const newFilings = funds.funds.filter((f) => f.filed >= weekAgo).map((f) => ({
   fund: f.name, period: f.period, filed: f.filed,
   newPositions: f.new.slice(0, 3).map((h) => h.t ?? h.name), soldOut: f.sold.slice(0, 3).map((h) => h.t ?? h.name),
 }));
-const slim = (t) => ({ symbol: t.symbol, issuer: t.issuer, owner: t.owner, role: t.role, value: t.value, date: t.date });
+const slim = (t) => ({ symbol: t.symbol, issuer: t.issuer, owner: t.owner, ownerCik: t.ownerCik, role: t.role, value: t.value, date: t.date, conv: t.conv ?? null });
 
 const digest = {
   generated: new Date().toISOString(), date: today, filed,
@@ -144,7 +140,7 @@ for (const d of devices) {
   if (d.screens?.length) screenMatches[d.id] = matchesNow;
   // Fill with market-wide highlights if nothing personal happened.
   if (!lines.length && clusters[0]) lines.push(`${clusters[0].insiders} insiders bought ${clusters[0].symbol} this week (${money(clusters[0].value)})`);
-  if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Biggest insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
+  if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Strongest insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
   if (lines.length < 4 && events[0]) lines.push(`Next: ${events[0].title} ${weekday(events[0].date)}`);
   const body = marketLine ? [...lines.slice(0, 3), marketLine] : lines.slice(0, 4);
   messages.push({ id: d.id, title: digest.title, body: body.join("\n") });

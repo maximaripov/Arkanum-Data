@@ -3,16 +3,17 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { deviceId, notificationsOn, register } from "@/lib/device";
 import { useWatchlist } from "@/components/useWatchlist";
-import { TradeList, personName, roleLabel } from "@/components/TradeList";
+import { TradeList, Signal, personName, roleLabel } from "@/components/TradeList";
 import { ComingUp } from "@/components/ComingUp";
+import { loadInsiders } from "@/lib/insiderData";
 import { WeekSummary, useMarkets } from "@/components/MarketBoard";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
-import type { InsiderTrade } from "@/lib/sec";
+import type { Conviction, InsiderTrade } from "@/lib/sec";
 
 type Digest = {
   generated: string; date: string; filed: string | null; title: string;
-  topBuys: { symbol: string; issuer: string; owner: string; role: string; value: number | null }[];
+  topBuys: { symbol: string; issuer: string; owner: string; role: string; value: number | null; conv?: Conviction | null }[];
   clusters: { symbol: string; issuer: string; insiders: number; value: number }[];
   fundFilings: { fund: string; period: string; filed: string; newPositions: string[]; soldOut: string[] }[];
   events: { date: string; time: string | null; kind: string; title: string }[];
@@ -34,7 +35,7 @@ function useWatchlistActivity() {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [moves, setMoves] = useState<Move[]>([]);
   useEffect(() => {
-    fetch("/data/insiders.json").then((r) => r.json()).then((d) => setTrades(d.trades)).catch(() => setTrades([]));
+    loadInsiders().then((d) => setTrades(d.trades)).catch(() => setTrades([]));
     fetch("/data/funds.json").then((r) => r.json()).then((d) => {
       const out: Move[] = [];
       for (const f of d.funds) {
@@ -85,6 +86,15 @@ function Notifications() {
   const [status, setStatus] = useState("");
   const [on, setOn] = useState(false);
   const [owner, setOwner] = useState("");
+  // Instant alerts are on unless this device switched them off (remembered here and on the server).
+  const [instant, setInstant] = useState(true);
+  useEffect(() => { try { setInstant(localStorage.getItem("foresight.instant") !== "0"); } catch {} }, []);
+  async function toggleInstant(v: boolean) {
+    setInstant(v);
+    try { localStorage.setItem("foresight.instant", v ? "1" : "0"); } catch {}
+    try { await register({ instant: v }); setStatus(v ? "Instant alerts are on." : "Instant alerts are off. You'll still get the daily digest."); }
+    catch (e: any) { setStatus(`Couldn't save that: ${e.message ?? e}`); }
+  }
   const [ownerMode, setOwnerMode] = useState(false);
   useEffect(() => setOwnerMode(new URLSearchParams(location.search).has("owner")), []);
   const [env, setEnv] = useState({ supported: true, ios: false, standalone: false });
@@ -100,7 +110,7 @@ function Notifications() {
       if ((await Notification.requestPermission()) !== "granted") { setStatus("Notifications are blocked. Allow them for Form4 in your phone's Settings → Notifications."); return; }
       const reg = await navigator.serviceWorker.ready;
       const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
-      await register({ subscription: sub.toJSON() });
+      await register({ subscription: sub.toJSON(), instant });
       setOn(true); setStatus("You're set. The digest arrives each weekday after the 4 PM close.");
     } catch (e: any) { setStatus(`Couldn't turn on notifications: ${e.message ?? e}`); }
   }
@@ -127,6 +137,7 @@ function Notifications() {
       ) : (
         <>
           <p className="muted">One notification each weekday after the 4 PM close (usually by about 4:30 PM ET) with your watchlist&apos;s insider trades, company announcements and fund moves, plus new matches for your saved screens.</p>
+          <label className="check"><input type="checkbox" checked={instant} onChange={(e) => (on ? toggleInstant(e.target.checked) : setInstant(e.target.checked))} /> <span><strong>Instant alerts:</strong> also tell me within about an hour when a CEO, CFO or other top executive buys a stock on my watchlist, or anyone makes a strong-signal buy of it.</span></label>
           <div className="toolbar">{on ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary big" onClick={enable}>Turn on notifications</button>}</div>
           <p className="muted small">No account, email or name. While it&apos;s on we keep your watchlist and saved screens to personalize it; turning it off deletes them.</p>
         </>
@@ -154,7 +165,7 @@ export default function DigestPage() {
   const summary = d && d !== "none" ? [
     a.list.length ? `${a.mine.length ? `${a.mine.length} insider ${a.mine.length === 1 ? "trade" : "trades"}` : "No insider trades"} in your watchlist this week${a.byStock.length ? `; ${a.byStock.length} of your stocks moved by big funds last quarter` : ""}.` : null,
     d.clusters[0] ? `${d.clusters[0].insiders} insiders bought ${d.clusters[0].symbol} (${titleCase(d.clusters[0].issuer)}) this week, $${fmtBig(d.clusters[0].value)} in total.` : null,
-    d.topBuys[0] ? `Biggest single buy: ${personName(d.topBuys[0].owner)} at ${d.topBuys[0].symbol}, $${fmtBig(d.topBuys[0].value ?? 0)}.` : null,
+    d.topBuys[0] ? `Strongest buy: ${personName(d.topBuys[0].owner)} at ${d.topBuys[0].symbol}, $${fmtBig(d.topBuys[0].value ?? 0)}.` : null,
     d.fundFilings.length ? `${d.fundFilings.length} tracked ${d.fundFilings.length === 1 ? "fund" : "funds"} filed new holdings this week.` : null,
     d.events[0] ? `Next: ${d.events[0].title} on ${day(d.events[0].date)}.` : null,
   ].filter(Boolean) as string[] : [];
@@ -175,17 +186,17 @@ export default function DigestPage() {
           <YourWatchlist a={a} />
           <div className="twocol">
             <section className="card">
-              <div className="card-head"><h2>Biggest insider buys</h2><Link href="/insiders?view=trades" className="small">All trades ›</Link></div>
+              <div className="card-head"><h2>Strongest insider buys</h2><Link href="/?view=trades&signal=1" className="small">All trades ›</Link></div>
               <p className="muted small">Filed {d.filed ? day(d.filed) : "recently"} by executives and directors.</p>
               {d.topBuys.length ? <ul className="rows">{d.topBuys.map((t, i) => (
                 <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
-                  <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div><div className="small muted">{personName(t.owner)} ({roleLabel(t.role)})</div></div>
+                  <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div><div className="small muted">{personName(t.owner)} ({roleLabel(t.role)})</div>{t.conv ? <Signal c={t.conv} compact /> : null}</div>
                   <div className="row-value up mono">{t.value ? "$" + fmtBig(t.value) : "—"}</div>
                 </Link></li>
               ))}</ul> : <p className="muted">None filed.</p>}
             </section>
             <section className="card">
-              <div className="card-head"><h2>Several insiders buying</h2><Link href="/insiders?view=groups" className="small">More ›</Link></div>
+              <div className="card-head"><h2>Several insiders buying</h2><Link href="/?view=groups" className="small">More ›</Link></div>
               <p className="muted small">2+ executives or directors buying the same stock this week, the strongest signal.</p>
               {d.clusters.length ? <ul className="rows">{d.clusters.map((c) => (
                 <li key={c.symbol}><Link href={`/stock/${c.symbol}`} className="row-link">
@@ -197,7 +208,7 @@ export default function DigestPage() {
             {/* Funds file quarterly (mid-Feb, May, Aug, Nov); most weeks there is nothing to show. */}
             {d.fundFilings.length ? (
             <section className="card">
-              <div className="card-head"><h2>Big-fund filings this week</h2><Link href="/insiders?view=funds" className="small">All funds ›</Link></div>
+              <div className="card-head"><h2>Big-fund filings this week</h2><Link href="/?view=funds" className="small">All funds ›</Link></div>
               <ul className="rows">{d.fundFilings.map((f) => (
                 <li key={f.fund} className="row-static"><div className="row-main"><strong>{f.fund}</strong><div className="small">{f.newPositions.length ? <>New: {f.newPositions.join(", ")}</> : null}{f.newPositions.length && f.soldOut.length ? " · " : ""}{f.soldOut.length ? <>Sold: {f.soldOut.join(", ")}</> : null}</div></div></li>
               ))}</ul>

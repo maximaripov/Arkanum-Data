@@ -5,52 +5,10 @@ import { useState } from "react";
 import Link from "next/link";
 import type { InsiderTrade } from "@/lib/sec";
 import { fmtBig } from "@/lib/format";
+import { TIER_LABEL } from "@/lib/conviction.mjs";
+import { personName, roleLabel, titleCase } from "@/lib/people.mjs";
 
-const ORG = /\b(LLC|L\.?P\.?|INC|CORP|FUND|TRUST|HOLDINGS?|CAPITAL|PARTNERS|MANAGEMENT|ADVISORS?|GROUP|LTD|LIMITED|FOUNDATION|VENTURES|INVESTMENTS?|ASSOCIATES|PLC|SA|AG|NV|CO)\b/i;
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\bIi\b/g, "II").replace(/\bIii\b/g, "III");
-
-/** SEC lists people surname-first in capitals ("HEALY JAMES"); show "James Healy". */
-export function personName(raw: string) {
-  const first = raw.split(",")[0].trim(); // several filers on one form → the first one
-  const more = raw.includes(",") ? " and others" : "";
-  if (ORG.test(first)) return titleCase(first) + more;
-  const parts = first.split(/\s+/);
-  const suffix = /^(JR|SR|II|III|IV)\.?$/i.test(parts.at(-1) ?? "") ? " " + parts.pop() : "";
-  const name = parts.length > 1 ? [...parts.slice(1), parts[0]].join(" ") : first;
-  return titleCase(name) + titleCase(suffix) + more;
-}
-
-/** Titles: keep ones already in mixed case; in ALL-CAPS ones keep short abbreviations
- *  (SVP, EVP, GC, VP) and lowercase small words ("and", "of"). */
-function niceTitle(p: string) {
-  if (/[a-z]/.test(p)) return p;
-  return p.split(/\s+/).map((w) => (/^[A-Z&]{1,4}$/.test(w) && !/^(AND|OF|THE|FOR)$/.test(w) ? w : /^(AND|OF|THE|FOR)$/.test(w) ? w.toLowerCase() : titleCase(w))).join(" ");
-}
-
-const SHORT: [RegExp, string][] = [
-  [/chief executive officer|\bceo\b/i, "CEO"], [/chief financial officer|\bcfo\b/i, "CFO"], [/chief operating officer|\bcoo\b/i, "COO"],
-  [/chief technology officer|\bcto\b/i, "CTO"], [/general counsel/i, "General Counsel"], [/chair(man|woman|person)?/i, "Chair"], [/president/i, "President"],
-];
-/** "Chief Executive Officer, Director, 10% owner" → "CEO & director, major shareholder" */
-export function roleLabel(role: string) {
-  // The role string is "<officer title>, Director, 10% owner", but titles can contain
-  // commas themselves ("SVP, GC and Government Affairs"), so rejoin the title fragments.
-  const raw = role.split(",").map((p) => p.trim()).filter(Boolean);
-  const parts: string[] = [];
-  for (const p of raw) {
-    if (["Director", "10% owner", "Other"].includes(p) || !parts.length || ["Director", "10% owner", "Other"].includes(parts.at(-1)!)) parts.push(p);
-    else parts[parts.length - 1] += ", " + p;
-  }
-  const out: string[] = [];
-  for (const p of parts) {
-    if (p === "Other") continue;
-    if (p === "Director") { out.push("director"); continue; }
-    if (p === "10% owner") { out.push("major shareholder"); continue; }
-    const hit = SHORT.find(([re]) => re.test(p));
-    out.push(hit ? hit[1] : p.length > 34 ? "Officer" : niceTitle(p));
-  }
-  return out.length ? out.join(", ").replace(/, director/, " & director") : "insider";
-}
+export { personName, roleLabel };
 
 const VERB: Record<string, string> = { P: "bought", S: "sold", A: "was awarded", M: "exercised options for", X: "exercised options for", F: "had withheld for taxes", G: "gave away", D: "returned", C: "converted" };
 
@@ -59,6 +17,17 @@ const dayLabel = (d: string) => {
   const y = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
   return d === today ? "Today" : d === y ? "Yesterday" : new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 };
+
+/** Signal label plus the reasons behind it ("CEO · Stake +40% · First buy in 3 years"). */
+export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["conv"]>; compact?: boolean }) {
+  const reasons = compact ? c.reasons.filter((r) => !r.neg).slice(0, 3) : c.reasons;
+  return (
+    <div className="signal">
+      <span className={`tier tier-${c.tier}`} title={`Signal strength ${c.score}/100: who bought, how much of their own stake, how unusual it is for them, and whether other insiders are buying too.`}>{TIER_LABEL[c.tier]}</span>
+      {reasons.map((r) => <span key={r.text} className={`why${r.neg ? " neg" : ""}`}>{r.text}</span>)}
+    </div>
+  );
+}
 
 function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
   const buy = t.code === "P", sell = t.code === "S";
@@ -69,12 +38,13 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
           <div className="trade-co"><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong></Link> <span className="muted">{titleCase(t.issuer)}</span></div>
         ) : null}
         <div>
-          <strong>{personName(t.owner)}</strong> <span className="muted">({roleLabel(t.role)})</span>{" "}
+          {t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person"><strong>{personName(t.owner)}</strong></Link> : <strong>{personName(t.owner)}</strong>} <span className="muted">({roleLabel(t.role)})</span>{" "}
           <span className={buy ? "up" : sell ? "down" : ""}>{VERB[t.code] ?? "traded"}</span>{" "}
           {t.shares ? `${Math.round(t.shares).toLocaleString()} shares` : "shares"}{t.price ? ` at $${t.price.toFixed(2)}` : ""}
         </div>
+        {t.conv ? <Signal c={t.conv} /> : null}
         <div className="muted small">
-          {t.planned ? <span className="badge" title="Scheduled in advance under a trading plan (Rule 10b5-1), so it says less about the insider's current view.">Planned</span> : null}
+          {t.planned && !t.conv ? <span className="badge" title="Scheduled in advance under a trading plan (Rule 10b5-1), so it says less about the insider's current view.">Planned</span> : null}
           {t.date && t.date !== t.filed ? `traded ${dayLabel(t.date)} · ` : ""}
           {/* Forms often report direct and indirect (trust, fund) holdings separately; skip a "now owns" smaller than the trade itself. */}
           {t.ownedAfter != null && t.ownedAfter >= t.shares ? `now owns ${fmtBig(t.ownedAfter)} shares · ` : ""}

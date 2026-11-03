@@ -1,4 +1,5 @@
 "use client";
+import { loadInsiders } from "@/lib/insiderData";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fmtBig, fmtPct, tone } from "@/lib/format";
@@ -62,7 +63,7 @@ export default function Screener() {
   useEffect(() => {
     Promise.all([
       fetch("/data/screener.json").then((r) => r.json()),
-      fetch("/data/insiders.json").then((r) => r.json()).catch(() => ({ trades: [] })),
+      loadInsiders().catch(() => ({ trades: [] })),
     ]).then(([d, ins]) => {
       const buys = execBuysBySymbol(ins.trades);
       setMeta({ updated: d.updated });

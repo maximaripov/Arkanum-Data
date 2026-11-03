@@ -147,7 +147,7 @@ export function FundHolders({ symbol }: { symbol: string }) {
           </div>
         </li>
       ))}</ul>
-      <Link href="/insiders?view=funds" className="small muted">See all funds →</Link>
+      <Link href="/?view=funds" className="small muted">See all funds →</Link>
     </section>
   );
 }

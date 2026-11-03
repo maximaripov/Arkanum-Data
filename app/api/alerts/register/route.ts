@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       const sc = sanitizeScreens(body.screens);
       if (sc) cur.screens = sc;
       if (body.ownerCode !== undefined) cur.owner = ownerCodeOk(body.ownerCode);
+      if (typeof body.instant === "boolean") cur.instant = body.instant;
       cur.seen = now;
       if (!cur.sub) return { ok: true, on: false }; // only devices with notifications on are stored
       d[body.id] = cur;

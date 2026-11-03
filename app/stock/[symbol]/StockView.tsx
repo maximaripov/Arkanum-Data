@@ -18,26 +18,31 @@ const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.
 const RANGES: [string, string, string][] = [["1D", "1D", "5"], ["1M", "1M", "60"], ["6M", "6M", "D"], ["1Y", "12M", "D"], ["5Y", "60M", "W"]];
 const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
 
-export function StockView({ symbol }: { symbol: string }) {
-  const [co, setCo] = useState<Company | null>(null);
-  const [fund, setFund] = useState<Record<string, any> | null>(null);
-  const [insiders, setInsiders] = useState<InsiderTrade[] | null>(null);
-  const [news, setNews] = useState<Announcement[] | null>(null);
+/** Data the server already loaded (so the page arrives filled in and search engines can read it). */
+export type StockInitial = { co: Company | null; fund: Record<string, any> | null; insiders: InsiderTrade[] | null; news: Announcement[] | null };
+
+export function StockView({ symbol, initial }: { symbol: string; initial?: StockInitial }) {
+  const [co, setCo] = useState<Company | null>(initial?.co ?? null);
+  const [fund, setFund] = useState<Record<string, any> | null>(initial?.fund ?? null);
+  const [insiders, setInsiders] = useState<InsiderTrade[] | null>(initial?.insiders ?? null);
+  const [news, setNews] = useState<Announcement[] | null>(initial?.news ?? null);
   const [flow, setFlow] = useState<RetailFlow | null | undefined>(undefined);
   const { has, toggle } = useWatchlist();
   const [range, setRange] = useState("1Y");
   const [tools, setTools] = useState(false);
 
   useEffect(() => {
-    setCo(null); setFund(null); setInsiders(null); setNews(null); setFlow(undefined);
-    fetch(`/api/company?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setCo).catch(() => setCo({ ticker: symbol, name: null, exchange: null }));
-    fetch("/data/screener.json").then((r) => r.json()).then((d) => {
+    // Anything the server couldn't load is fetched here instead.
+    setFlow(undefined);
+    if (!initial?.co) fetch(`/api/company?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setCo).catch(() => setCo({ ticker: symbol, name: null, exchange: null }));
+    if (!initial?.fund) fetch("/data/screener.json").then((r) => r.json()).then((d) => {
       const row = d.rows.find((r: any[]) => r[0] === symbol);
       if (row) setFund(Object.fromEntries(d.fields.map((f: string, i: number) => [f, row[i]])));
     }).catch(() => {});
-    fetch(`/api/insiders?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setInsiders(Array.isArray(d) ? d : [])).catch(() => setInsiders([]));
-    fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setNews(d.announcements ?? [])).catch(() => setNews([]));
+    if (!initial?.insiders) fetch(`/api/insiders?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setInsiders(Array.isArray(d) ? d : [])).catch(() => setInsiders([]));
+    if (!initial?.news) fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setNews(d.announcements ?? [])).catch(() => setNews([]));
     fetch(`/api/retail?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setFlow(d.flow)).catch(() => setFlow(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
   const tv = co ? tvSymbol(symbol, co.exchange) : null;
@@ -53,7 +58,7 @@ export function StockView({ symbol }: { symbol: string }) {
         <div className="stock-head">
           <div>
             <h1>{co?.name ? titleCase(co.name) : symbol}</h1>
-            <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""}</div>
+            <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""} · insider trades, fund holdings and fundamentals</div>
           </div>
           <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "★ On your watchlist" : "☆ Add to watchlist"}</button>
         </div>

@@ -1,7 +1,8 @@
 name: Daily digest and data
-# Weekdays at 4:02 PM New York time: rebuild the SEC-based data (fundamentals, insider
-# trades, 13F fund holdings) and the economic calendar, check it, send each subscribed
-# device its digest, then commit the data (Vercel redeploys on commit).
+# Weekdays at 4:02 PM New York time: rebuild the SEC-based data (fundamentals, the 30-day
+# insider file and each buy's history, 13F fund holdings) and the economic calendar, check it, send each subscribed
+# device its digest, then commit the data (Vercel redeploys on commit). Today's insider
+# trades are added hourly by insiders-hourly.yml.
 #
 # GitHub schedules run in UTC, and 4 PM in New York is 21:02 UTC in winter (EST) but
 # 20:02 UTC in summer (EDT). Both are scheduled; the gate job keeps the one that is
@@ -87,7 +88,9 @@ jobs:
           git config user.email "351230404+maximaripov@users.noreply.github.com"
           git add public/data data
           git diff --cached --quiet || git commit -m "data: daily refresh $(date -u +%F)"
-          git push
+          # The hourly insider job may have pushed meanwhile; on the shared history cache, keep ours.
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          exit 1
       # If any step failed, nothing was sent or published (the site keeps the last good
       # data) and the owner's devices get a notification naming the step.
       - name: Notify on failure
