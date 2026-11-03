@@ -10,6 +10,7 @@
     "screener": "node scripts/build-screener.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "2.0.1",
     "@vercel/blob": "^2.8.2",
     "fast-xml-parser": "^5.2.0",
     "jose": "^6.2.15",

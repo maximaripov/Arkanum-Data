@@ -2,12 +2,17 @@ import Link from "next/link";
 import type { Metadata, Viewport } from "next";
 import { Nav } from "@/components/Nav";
 import { Welcome } from "@/components/Welcome";
+import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
+const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
 export const metadata: Metadata = {
-  title: "Foresight",
-  description: "Free market tracker: insider trades, big-fund moves, company filings and fundamentals in plain English, with indexes, bitcoin, gold and Treasury yields.",
+  metadataBase: new URL("https://foresightscreener.vercel.app"),
+  title: { default: "Foresight: what insiders are buying", template: "%s · Foresight" },
+  description: DESCRIPTION,
+  openGraph: { type: "website", siteName: "Foresight", title: "Foresight: what insiders are buying", description: DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: "Foresight: what insiders are buying", description: DESCRIPTION },
   appleWebApp: { capable: true, title: "Foresight", statusBarStyle: "black-translucent" },
 };
 export const viewport: Viewport = { themeColor: "#0b0e14", width: "device-width", initialScale: 1, viewportFit: "cover" };
@@ -18,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ServiceWorker />
         <Welcome />
+        <Analytics />
         <Nav />
         <main>{children}</main>
         <footer className="muted small">

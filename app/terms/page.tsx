@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms of use · Foresight", description: "The terms for using Foresight, a free market tracker." };
+export const metadata = { title: "Terms of use", description: "The terms for using Foresight, a free market tracker." };
 
 export default function Terms() {
   return (

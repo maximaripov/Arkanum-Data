@@ -212,3 +212,12 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Terms of use** page (`/terms`), linked from the footer and About: not advice, data as-is, third-party data stays theirs, fair use, changes. No contact address yet (owner's choice).
 - **First-visit welcome** ([components/Welcome.tsx](../components/Welcome.tsx)): one screen explaining the three things to do (follow stocks, see who's buying, daily digest), with an Add-to-Home-Screen tip on iPhone Safari. A bottom sheet on phones, shown once per browser.
 - FINRA retail table kept on stock pages by the owner's decision; the public-display terms for that dataset remain unconfirmed.
+
+## Round 16: link previews, visitor counts (2026-11-03)
+
+- **Link previews:** site title "Foresight: what insiders are buying" with a page-name template, descriptions for every page (route `layout.tsx` files carry metadata for the client-rendered pages), Open Graph and Twitter card tags, and share images rendered by `next/og`:
+  - [app/opengraph-image.tsx](../app/opengraph-image.tsx): the site card (logo, headline, bar motif).
+  - [app/stock/[symbol]/opengraph-image.tsx](../app/stock/[symbol]/opengraph-image.tsx): ticker, company and the last 30 days of executive/director buys vs sells, read from `insiders.json` (cached 1 hour).
+- `robots.txt` (crawl everything except `/api/`) and `sitemap.xml`.
+- **Visitor counts:** `@vercel/analytics` 2.0.1 (`<Analytics />` in the layout). Cookieless; noted in the privacy section. Must be switched on once in the Vercel dashboard (project → Analytics → Enable).
+- **Name check (not legal advice):** web searches found other finance businesses called Foresight (EquBot's AI investing product "Foresight", UK-listed Foresight Group, a New York private-market data startup, an Indian opinion-trading app) and a "Foresight Investment Solutions, LLC" said to hold a mark for investment research. No USPTO record was confirmed; the owner should search tmsearch.uspto.gov.

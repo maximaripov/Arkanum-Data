@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "About, data & privacy · Foresight" };
+export const metadata = { title: "About, data & privacy", description: "Where Foresight's data comes from, and what it does (and doesn't) keep about you." };
 
 export default function About() {
   return (
@@ -35,7 +35,8 @@ export default function About() {
           <li><strong>Your watchlist and saved screens</strong> are stored in your browser on your device.</li>
           <li><strong>If you turn on notifications,</strong> we store a random device ID, your browser&apos;s push address, and your watchlist and saved screens, only to send your daily digest. Turning notifications off deletes them; devices that haven&apos;t opened Foresight in about 4 months are deleted automatically.</li>
           <li><strong>Stock charts and index quotes</strong> load from TradingView, which receives your IP address and the symbol you view (it sets no cookies, per its documentation). Our host, Vercel, keeps standard server logs.</li>
-          <li>We don&apos;t sell or share any data, and there are no ads or trackers.</li>
+          <li><strong>Visitor counts:</strong> we use Vercel Web Analytics to count page views. It sets no cookies and doesn&apos;t track you across sites or days; visitors are counted with a hash that resets daily.</li>
+          <li>We don&apos;t sell or share any data, and there are no ads or cross-site trackers.</li>
         </ul>
       </section>
       <p className="small muted"><Link href="/terms">Terms of use</Link> · <Link href="/">← Back to Markets</Link></p>
