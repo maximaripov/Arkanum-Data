@@ -21,7 +21,7 @@ function icsHref(e: Ev) {
   const m = (e.time ?? "").match(/(\d+):(\d+) (AM|PM)/);
   let h = m ? +m[1] % 12 + (m[3] === "PM" ? 12 : 0) : 9, min = m ? +m[2] : 0;
   const stamp = `${e.date.replace(/-/g, "")}T${String(h).padStart(2, "0")}${String(min).padStart(2, "0")}00`;
-  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Foresight//EN", "BEGIN:VEVENT", `UID:${e.date}-${e.title.replace(/\W/g, "")}@foresight`,
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Form4//EN", "BEGIN:VEVENT", `UID:${e.date}-${e.title.replace(/\W/g, "")}@foresight`,
     `DTSTART;TZID=America/New_York:${stamp}`, "DURATION:PT30M", `SUMMARY:${e.title}`, `DESCRIPTION:${EVENT_INFO(e).short} (${e.source})`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
   return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
 }

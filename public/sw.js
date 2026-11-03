@@ -1,9 +1,9 @@
-// Foresight service worker: shows push notifications and opens the app when tapped.
+// Form4 service worker: shows push notifications and opens the app when tapped.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
-  let msg = { title: "Foresight", body: "", url: "/briefing" };
+  let msg = { title: "Form4", body: "", url: "/briefing" };
   try { msg = { ...msg, ...event.data.json() }; } catch { if (event.data) msg.body = event.data.text(); }
   event.waitUntil(self.registration.showNotification(msg.title, {
     body: msg.body,

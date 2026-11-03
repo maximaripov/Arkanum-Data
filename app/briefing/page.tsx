@@ -98,7 +98,7 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
   async function enable() {
     try {
       setStatus("Asking for permission…");
-      if ((await Notification.requestPermission()) !== "granted") { setStatus("Notifications are blocked. Allow them for Foresight in your phone's Settings → Notifications."); return; }
+      if ((await Notification.requestPermission()) !== "granted") { setStatus("Notifications are blocked. Allow them for Form4 in your phone's Settings → Notifications."); return; }
       const reg = await navigator.serviceWorker.ready;
       const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
       await register({ subscription: sub.toJSON() });
@@ -121,8 +121,8 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
       <h2>{on ? "Daily notification is on" : "Get this on your phone"}</h2>
       {!env.supported || (env.ios && !env.standalone) ? (
         <div>
-          <p className="muted">On iPhone, notifications work once Foresight is on your Home Screen:</p>
-          <ol className="steps"><li>In Safari, tap <strong>Share</strong> → <strong>Add to Home Screen</strong>.</li><li>Open Foresight from the new icon.</li><li>Come back here and tap <strong>Turn on notifications</strong>.</li></ol>
+          <p className="muted">On iPhone, notifications work once Form4 is on your Home Screen:</p>
+          <ol className="steps"><li>In Safari, tap <strong>Share</strong> → <strong>Add to Home Screen</strong>.</li><li>Open Form4 from the new icon.</li><li>Come back here and tap <strong>Turn on notifications</strong>.</li></ol>
           {!env.supported && !env.ios ? <p className="muted small">This browser doesn&apos;t support notifications.</p> : null}
         </div>
       ) : (

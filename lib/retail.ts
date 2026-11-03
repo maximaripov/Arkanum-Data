@@ -14,7 +14,7 @@ async function finraWeek(symbol: string, week: string) {
     try {
       const r = await fetch("https://api.finra.org/data/group/otcMarket/name/weeklySummary", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "Foresight personal app" },
+        headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "Form4" },
         body: JSON.stringify({ limit: 500, compareFilters: [
           { compareType: "equal", fieldName: "weekStartDate", fieldValue: week },
           { compareType: "equal", fieldName: "tierIdentifier", fieldValue: tier },

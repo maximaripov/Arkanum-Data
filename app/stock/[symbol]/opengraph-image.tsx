@@ -5,7 +5,7 @@ import type { InsiderTrade } from "@/lib/sec";
 import { isExecOrDirector } from "@/lib/insider";
 import { fmtBig } from "@/lib/format";
 
-export const alt = "Insider trades on Foresight";
+export const alt = "Insider trades on Form4";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const revalidate = 3600;
@@ -16,7 +16,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
   const symbol = decodeURIComponent((await params).symbol).toUpperCase();
   const [co, ins] = await Promise.all([
     cikForTicker(symbol).catch(() => null),
-    fetch("https://foresightscreener.vercel.app/data/insiders.json", { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch("https://form4-insiders.vercel.app/data/insiders.json", { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]);
   const mine = ((ins?.trades ?? []) as InsiderTrade[]).filter((t) => t.symbol === symbol && isExecOrDirector(t));
   const sum = (code: string) => mine.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
@@ -29,7 +29,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#0b0e14", color: "#e6e9ef", padding: "64px 80px", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700, color: "#4ade80" }}>
           <div style={{ width: 36, height: 36, borderRadius: 18, border: "4px solid #4ade80", display: "flex", overflow: "hidden" }}><div style={{ width: "50%", background: "#4ade80" }} /></div>
-          Foresight
+          Form4
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontSize: 110, fontWeight: 800, lineHeight: 1 }}>{symbol}</div>

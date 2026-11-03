@@ -8,12 +8,12 @@ import "./globals.css";
 
 const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://foresightscreener.vercel.app"),
-  title: { default: "Foresight: what insiders are buying", template: "%s · Foresight" },
+  metadataBase: new URL("https://form4-insiders.vercel.app"),
+  title: { default: "Form4: what insiders are buying", template: "%s · Form4" },
   description: DESCRIPTION,
-  openGraph: { type: "website", siteName: "Foresight", title: "Foresight: what insiders are buying", description: DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: "Foresight: what insiders are buying", description: DESCRIPTION },
-  appleWebApp: { capable: true, title: "Foresight", statusBarStyle: "black-translucent" },
+  openGraph: { type: "website", siteName: "Form4", title: "Form4: what insiders are buying", description: DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: "Form4: what insiders are buying", description: DESCRIPTION },
+  appleWebApp: { capable: true, title: "Form4", statusBarStyle: "black-translucent" },
 };
 export const viewport: Viewport = { themeColor: "#0b0e14", width: "device-width", initialScale: 1, viewportFit: "cover" };
 

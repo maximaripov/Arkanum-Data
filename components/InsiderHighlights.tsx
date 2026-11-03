@@ -1,5 +1,5 @@
 "use client";
-// Foresight's own data on the Markets page: stocks executives and directors bought this
+// Form4's own data on the Markets page: stocks executives and directors bought this
 // week, as a bar chart by amount. SEC Form 4.
 import { useEffect, useState } from "react";
 import Link from "next/link";

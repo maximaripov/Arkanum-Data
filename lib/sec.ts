@@ -2,7 +2,7 @@
 // contact email and at most 10 requests/second.
 import { parseForm4 as parseForm4Js } from "./form4.mjs";
 
-const UA = process.env.SEC_USER_AGENT || "Foresight personal app (set SEC_USER_AGENT)";
+const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
 
 // Simple concurrency gate so one page load never bursts past SEC's limit.
 let active = 0;

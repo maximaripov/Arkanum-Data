@@ -5,7 +5,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { parseForm4 } from "../lib/form4.mjs";
 
-const UA = process.env.SEC_USER_AGENT || "Foresight personal app (set SEC_USER_AGENT)";
+const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i > -1 ? Number(process.argv[i + 1]) : d; };
 const DAYS = arg("--days", 30);
 const MIN_SALE = 250_000; // routine small sales are noise; keep big ones only

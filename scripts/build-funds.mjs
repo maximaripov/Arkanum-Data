@@ -8,7 +8,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 
-const UA = process.env.SEC_USER_AGENT || "Foresight personal app (set SEC_USER_AGENT)";
+const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
 const FUNDS = [
   [1067983, "Berkshire Hathaway", "Warren Buffett / Greg Abel"],
   [1350694, "Bridgewater Associates", "Ray Dalio's firm"],
@@ -140,7 +140,7 @@ for (const { cik_str, title, ticker } of Object.values(secList ?? {})) {
 }
 let byNameHits = 0;
 for (const f of out) for (const list of [f.top, f.new, f.added, f.reduced, f.sold]) for (const h of list) {
-  // OpenFIGI writes share classes as "LEN/B"; Foresight (like Yahoo) uses "LEN-B".
+  // OpenFIGI writes share classes as "LEN/B"; Form4 (like Yahoo) uses "LEN-B".
   h.t = cusipCache[h.cusip]?.replace(/[/ ]/g, "-") ?? null;
   if (h.t) continue;
   const hit = byName.get(norm(h.name));

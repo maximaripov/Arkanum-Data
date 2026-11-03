@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Foresight",
-    short_name: "Foresight",
-    description: "Live markets, screener and insider trades",
+    name: "Form4",
+    short_name: "Form4",
+    description: "What company insiders and big funds are buying, in plain English",
     start_url: "/",
     display: "standalone",
     background_color: "#0b0e14",

@@ -1,8 +1,8 @@
-# Foresight
+# Form4
 
 A free, public market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English — with prices, charts and news from TradingView. No account, no ads. Works on any phone via **Add to Home Screen**, with an optional daily notification.
 
-Live: https://foresightscreener.vercel.app
+Live: https://form4-insiders.vercel.app
 
 ## What's in it
 
@@ -50,7 +50,7 @@ node scripts/daily-digest.mjs --dry-run
 
 ## Known limits
 
-- **Free-tier limits:** Vercel Hobby and the Blob store have usage limits; notifications are capped at 5,000 devices. If Foresight gets popular, these are the first things to revisit.
+- **Free-tier limits:** Vercel Hobby and the Blob store have usage limits; notifications are capped at 5,000 devices. If Form4 gets popular, these are the first things to revisit.
 - **Fundamentals** use the last 4 reported quarters where SEC data allows, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year. Banks, insurers and funds don't get free cash flow or debt/equity.
 - **ETFs** aren't in SEC's company list, so search doesn't suggest them; typing the ticker and pressing Enter still opens a TradingView chart.
 - **13F holdings** are 6–20 weeks old when published. **FINRA** volume is 2–4 weeks delayed and doesn't show buys vs sells.

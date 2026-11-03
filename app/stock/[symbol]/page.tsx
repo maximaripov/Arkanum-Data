@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ symbol: s
   const name = co?.name ? titleCase(co.name) : null;
   const title = name ? `${symbol}: ${name} insider trades` : `${symbol} insider trades`;
   const description = `What ${name ?? symbol}'s executives and directors are buying and selling, which big funds hold it, and how the business is doing, from SEC filings.`;
-  return { title, description, openGraph: { title: `${title} · Foresight`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
+  return { title, description, openGraph: { title: `${title} · Form4`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
 }
 
 export default async function Page({ params }: { params: Promise<{ symbol: string }> }) {

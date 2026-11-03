@@ -2,7 +2,7 @@
 // Sends a short notification to your phone from the GitHub job.
 //   node scripts/notify.mjs "Title" "Body" [url]
 const [title, body, url] = process.argv.slice(2);
-const SITE = (process.env.SITE_URL || "https://foresightscreener.vercel.app").replace(/\/$/, "");
+const SITE = (process.env.SITE_URL || "https://form4-insiders.vercel.app").replace(/\/$/, "");
 async function token() {
   if (process.env.ALERTS_SECRET) return process.env.ALERTS_SECRET;
   const { ACTIONS_ID_TOKEN_REQUEST_URL: u, ACTIONS_ID_TOKEN_REQUEST_TOKEN: b } = process.env;

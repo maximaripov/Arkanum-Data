@@ -221,3 +221,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - `robots.txt` (crawl everything except `/api/`) and `sitemap.xml`.
 - **Visitor counts:** `@vercel/analytics` 2.0.1 (`<Analytics />` in the layout). Cookieless; noted in the privacy section. Must be switched on once in the Vercel dashboard (project → Analytics → Enable).
 - **Name check (not legal advice):** web searches found other finance businesses called Foresight (EquBot's AI investing product "Foresight", UK-listed Foresight Group, a New York private-market data startup, an Indian opinion-trading app) and a "Foresight Investment Solutions, LLC" said to hold a mark for investment research. No USPTO record was confirmed; the owner should search tmsearch.uspto.gov.
+
+## Round 17: renamed to Form4 (2026-11-03)
+
+- The site is now **Form4**, at **https://form4-insiders.vercel.app** (form4.vercel.app belongs to another account). Named after the SEC's Form 4; About and the welcome screen explain the name and say the site isn't affiliated with the SEC.
+- Renamed in page titles, share images, the app manifest (home-screen name), notification titles, the GitHub job's `SITE_URL`, and user-agent strings. Browser storage keys keep their `foresight.` prefix so visitors' watchlists and settings survive.
+- `vercel.json` permanently redirects foresightscreener.vercel.app to the new address, except `/api/*` and `/sw.js`, so phones still subscribed through the old address keep working.
+- Name notes: no FORM4 or FORM FOUR trademark turned up in third-party searches, but "Form 4" is the filing's name, so it's descriptive and others use it (secform4.com, a "Form 4 Insider Tracker" at form4-tracker.vercel.app). Low legal risk; differentiation comes from quality.

@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path((?!api/|sw\\.js$).*)",
+      "has": [{ "type": "host", "value": "foresightscreener.vercel.app" }],
+      "destination": "https://form4-insiders.vercel.app/:path",
+      "permanent": true
+    }
+  ]
+}
