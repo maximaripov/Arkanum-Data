@@ -234,3 +234,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - After 50 concepts across four rounds, the owner chose **Terminal**: `[4]` in lime (`#a3e635`) on near-black (`#0a0a0a`), without the cursor underline. Drawn as strokes, not text, so it renders the same on every device (the 4's top corner is bevelled and the crossbar corner kept sharp with `stroke-miterlimit="3"`). 
 - Applied to the browser-tab icon (`app/icon.svg`), the iPhone icon (`app/apple-icon.png`, 180px), app icons (`public/icon-192.png`, `icon-512.png`, also listed as maskable), the header (`components/Logo.tsx` plus a monospace "Form4" wordmark) and both share images.
 - Revised the same day at the owner's request: every corner sharp. The tile has square corners, and the brackets and 4 are filled shapes (even-odd path, the 4's counter cut out) instead of strokes, so the top of the 4 is crisp instead of bevelled. One file now: [docs/brand/form4-mark.svg](brand/form4-mark.svg). Phones still round home-screen icons themselves.
+
+## Round 19: site green matches the logo lime (2026-11-03)
+
+- Dark mode: highlight (`--accent`), gains/buys (`--up`) and bars (`--bar`) are the logo's lime `#a3e635` (12:1 contrast on the dark card).
+- Light mode: the exact lime is unreadable as text on white (1.5:1), so text uses lime-700 `#4d7c0f` (5:1) and bars use lime-600 `#65a30d` (3.1:1, enough for graphics).
+- Primary buttons use the exact lime with black text in both modes (`--brand`, 13:1). The stock share image's "Bought" bar is lime too.
+- TradingView widgets keep their own colors.

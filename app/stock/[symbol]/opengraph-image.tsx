@@ -38,7 +38,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ fontSize: 28, color: "#8a93a6" }}>Executives &amp; directors, last 30 days</div>
           {bought || sold ? (
-            [["Bought", bought, "#22c55e", buyers ? ` · ${buyers} ${buyers === 1 ? "insider" : "insiders"}` : ""], ["Sold", sold, "#ef4444", ""]].map(([label, v, color, extra]) => (
+            [["Bought", bought, "#a3e635", buyers ? ` · ${buyers} ${buyers === 1 ? "insider" : "insiders"}` : ""], ["Sold", sold, "#ef4444", ""]].map(([label, v, color, extra]) => (
               <div key={label as string} style={{ display: "flex", alignItems: "center", gap: 24 }}>
                 <div style={{ width: 120, fontSize: 32 }}>{label as string}</div>
                 <div style={{ display: "flex", width: 540, height: 34, background: "#1a202b", borderRadius: 17 }}>{v ? <div style={{ width: `${Math.max(3, ((v as number) / max) * 100)}%`, background: color as string, borderRadius: 17 }} /> : null}</div>
