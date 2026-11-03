@@ -81,7 +81,7 @@ function YourWatchlist({ a }: { a: ReturnType<typeof useWatchlistActivity> }) {
   );
 }
 
-function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
+function Notifications() {
   const [status, setStatus] = useState("");
   const [on, setOn] = useState(false);
   const [owner, setOwner] = useState("");
@@ -94,7 +94,6 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
     setEnv({ supported: "serviceWorker" in navigator && "PushManager" in window && "Notification" in window, ios, standalone });
     setOn(notificationsOn());
   }, []);
-  useEffect(() => { onChange?.(on); }, [on, onChange]);
   async function enable() {
     try {
       setStatus("Asking for permission…");
@@ -148,7 +147,6 @@ function Notifications({ onChange }: { onChange?: (on: boolean) => void }) {
 
 export default function DigestPage() {
   const [d, setD] = useState<Digest | null | "none">(null);
-  const [notifOn, setNotifOn] = useState(true);
   const a = useWatchlistActivity();
   const markets = useMarkets();
   useEffect(() => { fetch("/api/alerts/digest").then((r) => r.json()).then((x) => setD(x.empty ? "none" : x)).catch(() => setD("none")); }, []);
@@ -173,7 +171,6 @@ export default function DigestPage() {
             <h2 className="subhead">In 30 seconds</h2>
             <ul className="summary">{summary.map((s) => <li key={s}>{s}</li>)}</ul>
             {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /><Link href="/" className="small">Charts ›</Link></> : null}
-            {!notifOn ? <a href="#notify" className="btn primary">Get this on your phone every weekday ›</a> : null}
           </section>
           <YourWatchlist a={a} />
           <div className="twocol">
@@ -207,7 +204,7 @@ export default function DigestPage() {
           </div>
         </>
       )}
-      <Notifications onChange={setNotifOn} />
+      <Notifications />
     </div>
   );
 }

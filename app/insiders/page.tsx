@@ -191,7 +191,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
       {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
       {source === "history" && buys.length ? (
         <div className="twocol">
-          <section className="card">
+          <section className="card chart-card">
             <h2>Insider buying by day</h2>
             <div className="bigstats">
               <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>

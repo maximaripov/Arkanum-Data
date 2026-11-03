@@ -321,3 +321,7 @@ a.hb-row:hover { background: var(--chip); }
   .welcome { width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
   .welcome-actions .btn { flex: 1; }
 }
+/* A chart card beside a taller card: the bar chart grows to fill the space. */
+.chart-card { display: flex; flex-direction: column; }
+.chart-card .vbars { flex: 1; display: flex; flex-direction: column; }
+.chart-card .vb-cols { flex: 1; height: auto !important; min-height: 150px; }
