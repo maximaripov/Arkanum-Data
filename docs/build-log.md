@@ -231,5 +231,6 @@ The owner asked to show market data in Foresight's own design rather than embedd
 
 ## Round 18: Form4 logo (2026-11-03)
 
-- After 50 concepts across four rounds, the owner chose **Terminal**: `[4]` in lime (`#a3e635`) on near-black (`#0a0a0a`), without the cursor underline. Drawn as strokes, not text, so it renders the same on every device (the 4's top corner is bevelled and the crossbar corner kept sharp with `stroke-miterlimit="3"`). Source files: [docs/brand/form4-mark.svg](brand/form4-mark.svg) (rounded) and [docs/brand/form4-mark-square.svg](brand/form4-mark-square.svg) (full-bleed, for app icons).
+- After 50 concepts across four rounds, the owner chose **Terminal**: `[4]` in lime (`#a3e635`) on near-black (`#0a0a0a`), without the cursor underline. Drawn as strokes, not text, so it renders the same on every device (the 4's top corner is bevelled and the crossbar corner kept sharp with `stroke-miterlimit="3"`). 
 - Applied to the browser-tab icon (`app/icon.svg`), the iPhone icon (`app/apple-icon.png`, 180px), app icons (`public/icon-192.png`, `icon-512.png`, also listed as maskable), the header (`components/Logo.tsx` plus a monospace "Form4" wordmark) and both share images.
+- Revised the same day at the owner's request: every corner sharp. The tile has square corners, and the brackets and 4 are filled shapes (even-odd path, the 4's counter cut out) instead of strokes, so the top of the 4 is crisp instead of bevelled. One file now: [docs/brand/form4-mark.svg](brand/form4-mark.svg). Phones still round home-screen icons themselves.
