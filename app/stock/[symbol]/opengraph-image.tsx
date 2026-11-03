@@ -27,8 +27,8 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#0b0e14", color: "#e6e9ef", padding: "64px 80px", fontFamily: "sans-serif" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700, color: "#4ade80" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 18, border: "4px solid #4ade80", display: "flex", overflow: "hidden" }}><div style={{ width: "50%", background: "#4ade80" }} /></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700, color: "#e6e9ef" }}>
+          <svg width="44" height="44" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0a0a0a" /><path d="M31 24H21v52h10M69 24h10v52H69" fill="none" stroke="#a3e635" strokeWidth="6.5" /><path d="M56 75V26L35 58h29" fill="none" stroke="#a3e635" strokeWidth="7.5" strokeLinejoin="miter" strokeMiterlimit="3" /></svg>
           Form4
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

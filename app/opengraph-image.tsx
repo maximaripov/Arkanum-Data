@@ -12,8 +12,8 @@ export default function Image() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: "#0b0e14", color: "#e6e9ef", padding: "70px 80px", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 40, fontWeight: 700, color: "#4ade80" }}>
-            <div style={{ width: 44, height: 44, borderRadius: 22, border: "5px solid #4ade80", display: "flex", overflow: "hidden" }}><div style={{ width: "50%", background: "#4ade80" }} /></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 40, fontWeight: 700, color: "#e6e9ef" }}>
+            <svg width="52" height="52" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0a0a0a" /><path d="M31 24H21v52h10M69 24h10v52H69" fill="none" stroke="#a3e635" strokeWidth="6.5" /><path d="M56 75V26L35 58h29" fill="none" stroke="#a3e635" strokeWidth="7.5" strokeLinejoin="miter" strokeMiterlimit="3" /></svg>
             Form4
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -23,7 +23,7 @@ export default function Image() {
           <div style={{ fontSize: 24, color: "#8a93a6" }}>Free · no account · form4-insiders.vercel.app</div>
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: "100%", paddingBottom: 10 }}>
-          {BARS.map((h, i) => <div key={i} style={{ width: 22, height: h * 2.6, background: "#22c55e", borderRadius: "6px 6px 0 0", opacity: 0.55 + (i / BARS.length) * 0.45 }} />)}
+          {BARS.map((h, i) => <div key={i} style={{ width: 22, height: h * 2.6, background: "#a3e635", borderRadius: "6px 6px 0 0", opacity: 0.55 + (i / BARS.length) * 0.45 }} />)}
         </div>
       </div>
     ),

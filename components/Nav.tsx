@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search } from "./Search";
+import { LogoMark } from "./Logo";
 
 const LINKS = [["/", "Markets"], ["/screener", "Screener"], ["/insiders", "Insiders"], ["/calendar", "Calendar"], ["/briefing", "Digest"]];
 
@@ -10,8 +11,8 @@ export function Nav() {
   return (
     <header className="nav">
       <Link href="/" className="brand">
-        <svg viewBox="0 0 512 512" width="20" height="20" aria-hidden><circle cx="256" cy="256" r="150" fill="none" stroke="currentColor" strokeWidth="44" /><path d="M256 106a150 150 0 0 1 0 300z" fill="currentColor" /></svg>
-        Form4
+        <LogoMark size={26} />
+        <span className="wordmark">Form4</span>
       </Link>
       <nav>
         {LINKS.map(([href, label]) => (
