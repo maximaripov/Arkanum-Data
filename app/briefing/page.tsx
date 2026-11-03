@@ -194,12 +194,15 @@ export default function DigestPage() {
                 </Link></li>
               ))}</ul> : <p className="muted">None this week.</p>}
             </section>
+            {/* Funds file quarterly (mid-Feb, May, Aug, Nov); most weeks there is nothing to show. */}
+            {d.fundFilings.length ? (
             <section className="card">
               <div className="card-head"><h2>Big-fund filings this week</h2><Link href="/insiders?view=funds" className="small">All funds ›</Link></div>
-              {d.fundFilings.length ? <ul className="rows">{d.fundFilings.map((f) => (
+              <ul className="rows">{d.fundFilings.map((f) => (
                 <li key={f.fund} className="row-static"><div className="row-main"><strong>{f.fund}</strong><div className="small">{f.newPositions.length ? <>New: {f.newPositions.join(", ")}</> : null}{f.newPositions.length && f.soldOut.length ? " · " : ""}{f.soldOut.length ? <>Sold: {f.soldOut.join(", ")}</> : null}</div></div></li>
-              ))}</ul> : <p className="muted small">No new quarterly filings from the 13 tracked funds this week. The next batch is due by mid-February, May, August and November.</p>}
+              ))}</ul>
             </section>
+            ) : null}
             <ComingUp limit={4} />
           </div>
         </>
