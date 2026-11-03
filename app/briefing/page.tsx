@@ -143,10 +143,11 @@ function Notifications() {
         </>
       )}
       {status ? <p className="small status">{status}</p> : null}
-      {/* Only at /briefing?owner, so visitors don't see it. */}
+      {/* A small link opens the owner box (also /briefing?owner); it still needs the owner code. */}
+      {on && !ownerMode ? <button className="linkbtn small owner-link" onClick={() => setOwnerMode(true)}>Site owner</button> : null}
       {on && ownerMode ? (
         <details className="small muted" open><summary>Site owner</summary>
-          <form className="levelform" onSubmit={async (e) => { e.preventDefault(); try { const r = await register({ ownerCode: owner }); setStatus(r.owner ? "This device will also get alerts if the daily update fails." : "That code isn't right."); setOwner(""); } catch (err: any) { setStatus(err.message); } }}>
+          <form className="levelform" onSubmit={async (e) => { e.preventDefault(); try { const r = await register({ ownerCode: owner }); setStatus(r.owner ? "This device will also get alerts if the daily or hourly update fails." : "That code isn't right."); setOwner(""); } catch (err: any) { setStatus(err.message); } }}>
             <input className="note" type="password" placeholder="Owner code" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner code" />
             <button type="submit">Save</button>
           </form>

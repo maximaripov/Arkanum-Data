@@ -340,3 +340,4 @@ a.person:hover strong { color: var(--accent); }
 .follow-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: .4rem 0 .6rem; }
 .follow-item { display: flex; align-items: center; gap: .5rem; }
 .follow-item .row-link { flex: 1; }
+.owner-link { display: block; margin-top: .6rem; color: var(--muted); opacity: .75; }
