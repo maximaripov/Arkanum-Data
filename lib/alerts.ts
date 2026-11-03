@@ -41,9 +41,10 @@ export async function readDevices(): Promise<Store> {
 }
 
 /** Read-modify-write that retries if another request changed the file in between,
- *  so two people turning on notifications at the same moment can't erase each other. */
+ *  so two people turning on notifications at the same moment can't erase each other.
+ *  Waits grow on each retry: right after a write, a read can briefly return the old copy. */
 export async function updateDevices<T>(fn: (s: Store) => T): Promise<T> {
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const { data, etag } = await readJson<Store>(DEVICES);
     const store = data ?? { devices: {} };
     const result = fn(store);
@@ -52,7 +53,7 @@ export async function updateDevices<T>(fn: (s: Store) => T): Promise<T> {
       return result;
     } catch (e) {
       if (!(e instanceof BlobPreconditionFailedError)) throw e;
-      await new Promise((r) => setTimeout(r, 100 + Math.random() * 300));
+      await new Promise((r) => setTimeout(r, Math.min(3000, 150 * 2 ** attempt) + Math.random() * 250));
     }
   }
   throw new Error("Busy, try again");
