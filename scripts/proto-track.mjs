@@ -1,10 +1,12 @@
 // PROTOTYPE (not part of the site): how did stocks do after insiders bought?
 // Inputs, all public SEC data:
 //   - SEC "Insider Transactions Data Sets" (every Form 4, one zip per quarter)
-//   - Vanguard's quarterly 13F: value ÷ shares = each stock's quarter-end price
+//   - Geode's and State Street's quarterly 13Fs (index managers holding nearly every
+//     US stock): value ÷ shares = each stock's quarter-end price
 // Method: entry = quarter-end right after the buy; exits = the next two quarter-ends
 // (~3 and ~6 months later). The baseline is every stock Vanguard holds over the same
-// windows, so the comparison is apples to apples.
+// windows, so the comparison is apples to apples. Companies are matched by ticker
+// (13F CUSIPs → tickers via the free OpenFIGI lookup).
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -25,33 +27,52 @@ async function get(url, file, bin = false) {
   throw new Error("failed " + url);
 }
 
-// ---- 1. Quarter-end prices from Vanguard's 13F ------------------------------------------
-const QE = ["2025-06-30", "2025-09-30", "2025-12-31", "2026-03-31", "2026-06-30", "2026-09-30"];
-const sub = JSON.parse(await get("https://data.sec.gov/submissions/CIK0000102909.json", "vanguard-sub.json"));
-const r = sub.filings.recent;
-const prices = {}; // quarter-end → CUSIP → price
-const names = {};  // CUSIP → issuer name
-for (let i = 0; i < r.form.length; i++) {
-  if (r.form[i] !== "13F-HR" || !QE.includes(r.reportDate[i]) || prices[r.reportDate[i]]) continue;
-  const acc = r.accessionNumber[i], folder = `https://www.sec.gov/Archives/edgar/data/102909/${acc.replace(/-/g, "")}`;
-  const idx = JSON.parse(await get(`${folder}/index.json`, `vg-${acc}-idx.json`));
-  const file = idx.directory.item.map((x) => x.name).find((n) => /\.xml$/i.test(n) && !/primary_doc/i.test(n));
-  const xml = await get(`${folder}/${file}`, `vg-${acc}.xml`);
-  const p = {};
-  for (const m of xml.matchAll(/<(?:\w+:)?infoTable>([\s\S]*?)<\/(?:\w+:)?infoTable>/g)) {
-    const t = m[1], f = (tag) => t.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)<`))?.[1]?.trim();
-    if (f("putCall")) continue;
-    if ((f("sshPrnamtType") ?? "SH") !== "SH") continue;
-    const cusip = f("cusip"), value = +f("value"), sh = +f("sshPrnamt");
-    if (!cusip || !(value > 0) || !(sh > 0)) continue;
-    (p[cusip] ??= []).push(value / sh);
-    names[cusip] = f("nameOfIssuer");
+// ---- 1. Quarter-end prices from big index managers' 13Fs ------------------------------
+const QE = ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31", "2026-03-31", "2026-06-30", "2026-09-30"];
+const FILERS = [["1214717", "Geode"], ["93751", "StateStreet"]];
+const lots = {}; // quarter-end → CUSIP → [prices]
+for (const [cik, label] of FILERS) {
+  const sub = JSON.parse(await get(`https://data.sec.gov/submissions/CIK${cik.padStart(10, "0")}.json`, `${label}-sub.json`));
+  const r = sub.filings.recent;
+  const done = new Set();
+  for (let i = 0; i < r.form.length; i++) {
+    if (r.form[i] !== "13F-HR" || !QE.includes(r.reportDate[i]) || done.has(r.reportDate[i])) continue;
+    done.add(r.reportDate[i]);
+    const acc = r.accessionNumber[i], folder = `https://www.sec.gov/Archives/edgar/data/${cik}/${acc.replace(/-/g, "")}`;
+    const idx = JSON.parse(await get(`${folder}/index.json`, `${label}-${acc}-idx.json`));
+    const xmls = idx.directory.item.map((x) => x.name).filter((n) => /\.xml$/i.test(n) && !/primary_doc/i.test(n));
+    let n = 0;
+    for (const file of xmls) {
+      const xml = await get(`${folder}/${file}`, `${label}-${acc}-${file}`);
+      for (const m of xml.matchAll(/<(?:\w+:)?infoTable>([\s\S]*?)<\/(?:\w+:)?infoTable>/g)) {
+        const t = m[1], f = (tag) => t.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)<`))?.[1]?.trim();
+        if (f("putCall") || (f("sshPrnamtType") ?? "SH") !== "SH") continue;
+        const cusip = f("cusip")?.toUpperCase(), value = +f("value"), sh = +f("sshPrnamt");
+        if (!cusip || !(value > 0) || !(sh > 0)) continue;
+        ((lots[r.reportDate[i]] ??= {})[cusip] ??= []).push(value / sh); n++;
+      }
+    }
+    console.log(`13F ${label} ${r.reportDate[i]}: ${n} positions`);
   }
-  // One price per security: Vanguard reports several funds' lots; they share the close.
-  prices[r.reportDate[i]] = Object.fromEntries(Object.entries(p).map(([c, v]) => [c, v.sort((a, b) => a - b)[v.length >> 1]]));
-  console.log(`13F ${r.reportDate[i]}: ${Object.keys(prices[r.reportDate[i]]).length} securities`);
 }
+const prices = Object.fromEntries(Object.entries(lots).map(([q, m]) => [q, Object.fromEntries(Object.entries(m).map(([c, v]) => [c, v.sort((a, b) => a - b)[v.length >> 1]]))]));
 const quarters = QE.filter((q) => prices[q]);
+console.log("quarter-ends with prices:", quarters.join(", "));
+
+// CUSIP → ticker: the repo's cache first, then OpenFIGI (free: 25 requests/minute, 10 per request).
+const cusipTicker = JSON.parse(await readFile(new URL("../data/cusip.json", import.meta.url), "utf8").catch(() => "{}"));
+const need = [...new Set(Object.values(prices).flatMap((m) => Object.keys(m)))].filter((c) => !(c in cusipTicker));
+console.log(`OpenFIGI lookups needed: ${need.length}`);
+for (let i = 0; i < need.length; i += 10) {
+  const batch = need.slice(i, i + 10);
+  const r = await fetch("https://api.openfigi.com/v3/mapping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(batch.map((c) => ({ idType: "ID_CUSIP", idValue: c, exchCode: "US" }))) });
+  if (r.status === 429) { await sleep(61_000); i -= 10; continue; }
+  const out = r.ok ? await r.json() : [];
+  batch.forEach((c, k) => { cusipTicker[c] = out[k]?.data?.[0]?.ticker?.replace("/", "-") ?? null; });
+  await sleep(2600);
+}
+const tickerCusips = new Map();
+for (const [c, t] of Object.entries(cusipTicker)) if (t) { if (!tickerCusips.has(t)) tickerCusips.set(t, []); tickerCusips.get(t).push(c); }
 
 // ---- 2. Insider buys from the SEC's quarterly Form 4 data sets ---------------------------
 function tsv(text) {
@@ -61,7 +82,7 @@ function tsv(text) {
 }
 const unzip = (zip, name) => execFileSync("unzip", ["-p", zip, name], { maxBuffer: 2e9 }).toString("utf8");
 const buys = [];
-for (const q of ["2025q3", "2025q4", "2026q1", "2026q2"]) {
+for (const q of ["2025q1", "2025q2", "2025q3", "2025q4", "2026q1", "2026q2"]) {
   let zip;
   try { zip = await get(`https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/${q}_form345.zip`, `${q}_form345.zip`, true); }
   catch { console.warn(`no data set for ${q}`); continue; }
@@ -89,11 +110,8 @@ for (const q of ["2025q3", "2025q4", "2026q1", "2026q2"]) {
   console.log(`${q}: ${by.size} insider buys`);
 }
 
-// ---- 3. Match each company to Vanguard's CUSIPs by name (prototype-grade) ------------------
-const norm = (s) => String(s).toUpperCase().replace(/[.,'&/()-]/g, " ").replace(/\b(INC|CORP|CORPORATION|CO|COMPANY|LTD|PLC|HOLDINGS?|GROUP|THE|CL A|CLASS A|COM|NEW|LLC|LP|SA|NV|AG)\b/g, " ").replace(/\s+/g, " ").trim();
-const byName = new Map();
-for (const [c, n] of Object.entries(names)) { const k = norm(n); if (!byName.has(k)) byName.set(k, []); byName.get(k).push(c); }
-const cusipFor = (issuer) => { const c = byName.get(norm(issuer)); return c && c.length === 1 ? c[0] : null; };
+// ---- 3. Match each insider buy's ticker to a CUSIP with prices --------------------------
+const cusipFor = (sym) => { const c = (tickerCusips.get(sym) ?? []).filter((x) => quarters.some((q) => prices[q][x])); return c[0] ?? null; };
 
 // ---- 4. Score and measure ----------------------------------------------------------------
 const nextQE = (d) => quarters.find((q) => q >= d);
@@ -102,7 +120,7 @@ const rows = [];
 for (const t of exec) {
   const window = exec.filter((x) => x.symbol === t.symbol && Math.abs(Date.parse(x.date) - Date.parse(t.date)) < 30 * 86_400_000);
   const c = conviction(t, { insiders: buyersBySymbol(window).get(t.symbol) ?? 1 });
-  const cusip = cusipFor(t.issuer);
+  const cusip = cusipFor(t.symbol);
   const q0 = nextQE(t.date), i0 = quarters.indexOf(q0);
   if (!cusip || i0 < 0) { rows.push({ ...t, conv: c, matched: !!cusip }); continue; }
   const px = (i) => prices[quarters[i]]?.[cusip];
@@ -133,7 +151,14 @@ const group = (f) => {
   }
   return { count: g.length, ...out };
 };
+const byQuarter = {};
+for (const x of rows.filter((x) => x.matched && x.r3 != null)) {
+  const g = (byQuarter[x.q0] ??= { strong: [], all: [] });
+  const ex = x.r3 - (base[`${x.q0}|1`]?.median ?? 0);
+  g.all.push(ex); if (x.conv?.tier === "strong") g.strong.push(ex);
+}
 const result = {
+  byQuarter: Object.fromEntries(Object.entries(byQuarter).map(([q, g]) => [q, { strongN: g.strong.length, strongExcessMedian: stats(g.strong)?.median ?? null, allN: g.all.length, allExcessMedian: stats(g.all)?.median ?? null }])),
   quarters, totalBuys: buys.length, execBuys: exec.length, matched: rows.filter((x) => x.matched).length,
   tiers: { strong: group((x) => x.conv?.tier === "strong"), notable: group((x) => x.conv?.tier === "notable"), routine: group((x) => x.conv?.tier === "routine"), all: group(() => true) },
   base,
