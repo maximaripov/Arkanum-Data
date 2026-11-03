@@ -28,7 +28,11 @@ export const notificationsOn = () => ls.get(ON) === "1";
 
 /** Sends this device's watchlist (exactly what the Markets tab shows, defaults included)
  *  and saved screens, plus any extra fields. */
-const prefs = () => ({ watchlist: ls.json<string[] | null>("foresight.watchlist", null) ?? DEFAULT_WATCHLIST, screens: ls.json("foresight.screens", []) });
+const prefs = () => ({
+  watchlist: ls.json<string[] | null>("foresight.watchlist", null) ?? DEFAULT_WATCHLIST,
+  screens: ls.json("foresight.screens", []),
+  following: ls.json<{ cik: string }[]>("foresight.following", []).map((p) => p.cik),
+});
 const SYNCED = "foresight.synced"; // what the server last received, and when
 
 export async function register(extra: Record<string, unknown> = {}) {

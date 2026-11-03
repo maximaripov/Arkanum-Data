@@ -1,6 +1,6 @@
 // A device turns notifications on/off or updates its watchlist and saved screens.
 // No account: the random device ID (kept on the device) is what identifies it.
-import { MAX_DEVICES, ownerCodeOk, sanitizeScreens, sanitizeSub, sanitizeWatchlist, updateDevices, validId } from "@/lib/alerts";
+import { MAX_DEVICES, ownerCodeOk, sanitizeFollowing, sanitizeScreens, sanitizeSub, sanitizeWatchlist, updateDevices, validId } from "@/lib/alerts";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -18,6 +18,8 @@ export async function POST(req: Request) {
       if (w) cur.watchlist = w;
       const sc = sanitizeScreens(body.screens);
       if (sc) cur.screens = sc;
+      const fo = sanitizeFollowing(body.following);
+      if (fo) cur.following = fo;
       if (body.ownerCode !== undefined) cur.owner = ownerCodeOk(body.ownerCode);
       if (typeof body.instant === "boolean") cur.instant = body.instant;
       cur.seen = now;

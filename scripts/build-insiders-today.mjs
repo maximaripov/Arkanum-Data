@@ -33,7 +33,8 @@ const fresh = [];
 for (let page = 0; page < MAX_PAGES; page++) {
   const atom = await getText(`https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&owner=include&count=100&start=${page * 100}&output=atom`);
   const entries = [...(atom ?? "").matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
-  if (!entries.length) break;
+  // The feed always lists recent filings; nothing at all on the first page means it broke.
+  if (!entries.length) { if (page === 0) throw new Error("SEC's live Form 4 feed returned no filings"); break; }
   let reachedSeen = false;
   for (const e of entries) {
     if (!/\(Issuer\)/.test(e)) continue;

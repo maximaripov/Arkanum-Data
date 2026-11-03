@@ -5,6 +5,7 @@ import { insiderTradesByOwner } from "@/lib/sec";
 import { withConviction } from "@/lib/conviction.mjs";
 import { loadInsiders, withHistory } from "@/lib/insiderData";
 import { TradeList } from "@/components/TradeList";
+import { FollowButton } from "@/components/FollowButton";
 import { personName, roleLabel } from "@/lib/people.mjs";
 import { fmtBig } from "@/lib/format";
 import type { InsiderTrade } from "@/lib/sec";
@@ -47,6 +48,7 @@ export default async function InsiderPage({ params }: { params: Promise<{ cik: s
     <div className="stack">
       <section className="card">
         <h1>{d.name}</h1>
+        <FollowButton cik={String(Number(cik))} name={d.name} />
         <p className="muted">Insider trades reported to the SEC{oldest ? ` since ${day(oldest)}` : ""}, from their latest {d.trades.length ? "Form 4 filings" : "filings"}.</p>
         <dl className="stats compact">
           <div><dt>Bought (open market)</dt>{sum("P") ? <dd className="mono up">${fmtBig(sum("P"))}</dd> : <dd className="muted">None</dd>}</div>

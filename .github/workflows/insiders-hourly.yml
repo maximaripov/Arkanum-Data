@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   id-token: write # lets the job prove to the site that it is this repo's job
+  actions: read # to check how the previous run ended before alerting
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -24,10 +25,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - name: Today's insider trades (SEC Form 4 live feed)
+      - id: install
+        run: npm ci
+      - id: today
+        name: Today's insider trades (SEC Form 4 live feed)
         run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/build-insiders-today.mjs
-      - name: Commit data
+      - id: commit
+        name: Commit data
         run: |
           # Vercel's Hobby plan only deploys commits authored by the project owner.
           git config user.name "maximaripov"
@@ -38,5 +42,33 @@ jobs:
           # The daily job may have pushed meanwhile; on the shared history cache, keep ours.
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
           exit 1
-      - name: Instant alerts
+      - id: alerts
+        name: Instant alerts
         run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/instant-alerts.mjs
+      # Tell the owner's devices when the job breaks, and when it works again. Only on a
+      # change from the previous run, so a lasting outage sends one message, not one an hour.
+      - name: Notify on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev=$(gh run list --repo "${{ github.repository }}" --workflow insiders-hourly.yml --limit 5 --json databaseId,conclusion,status \
+            --jq '[.[] | select(.databaseId != ${{ github.run_id }} and .status == "completed")][0].conclusion' || echo "")
+          if [ "$prev" = "failure" ]; then echo "The previous run failed too; the owner was already alerted."; exit 0; fi
+          failed=""
+          [ "${{ steps.install.outcome }}" = "failure" ] && failed="$failed setup,"
+          [ "${{ steps.today.outcome }}" = "failure" ] && failed="$failed reading new filings from SEC,"
+          [ "${{ steps.commit.outcome }}" = "failure" ] && failed="$failed saving the data,"
+          [ "${{ steps.alerts.outcome }}" = "failure" ] && failed="$failed instant alerts,"
+          failed="${failed%,}"
+          node scripts/notify.mjs "Form4: hourly insider update failed" "Failed:${failed:- setup}. The site keeps the last good data; you'll hear once it works again. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Notify on recovery
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev=$(gh run list --repo "${{ github.repository }}" --workflow insiders-hourly.yml --limit 5 --json databaseId,conclusion,status \
+            --jq '[.[] | select(.databaseId != ${{ github.run_id }} and .status == "completed")][0].conclusion' || echo "")
+          if [ "$prev" = "failure" ]; then
+            node scripts/notify.mjs "Form4: hourly insider update is working again" "The latest run succeeded." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi

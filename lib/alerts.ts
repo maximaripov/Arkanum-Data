@@ -19,6 +19,7 @@ export type Device = {
   screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last digest
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
   instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
+  following?: string[]; // SEC IDs of insiders this device follows
   added: string;
   seen: string;
 };
@@ -118,6 +119,11 @@ export const validId = (id: unknown): id is string => typeof id === "string" && 
 export function sanitizeWatchlist(w: unknown): string[] | undefined {
   if (!Array.isArray(w)) return undefined;
   return [...new Set(w.map(clean).filter((s) => /^[A-Z0-9.\-^=]{1,12}$/.test(s)))].slice(0, 50);
+}
+/** SEC IDs of followed insiders: digits only, at most 100. */
+export function sanitizeFollowing(f: unknown): string[] | undefined {
+  if (!Array.isArray(f)) return undefined;
+  return [...new Set(f.map((x) => String(Number(x) || "")).filter((x) => /^\d{1,10}$/.test(x)))].slice(0, 100);
 }
 export function sanitizeSub(s: any): PushSubscription | null {
   if (!s?.endpoint || !s?.keys?.p256dh || !s?.keys?.auth) return null;

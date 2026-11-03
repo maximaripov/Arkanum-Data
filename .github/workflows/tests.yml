@@ -1,0 +1,29 @@
+name: Tests
+# Runs the automated tests and the type check whenever code changes. Data-only commits
+# (the hourly and daily jobs) are skipped so they don't use up GitHub's free minutes.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "public/data/**"
+      - "data/**"
+      - "docs/**"
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tests
+        run: npm test
+      - name: Type check
+        run: npx tsc --noEmit -p .

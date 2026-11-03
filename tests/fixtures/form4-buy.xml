@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ownershipDocument>
+  <schemaVersion>X0508</schemaVersion>
+  <documentType>4</documentType>
+  <periodOfReport>2026-10-30</periodOfReport>
+  <aff10b5One>0</aff10b5One>
+  <issuer>
+    <issuerCik>0000853816</issuerCik>
+    <issuerName>LANDSTAR SYSTEM INC</issuerName>
+    <issuerTradingSymbol>LSTR</issuerTradingSymbol>
+  </issuer>
+  <reportingOwner>
+    <reportingOwnerId>
+      <rptOwnerCik>0001653042</rptOwnerCik>
+      <rptOwnerName>Lonegro Frank A</rptOwnerName>
+    </reportingOwnerId>
+    <reportingOwnerRelationship>
+      <isDirector>1</isDirector>
+      <isOfficer>1</isOfficer>
+      <officerTitle>President &amp; CEO</officerTitle>
+    </reportingOwnerRelationship>
+  </reportingOwner>
+  <nonDerivativeTable>
+    <nonDerivativeTransaction>
+      <securityTitle><value>Common Stock</value></securityTitle>
+      <transactionDate><value>2026-10-30</value></transactionDate>
+      <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>P</transactionCode></transactionCoding>
+      <transactionAmounts>
+        <transactionShares><value>3000</value></transactionShares>
+        <transactionPricePerShare><value>142.50</value></transactionPricePerShare>
+        <transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode>
+      </transactionAmounts>
+      <postTransactionAmounts><sharesOwnedFollowingTransaction><value>26100</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+    </nonDerivativeTransaction>
+    <nonDerivativeTransaction>
+      <securityTitle><value>Common Stock</value></securityTitle>
+      <transactionDate><value>2026-10-30</value></transactionDate>
+      <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>P</transactionCode></transactionCoding>
+      <transactionAmounts>
+        <transactionShares><value>2000</value></transactionShares>
+        <transactionPricePerShare><value>143.55</value></transactionPricePerShare>
+        <transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode>
+      </transactionAmounts>
+      <postTransactionAmounts><sharesOwnedFollowingTransaction><value>28100</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+    </nonDerivativeTransaction>
+  </nonDerivativeTable>
+</ownershipDocument>

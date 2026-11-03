@@ -335,3 +335,8 @@ a.hb-row:hover { background: var(--chip); }
 a.person:hover strong { color: var(--accent); }
 .check { display: flex; gap: .55rem; align-items: flex-start; margin: .2rem 0 .8rem; font-size: .9rem; cursor: pointer; }
 .check input { margin-top: .2rem; accent-color: var(--brand); width: 1.05rem; height: 1.05rem; flex: none; }
+
+/* Follow an insider */
+.follow-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: .4rem 0 .6rem; }
+.follow-item { display: flex; align-items: center; gap: .5rem; }
+.follow-item .row-link { flex: 1; }
