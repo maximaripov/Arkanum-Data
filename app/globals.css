@@ -469,3 +469,5 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 .ttable td:nth-child(2) { max-width: 15rem; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 761px) and (max-width: 1199px) { .ttable th:nth-child(4), .ttable td:nth-child(4) { display: none; } }
 @media (min-width: 761px) and (max-width: 999px) { .ov .span8, .ov .span4, .ov .span7, .ov .span5, .ov .span6 { grid-column: span 12; } .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .kpi:nth-child(3) { border-right: 0; } .kpi:nth-child(-n+3) { border-bottom: 1px solid var(--line); } }
+.idx2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .25rem 0 .5rem; }
+@media (max-width: 760px) { .idx2 { grid-template-columns: 1fr; } }

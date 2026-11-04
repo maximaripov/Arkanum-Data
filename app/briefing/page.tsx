@@ -7,6 +7,7 @@ import { TradeList, Signal, personName, roleLabel } from "@/components/TradeList
 import { ComingUp } from "@/components/ComingUp";
 import { loadInsiders } from "@/lib/insiderData";
 import { WeekSummary, useMarkets } from "@/components/MarketBoard";
+import { TradingView } from "@/components/TradingView";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { Conviction, InsiderTrade } from "@/lib/sec";
@@ -192,10 +193,18 @@ export default function DigestPage() {
         <>
           <section className="card">
             <h1>Daily digest</h1>
-            <p className="muted small">{day(d.date)} · what company insiders and big funds did, plus the week in markets</p>
+            <p className="muted small">{day(d.date)} · what company insiders and big funds did, plus the markets</p>
             <h2 className="subhead">In 30 seconds</h2>
             <ul className="summary">{summary.map((s) => <li key={s}>{s}</li>)}</ul>
-            {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /><Link href="/" className="small">Charts ›</Link></> : null}
+            <h2 className="subhead">S&amp;P 500 and Nasdaq 100 <span className="muted" style={{ textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>· latest day, last month&apos;s chart</span></h2>
+            {/* Index levels are licensed by S&P and Nasdaq, so they come only through TradingView's widgets (round 13). */}
+            <div className="idx2">{["FOREXCOM:SPXUSD", "FOREXCOM:NSXUSD"].map((symbol) => (
+              <div key={symbol} className="mcard tvq">
+                <TradingView widget="mini-symbol-overview" height={150} config={{ symbol, width: "100%", height: "100%", dateRange: "1M", isTransparent: true, noTimeScale: true }} label="TradingView" />
+              </div>
+            ))}</div>
+            {markets?.length ? <><h2 className="subhead">Markets this week</h2><WeekSummary groups={markets} /></> : null}
+            <Link href="/markets" className="small">Charts ›</Link>
           </section>
           <YourWatchlist a={a} />
           <div className="twocol">
