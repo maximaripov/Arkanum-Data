@@ -55,7 +55,7 @@ export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null;
           const size = 8 + 12 * Math.sqrt(m.value / max);
           return (
             <button key={m.key} className={`imark ${m.buy ? "buy" : "sell"}${m.key === pick ? " on" : ""}`}
-              style={{ left: `${((at(m.date) - start) / (end - start)) * 100}%`, width: size, height: size }}
+              style={{ left: `calc(12px + (100% - 24px) * ${(at(m.date) - start) / (end - start)})`, width: size, height: size }}
               onPointerEnter={(e) => e.pointerType === "mouse" && setPick(m.key)} onClick={() => setPick(m.key === pick ? null : m.key)}
               aria-label={`${m.buy ? "Bought" : "Sold"} $${fmtBig(m.value)}, ${who(m)}, ${m.date}`} />
           );
