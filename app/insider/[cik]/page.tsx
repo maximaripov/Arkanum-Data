@@ -9,11 +9,12 @@ import { FollowButton } from "@/components/FollowButton";
 import { personName, roleLabel } from "@/lib/people.mjs";
 import { fmtBig } from "@/lib/format";
 import type { InsiderTrade } from "@/lib/sec";
+import { companyName } from "@/lib/people.mjs";
 
 // One insider across every company they report for, from their own SEC filings.
 // Rebuilt at most every 6 hours; search engines get the full page.
 export const revalidate = 21600;
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 async function load(cik: string) {
@@ -62,7 +63,7 @@ export default async function InsiderPage({ params }: { params: Promise<{ cik: s
           <h2>Companies</h2>
           <ul className="rows">{[...companies.values()].map((t) => (
             <li key={t.symbol}><Link href={`/stock/${t.symbol}`} className="row-link">
-              <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div><div className="small muted">{roleLabel(t.role)}</div></div>
+              <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></div><div className="small muted">{roleLabel(t.role)}</div></div>
               <div className="small muted">latest {day(t.date)}</div>
             </Link></li>
           ))}</ul>

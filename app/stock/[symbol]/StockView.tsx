@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
 import { TradeList } from "@/components/TradeList";
+import { InsiderStrip } from "@/components/InsiderStrip";
 import { HBars } from "@/components/Bars";
 import { isExecOrDirector } from "@/lib/insider";
 import { FundHolders } from "@/components/FundsView";
@@ -12,9 +13,10 @@ import { tvSymbol } from "@/lib/tv";
 import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement } from "@/lib/news";
 import type { RetailFlow } from "@/lib/retail";
+import { companyName } from "@/lib/people.mjs";
 
 type Company = { ticker: string; name: string | null; exchange: string | null };
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 // [label, TradingView range, bar interval]
 const RANGES: [string, string, string][] = [["1D", "1D", "5"], ["1M", "1M", "60"], ["6M", "6M", "D"], ["1Y", "12M", "D"], ["5Y", "60M", "W"]];
 const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
@@ -58,7 +60,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
       <section className="card">
         <div className="stock-head">
           <div>
-            <h1>{co?.name ? titleCase(co.name) : symbol}</h1>
+            <h1>{co?.name ? titleCase(co.name, symbol) : symbol}</h1>
             <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""} · insider trades, fund holdings and fundamentals</div>
           </div>
           <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "★ On your watchlist" : "☆ Add to watchlist"}</button>
@@ -72,6 +74,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
           interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
           hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
         }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
+        <InsiderStrip trades={insiders} range={range} />
         <p className="muted small">Prices are delayed 15 minutes. Drag across the chart to see past prices.</p>
       </section>
 

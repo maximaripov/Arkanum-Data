@@ -2,13 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fmtBig, fmtPct } from "@/lib/format";
+import { companyName } from "@/lib/people.mjs";
 
 export type Holding = { cusip: string; t: string | null; name: string; cls: string; value: number; shares: number; pct: number; change: string; chgPct: number | null };
 type Fund = { cik: number; name: string; who: string; period: string; filed: string; prevPeriod: string | null; total: number; count: number; top: Holding[]; new: Holding[]; added: Holding[]; reduced: Holding[]; sold: Holding[] };
 
 const q = (d: string) => { const [y, m] = d.split("-"); return `Q${Math.ceil(+m / 3)} ${y}`; };
 const share = (pct: number) => (pct < 0.1 ? "<0.1%" : `${pct.toFixed(1)}%`);
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 
 export function Badge({ h }: { h: Holding }) {
   if (h.change === "new") return <span className="badge up">New</span>;
@@ -24,8 +25,8 @@ export function HoldingRows({ items, max = 10, maxPct }: { items: Holding[]; max
     <ul className="holdings">{items.slice(0, max).map((h) => (
       <li key={h.cusip}>
         <div className="h-name">
-          {h.t ? <Link href={`/stock/${h.t}`}><strong>{h.t}</strong></Link> : <strong>{titleCase(h.name)}</strong>}
-          <span className="muted small ellipsis">{h.t ? titleCase(h.name) : h.cls}</span>
+          {h.t ? <Link href={`/stock/${h.t}`}><strong>{h.t}</strong></Link> : <strong>{titleCase(h.name, h.t)}</strong>}
+          <span className="muted small ellipsis">{h.t ? titleCase(h.name, h.t) : h.cls}</span>
         </div>
         <div className="h-right">
           <div className="mono">${fmtBig(h.value)}{h.change !== "sold" ? <span className="muted small"> · {share(h.pct)}</span> : null}</div>
@@ -52,7 +53,7 @@ export function ChangeLines({ c, since }: { c: Changes; since: string }) {
         return (
           <div key={k} className="change-line small">
             <span className="muted">{label}</span>
-            <span>{list.slice(0, 12).map((h, i) => <span key={h.cusip}>{i ? ", " : ""}{h.t ? <Link href={`/stock/${h.t}`}>{h.t}</Link> : titleCase(h.name)}</span>)}{list.length > 12 ? ` +${list.length - 12} more` : ""}</span>
+            <span>{list.slice(0, 12).map((h, i) => <span key={h.cusip}>{i ? ", " : ""}{h.t ? <Link href={`/stock/${h.t}`}>{h.t}</Link> : titleCase(h.name, h.t)}</span>)}{list.length > 12 ? ` +${list.length - 12} more` : ""}</span>
           </div>
         );
       })}
@@ -91,10 +92,10 @@ export function FundsView() {
       {part === "popular" ? (consensus.bought.length || consensus.sold.length ? (
         <div className="twocol">
           <section className="card"><h2>Bought by several funds <span className="muted small">new or added, latest quarter</span></h2>
-            <ul className="compact-list">{consensus.bought.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="up">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
+            <ul className="compact-list">{consensus.bought.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name, x.t)}</span> · <span className="up">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
           </section>
           <section className="card"><h2>Sold by several funds <span className="muted small">cut or exited</span></h2>
-            <ul className="compact-list">{consensus.sold.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name)}</span> · <span className="down">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
+            <ul className="compact-list">{consensus.sold.map((x) => <li key={x.t}><Link href={`/stock/${x.t}`}><strong>{x.t}</strong></Link> <span className="muted">{titleCase(x.name, x.t)}</span> · <span className="down">{x.funds.length} funds</span><div className="muted small">{x.funds.join(", ")}</div></li>)}</ul>
           </section>
         </div>
       ) : <section className="card"><p className="muted">No stock was bought or sold by several tracked funds this quarter.</p></section>) : null}

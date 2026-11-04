@@ -471,3 +471,13 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 @media (min-width: 761px) and (max-width: 999px) { .ov .span8, .ov .span4, .ov .span7, .ov .span5, .ov .span6 { grid-column: span 12; } .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .kpi:nth-child(3) { border-right: 0; } .kpi:nth-child(-n+3) { border-bottom: 1px solid var(--line); } }
 .idx2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin: .25rem 0 .5rem; }
 @media (max-width: 760px) { .idx2 { grid-template-columns: 1fr; } }
+.tier-sale { background: color-mix(in srgb, var(--down) 18%, transparent); color: var(--down); }
+/* Insider buys and sales under a stock's chart */
+.istrip { margin: .5rem 0 .25rem; }
+.istrip-read { min-height: 1.4em; margin-bottom: .35rem; }
+.istrip-track { position: relative; height: 34px; border-radius: 8px; background: var(--card2); border: 1px solid var(--line); }
+.imark { position: absolute; top: 50%; transform: translate(-50%, -50%); border: 0; padding: 0; cursor: pointer; opacity: .85; }
+.imark.buy { background: var(--up); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.imark.sell { background: var(--down); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.imark:hover, .imark.on { opacity: 1; transform: translate(-50%, -50%) scale(1.35); z-index: 1; }
+.istrip-axis { display: flex; justify-content: space-between; gap: .5rem; margin-top: .2rem; }

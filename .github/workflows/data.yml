@@ -66,6 +66,9 @@ jobs:
       - id: insiders
         name: Update insider trades (SEC Form 4)
         run: node scripts/build-insiders.mjs --days 30
+      - name: Insiders overview (home page summary)
+        continue-on-error: true
+        run: node scripts/build-overview.mjs
       - id: funds
         name: Update big-fund holdings (SEC 13F)
         run: node scripts/build-funds.mjs

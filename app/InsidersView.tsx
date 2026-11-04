@@ -8,12 +8,27 @@ import { VBars } from "@/components/Bars";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
+import { buildOverview } from "@/lib/overview.mjs";
+
+type Overview = {
+  updated: string | null;
+  totals: { value: number; buys: number; people: number; cos: number; strong: number; sales: number; salesValue: number; notableSales: number };
+  hero: { t: InsiderTrade; recent: boolean } | null;
+  strongest: InsiderTrade[];
+  clusters: { symbol: string; issuer: string; value: number; last: string; people: number }[];
+  clusterCount: number;
+  byDay: { key: string; value: number; people: number; cos: number }[];
+  latest: InsiderTrade[];
+  notableSales: InsiderTrade[];
+};
+const buildOv = buildOverview as unknown as (d: { trades: InsiderTrade[]; days: string[]; updated: string | null }) => Overview;
+import { companyName } from "@/lib/people.mjs";
 
 type Kind = "buys" | "sells" | "all";
 type View = "overview" | "groups" | "trades" | "funds";
 const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["funds", "Big funds"]];
 const SIZES = [[0, "Any size"], [100_000, "$100K+"], [1_000_000, "$1M+"]] as const;
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const shortDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 type Cluster = { symbol: string; issuer: string; value: number; last: string; people: { name: string; role: string }[] };
@@ -29,7 +44,7 @@ function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; previe
         {top.map((c) => (
           <Link key={c.symbol} href={`/stock/${c.symbol}`} className="cluster">
             <div className="cluster-head"><strong>{c.symbol}</strong><span className="up mono">${fmtBig(c.value)}</span></div>
-            <div className="muted small ellipsis-2">{titleCase(c.issuer)}</div>
+            <div className="muted small ellipsis-2">{titleCase(c.issuer, c.symbol)}</div>
             <div className="small"><span className="up">{c.people.length} insiders bought</span> · latest {shortDay(c.last)}</div>
             <div className="muted small ellipsis-2">{c.people.slice(0, 3).map((p) => `${p.name} (${p.role})`).join(", ")}{c.people.length > 3 ? `, +${c.people.length - 3} more` : ""}</div>
           </Link>
@@ -38,7 +53,7 @@ function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; previe
       {rest.length ? (
         all ? (
           <ul className="compact-list">{rest.map((c) => (
-            <li key={c.symbol}><Link href={`/stock/${c.symbol}`}><strong>{c.symbol}</strong></Link> <span className="muted">{titleCase(c.issuer)}</span> · <span className="up">{c.people.length} insiders, ${fmtBig(c.value)}</span></li>
+            <li key={c.symbol}><Link href={`/stock/${c.symbol}`}><strong>{c.symbol}</strong></Link> <span className="muted">{titleCase(c.issuer, c.symbol)}</span> · <span className="up">{c.people.length} insiders, ${fmtBig(c.value)}</span></li>
           ))}</ul>
         ) : <button className="btn wide" onClick={() => setAll(true)}>Show all {clusters.length}</button>
       ) : null}
@@ -84,7 +99,17 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     history.replaceState(null, "", p.toString() ? `?${p}` : location.pathname);
   }, [view, kind, execOnly, min, q, strongOnly]);
 
+  // The overview comes from the small overview.json; the full 30-day file loads only for
+  // the trade lists (or if overview.json is unavailable).
+  const [ov, setOv] = useState<Overview | null | undefined>(undefined);
   useEffect(() => {
+    fetch("/data/overview.json").then((r) => (r.ok ? r.json() : null)).then((d) => setOv(d?.totals ? d : null)).catch(() => setOv(null));
+  }, []);
+  const needFull = view !== "overview" || ov === null;
+  const loadedFrom = useRef<string | null>(null);
+  useEffect(() => {
+    if (!needFull || loadedFrom.current === source) return;
+    loadedFrom.current = source;
     setTrades(null); setErr("");
     if (source === "history") {
       loadInsiders().then((d) => {
@@ -97,7 +122,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
       if (Array.isArray(d)) { setTrades(d.map((t: InsiderTrade) => ({ ...t, filed: t.filed || t.date }))); setUpdated("Newest filings on SEC EDGAR right now"); }
       else setErr(d.error);
     }).catch((e) => setErr(String(e)));
-  }, [source]);
+  }, [source, needFull]);
 
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -111,45 +136,11 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
       (!s || t.symbol.toLowerCase().startsWith(s) || t.issuer.toLowerCase().includes(s) || t.owner.toLowerCase().includes(s)));
   }, [trades, kind, execOnly, min, q, hidePlanned, day, strongOnly]);
 
-  // Executive and director buys only: the trades that carry a signal.
-  const buys = useMemo(() => (trades ?? []).filter((t) => t.code === "P" && isExecOrDirector(t) && t.value), [trades]);
-  const byDay = useMemo(() => {
-    const m = new Map<string, { value: number; people: Set<string>; cos: Set<string> }>();
-    for (const d of days) m.set(d, { value: 0, people: new Set(), cos: new Set() });
-    for (const t of buys) {
-      const k = t.filed || t.date, x = m.get(k) ?? { value: 0, people: new Set<string>(), cos: new Set<string>() };
-      x.value += t.value ?? 0; x.people.add(t.owner); x.cos.add(t.symbol); m.set(k, x);
-    }
-    return [...m].sort((a, b) => a[0].localeCompare(b[0])).map(([k, x]) => ({
-      key: k, label: shortDay(k), value: x.value,
-      detail: x.value ? `$${fmtBig(x.value)} bought by ${x.people.size} ${x.people.size === 1 ? "insider" : "insiders"} at ${x.cos.size} ${x.cos.size === 1 ? "company" : "companies"}` : "no insider buys",
-    }));
-  }, [buys, days]);
-  const totals = useMemo(() => ({ value: buys.reduce((a, t) => a + (t.value ?? 0), 0), people: new Set(buys.map((t) => t.owner)).size, cos: new Set(buys.map((t) => t.symbol)).size }), [buys]);
-  // Strongest buys: each company's highest-scoring purchase, strongest first.
-  const strongest = useMemo(() => {
-    const best = new Map<string, InsiderTrade>();
-    for (const t of buys) { const b = best.get(t.symbol); if (!b || (t.conv?.score ?? 0) > (b.conv?.score ?? 0)) best.set(t.symbol, t); }
-    return [...best.values()].sort((a, b) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0)).slice(0, 10);
-  }, [buys]);
-  const strongCount = useMemo(() => buys.filter((t) => t.conv?.tier === "strong").length, [buys]);
-  // The 30-day file keeps only sales of $250K or more, so this is labeled "large sales".
-  const largeSales = useMemo(() => {
-    const s = (trades ?? []).filter((t) => t.code === "S" && isExecOrDirector(t));
-    return { n: s.length, value: s.reduce((a, t) => a + (t.value ?? 0), 0) };
-  }, [trades]);
-  // Phones lead with one buy: the strongest filed in the last 7 days (or 30 if none).
-  const hero = useMemo(() => {
-    const week = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
-    const byScore = (a: InsiderTrade, b: InsiderTrade) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0);
-    const recent = buys.filter((t) => (t.filed || t.date) >= week && (t.value ?? 0) >= 25_000).sort(byScore)[0];
-    const t = recent ?? strongest[0];
-    return t ? { t, symbol: t.symbol, recent: !!recent } : null;
-  }, [buys, strongest]);
-  const latest = useMemo(() => (trades ?? [])
-    .filter((t) => (t.code === "P" || t.code === "S") && t.value && isExecOrDirector(t))
-    .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
-    .slice(0, 8), [trades]);
+  const o = useMemo<Overview | null>(() => ov ?? (ov === null && trades && source === "history" ? buildOv({ trades, days, updated: null }) : null), [ov, trades, days, source]);
+  const byDay = useMemo(() => (o?.byDay ?? []).map((d) => ({
+    key: d.key, label: shortDay(d.key), value: d.value,
+    detail: d.value ? `$${fmtBig(d.value)} bought by ${d.people} ${d.people === 1 ? "insider" : "insiders"} at ${d.cos} ${d.cos === 1 ? "company" : "companies"}` : "no insider buys",
+  })), [o]);
 
   const clusters = useMemo<Cluster[]>(() => {
     const by = new Map<string, Cluster & { names: Set<string> }>();
@@ -200,34 +191,34 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
   return (
     <>
       <h1 className="sr-only">What insiders are buying</h1>
-      {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
-      {source === "history" && buys.length ? (
+      {!o ? <section className="card"><p className="muted">{err ? <span className="down">Couldn&apos;t load the data: {err}</span> : "Loading…"}</p></section> : null}
+      {o ? (
         <div className="ov">
-          {hero ? (
-            <Link href={`/stock/${hero.symbol}`} className="hero m-only">
-              <span className="hero-tag">⚡ {hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
-              <span className="hero-big mono">${fmtBig(hero.t.value ?? 0)}</span>
-              <span className="hero-sym"><strong>{hero.symbol}</strong> · {titleCase(hero.t.issuer)}</span>
-              <span className="muted">{personName(hero.t.owner)}, {roleLabel(hero.t.role)} · {shortDay(hero.t.date)}{hero.t.price ? ` · $${hero.t.price.toFixed(2)}/share` : ""}</span>
-              {hero.t.conv ? <span className="hero-chips"><span>Signal {hero.t.conv.score}</span>{hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
+          {o.hero ? (
+            <Link href={`/stock/${o.hero.t.symbol}`} className="hero m-only">
+              <span className="hero-tag">⚡ {o.hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
+              <span className="hero-big mono">${fmtBig(o.hero.t.value ?? 0)}</span>
+              <span className="hero-sym"><strong>{o.hero.t.symbol}</strong> · {titleCase(o.hero.t.issuer, o.hero.t.symbol)}</span>
+              <span className="muted">{personName(o.hero.t.owner)}, {roleLabel(o.hero.t.role)} · {shortDay(o.hero.t.date)}{o.hero.t.price ? ` · $${o.hero.t.price.toFixed(2)}/share` : ""}</span>
+              {o.hero.t.conv ? <span className="hero-chips"><span>Signal {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
             </Link>
           ) : null}
 
           <section className="kpis">
-            <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(totals.value)}</span><em>{buys.length.toLocaleString()} buys</em></div>
-            <div className="kpi"><small>Insiders buying</small><span className="mono">{totals.people}</span><em>officers &amp; directors</em></div>
-            <div className="kpi"><small>Strong signals</small><span className="mono up">{strongCount}</span><em>score 75+</em></div>
-            <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(largeSales.value)}</span><em>{largeSales.n.toLocaleString()} sales of $250K+</em></div>
-            <div className="kpi d-only"><small>Companies</small><span className="mono">{totals.cos}</span><em>with insider buys</em></div>
+            <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(o.totals.value)}</span><em>{o.totals.buys.toLocaleString()} buys</em></div>
+            <div className="kpi"><small>Insiders buying</small><span className="mono">{o.totals.people}</span><em>officers &amp; directors</em></div>
+            <div className="kpi"><small>Strong signals</small><span className="mono up">{o.totals.strong}</span><em>score 60+</em></div>
+            <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(o.totals.salesValue)}</span><em>{o.totals.sales.toLocaleString()} sales of $250K+</em></div>
+            <div className="kpi d-only"><small>Companies</small><span className="mono">{o.totals.cos}</span><em>with insider buys</em></div>
           </section>
 
           <section className="card flush span8">
             <div className="card-title"><h2>Strongest buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All strong buys ›</button></div>
             <table className="ttable d-only">
               <thead><tr><th>Stock</th><th>Insider</th><th>Signal</th><th>Why</th><th className="r">Value</th></tr></thead>
-              <tbody>{strongest.slice(0, 8).map((t) => (
+              <tbody>{o.strongest.slice(0, 8).map((t) => (
                 <tr key={t.accession}>
-                  <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer).slice(0, 18)}</span></Link></td>
+                  <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
                   <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
                   <td className="nowrap">{t.conv ? <><Meter score={t.conv.score} /> <span className="mono muted">{t.conv.score}</span></> : null}</td>
                   <td>{t.conv?.reasons.filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).slice(0, 1).map((r) => <span key={r.text} className="why">{r.text}</span>)}</td>
@@ -235,22 +226,22 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
                 </tr>
               ))}</tbody>
             </table>
-            <ul className="lrows m-only">{strongest.filter((t) => t !== hero?.t).slice(0, 5).map((t) => (
+            <ul className="lrows m-only">{o.strongest.filter((t) => t.accession !== o.hero?.t.accession).slice(0, 5).map((t) => (
               <li key={t.accession}><Link href={`/stock/${t.symbol}`}>
                 <Ring score={t.conv?.score ?? 0} />
-                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}</span></span>
+                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}</span></span>
                 <span className="lrow-v"><span className="mono up">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.date)}</span></span>
               </Link></li>
             ))}</ul>
           </section>
 
           <section className="card flush span4">
-            <div className="card-title"><h2>Buying together <span className="muted small">2+ insiders</span></h2>{clusters.length > 6 ? <button className="linkbtn" onClick={() => { go("groups"); scrollTo({ top: 0 }); }}>All {clusters.length} ›</button> : null}</div>
-            {clusters.length ? <ul className="lrows">{clusters.slice(0, 6).map((c) => (
+            <div className="card-title"><h2>Buying together <span className="muted small">2+ insiders</span></h2>{o.clusterCount > 6 ? <button className="linkbtn" onClick={() => { go("groups"); scrollTo({ top: 0 }); }}>All {o.clusterCount} ›</button> : null}</div>
+            {o.clusters.length ? <ul className="lrows">{o.clusters.map((c) => (
               <li key={c.symbol}><Link href={`/stock/${c.symbol}`}>
                 <strong className="lrow-sym">{c.symbol}</strong>
-                <span className="dots" aria-label={`${c.people.length} insiders`}>{Array.from({ length: Math.min(c.people.length, 10) }, (_, i) => <i key={i} />)}</span>
-                <span className="lrow-v"><span className="mono">${fmtBig(c.value)}</span><span className="muted small">{c.people.length} insiders</span></span>
+                <span className="dots" aria-label={`${c.people} insiders`}>{Array.from({ length: Math.min(c.people, 10) }, (_, i) => <i key={i} />)}</span>
+                <span className="lrow-v"><span className="mono">${fmtBig(c.value)}</span><span className="muted small">{c.people} insiders</span></span>
               </Link></li>
             ))}</ul> : <p className="muted pad">No stock had several insiders buying in the last 30 days.</p>}
           </section>
@@ -262,7 +253,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
 
           <section className="card flush span5">
             <div className="card-title"><h2>Latest filings</h2><button className="linkbtn" onClick={() => { setKind("all"); go("trades"); scrollTo({ top: 0 }); }}>All trades ›</button></div>
-            <ul className="lrows">{latest.map((t, i) => (
+            <ul className="lrows">{o.latest.map((t, i) => (
               <li key={t.accession + t.code + i}><Link href={`/stock/${t.symbol}`}>
                 <span className={`side ${t.code === "P" ? "up" : "down"}`}>{t.code === "P" ? "BUY" : "SELL"}</span>
                 <span className="lrow-main"><strong>{t.symbol}</strong><span className="muted small">{personName(t.owner)} · {shortDay(t.filed || t.date)}</span></span>
@@ -270,6 +261,30 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
               </Link></li>
             ))}</ul>
           </section>
+
+          {o.notableSales.length ? (
+            <section className="card flush">
+              <div className="card-title"><h2>Notable sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
+              <table className="ttable d-only">
+                <thead><tr><th>Stock</th><th>Insider</th><th>What stands out</th><th className="r">Value</th></tr></thead>
+                <tbody>{o.notableSales.map((t) => (
+                  <tr key={t.accession + t.code}>
+                    <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
+                    <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
+                    <td>{t.sale?.flags.filter((f) => !/^(CEO|CFO|President|Chair)$/.test(f.text)).map((f) => <span key={f.text} className="why">{f.text}</span>)}</td>
+                    <td className="r"><span className="mono down"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.filed || t.date)}</div></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+              <ul className="lrows m-only">{o.notableSales.slice(0, 5).map((t) => (
+                <li key={t.accession + t.code}><Link href={`/stock/${t.symbol}`}>
+                  <span className="side down">SELL</span>
+                  <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.sale?.flags.find((f) => /Sold/.test(f.text))?.text ?? roleLabel(t.role)}</span></span>
+                  <span className="lrow-v"><span className="mono down">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.filed || t.date)}</span></span>
+                </Link></li>
+              ))}</ul>
+            </section>
+          ) : null}
         </div>
       ) : null}
     </>

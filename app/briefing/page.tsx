@@ -11,6 +11,7 @@ import { TradingView } from "@/components/TradingView";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import type { Conviction, InsiderTrade } from "@/lib/sec";
+import { companyName } from "@/lib/people.mjs";
 
 type Digest = {
   generated: string; date: string; filed: string | null; title: string;
@@ -21,7 +22,7 @@ type Digest = {
 };
 type Move = { fund: string; symbol: string; change: string };
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const VERB: Record<string, [string, string]> = { new: ["bought", "up"], added: ["added", "up"], reduced: ["cut", "down"], sold: ["sold out", "down"] };
 
 function b64ToBytes(b64: string) {
@@ -179,7 +180,7 @@ export default function DigestPage() {
 
   const summary = d && d !== "none" ? [
     a.list.length ? `${a.mine.length ? `${a.mine.length} insider ${a.mine.length === 1 ? "trade" : "trades"}` : "No insider trades"} in your watchlist this week${a.byStock.length ? `; ${a.byStock.length} of your stocks moved by big funds last quarter` : ""}.` : null,
-    d.clusters[0] ? `${d.clusters[0].insiders} insiders bought ${d.clusters[0].symbol} (${titleCase(d.clusters[0].issuer)}) this week, $${fmtBig(d.clusters[0].value)} in total.` : null,
+    d.clusters[0] ? `${d.clusters[0].insiders} insiders bought ${d.clusters[0].symbol} (${titleCase(d.clusters[0].issuer, d.clusters[0].symbol)}) this week, $${fmtBig(d.clusters[0].value)} in total.` : null,
     d.topBuys[0] ? `Strongest buy: ${personName(d.topBuys[0].owner)} at ${d.topBuys[0].symbol}, $${fmtBig(d.topBuys[0].value ?? 0)}.` : null,
     d.fundFilings.length ? `${d.fundFilings.length} tracked ${d.fundFilings.length === 1 ? "fund" : "funds"} filed new holdings this week.` : null,
     d.events[0] ? `Next: ${d.events[0].title} on ${day(d.events[0].date)}.` : null,
@@ -213,7 +214,7 @@ export default function DigestPage() {
               <p className="muted small">Filed {d.filed ? day(d.filed) : "recently"} by executives and directors.</p>
               {d.topBuys.length ? <ul className="rows">{d.topBuys.map((t, i) => (
                 <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
-                  <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div><div className="small muted">{personName(t.owner)} ({roleLabel(t.role)})</div>{t.conv ? <Signal c={t.conv} compact /> : null}</div>
+                  <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></div><div className="small muted">{personName(t.owner)} ({roleLabel(t.role)})</div>{t.conv ? <Signal c={t.conv} compact /> : null}</div>
                   <div className="row-value up mono">{t.value ? "$" + fmtBig(t.value) : "—"}</div>
                 </Link></li>
               ))}</ul> : <p className="muted">None filed.</p>}
@@ -223,7 +224,7 @@ export default function DigestPage() {
               <p className="muted small">2+ executives or directors buying the same stock this week, the strongest signal.</p>
               {d.clusters.length ? <ul className="rows">{d.clusters.map((c) => (
                 <li key={c.symbol}><Link href={`/stock/${c.symbol}`} className="row-link">
-                  <div className="row-main"><div><strong>{c.symbol}</strong> <span className="muted">{titleCase(c.issuer)}</span></div><div className="small up">{c.insiders} insiders</div></div>
+                  <div className="row-main"><div><strong>{c.symbol}</strong> <span className="muted">{titleCase(c.issuer, c.symbol)}</span></div><div className="small up">{c.insiders} insiders</div></div>
                   <div className="row-value up mono">${fmtBig(c.value)}</div>
                 </Link></li>
               ))}</ul> : <p className="muted">None this week.</p>}

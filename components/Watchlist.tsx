@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useWatchlist } from "./useWatchlist";
 import { fmtBig, fmtPct } from "@/lib/format";
 import type { WatchItem } from "@/app/api/watch/route";
+import { companyName } from "@/lib/people.mjs";
 
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\b(Inc|Corp|Co|Ltd)\b\.?$/, "$1.");
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const focusSearch = () => (document.querySelector(".search input") as HTMLInputElement | null)?.focus();
 
 function Insiders({ x }: { x: WatchItem["insiders"] }) {
@@ -21,7 +22,7 @@ function Card({ w, remove }: { w: WatchItem; remove: () => void }) {
   return (
     <Link href={`/stock/${encodeURIComponent(w.t)}`} className="wcard">
       <div className="wcard-top">
-        <div className="wcard-id"><strong>{w.t}</strong><span className="muted small ellipsis">{w.name ? titleCase(w.name) : ""}</span></div>
+        <div className="wcard-id"><strong>{w.t}</strong><span className="muted small ellipsis">{w.name ? titleCase(w.name, w.t) : ""}</span></div>
         <button className="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); remove(); }} aria-label={`Remove ${w.t} from watchlist`} title="Remove">×</button>
       </div>
       <div className="wcard-pills">

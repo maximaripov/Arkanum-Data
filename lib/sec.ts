@@ -80,7 +80,9 @@ export type InsiderTrade = {
   prevBuy?: string | null; // this insider's previous open-market buy of this stock (null: none found)
   prevBuyYears?: number; // how many years back that search reached
   conv?: Conviction | null;
+  sale?: SaleFlags | null; // sales only: what stands out about it
 };
+export type SaleFlags = { notable: boolean; pct: number | null; flags: { text: string }[] };
 
 export const parseForm4 = parseForm4Js as (xml: string, meta: { accession: string; filed: string; url: string }) => InsiderTrade[];
 

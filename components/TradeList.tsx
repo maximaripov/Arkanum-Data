@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { InsiderTrade } from "@/lib/sec";
 import { fmtBig } from "@/lib/format";
 import { TIER_LABEL } from "@/lib/conviction.mjs";
-import { personName, roleLabel, titleCase } from "@/lib/people.mjs";
+import { personName, roleLabel, companyName } from "@/lib/people.mjs";
 
 export { personName, roleLabel };
 
@@ -35,7 +35,7 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
     <li className="trade">
       <div className="trade-main">
         {showCompany ? (
-          <div className="trade-co"><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong></Link> <span className="muted">{titleCase(t.issuer)}</span></div>
+          <div className="trade-co"><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong></Link> <span className="muted">{companyName(t.issuer, t.symbol)}</span></div>
         ) : null}
         <div>
           {t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person"><strong>{personName(t.owner)}</strong></Link> : <strong>{personName(t.owner)}</strong>} <span className="muted">({roleLabel(t.role)})</span>{" "}
@@ -43,6 +43,12 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
           {t.shares ? `${Math.round(t.shares).toLocaleString()} shares` : "shares"}{t.price ? ` at $${t.price.toFixed(2)}` : ""}
         </div>
         {t.conv ? <Signal c={t.conv} /> : null}
+        {t.sale && (t.sale.notable || t.sale.flags.some((f) => f.text !== "Not pre-planned")) ? (
+          <div className="signal">
+            {t.sale.notable ? <span className="tier tier-sale" title="Not under a pre-set trading plan, and either a top executive selling a large share or $1M+, or anyone selling half or more of the holding.">Notable sale</span> : null}
+            {t.sale.flags.map((f) => <span key={f.text} className="why">{f.text}</span>)}
+          </div>
+        ) : null}
         <div className="muted small">
           {t.planned && !t.conv ? <span className="badge" title="Scheduled in advance under a trading plan (Rule 10b5-1), so it says less about the insider's current view.">Planned</span> : null}
           {t.date && t.date !== t.filed ? `traded ${dayLabel(t.date)} · ` : ""}

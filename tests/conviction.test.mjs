@@ -1,7 +1,7 @@
 // Signal scoring (lib/conviction.mjs).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { conviction, roleKind, stakeIncrease, withConviction, buyersBySymbol } from "../lib/conviction.mjs";
+import { conviction, roleKind, stakeIncrease, withConviction, buyersBySymbol, saleFlags } from "../lib/conviction.mjs";
 
 const buy = (over = {}) => ({ code: "P", symbol: "ABC", role: "Chief Executive Officer, Director", owner: "DOE JANE", ownerCik: "1", shares: 1000, ownedAfter: 3000, value: 300_000, planned: false, date: "2026-10-30", filed: "2026-11-02", ...over });
 
@@ -71,4 +71,23 @@ test("counts distinct executives per stock, by SEC ID, ignoring 10% holders", ()
   const scored = withConviction(trades);
   assert.ok(scored[0].conv.reasons.some((r) => r.text === "2 insiders buying"));
   assert.equal(withConviction([{ ...buy(), code: "S" }])[0].conv, undefined);
+});
+
+test("a vice president is an officer, not a top executive", () => {
+  assert.equal(roleKind("Vice President"), "officer");
+  assert.equal(roleKind("Senior Vice President, Finance"), "officer");
+  assert.equal(roleKind("President & CEO, Director"), "top");
+});
+
+test("sales: unplanned CEO selling a big share is notable; planned, fund and small ones aren't", () => {
+  const base = { code: "S", role: "Chief Executive Officer, Director", owner: "DOE JANE", shares: 40_000, ownedAfter: 60_000, value: 2_000_000, planned: false };
+  const s = saleFlags(base);
+  assert.equal(s.notable, true);
+  assert.deepEqual(s.flags.map((f) => f.text), ["CEO", "Sold 40% of stake", "Not pre-planned"]);
+  assert.equal(saleFlags({ ...base, planned: true }).notable, false);
+  assert.equal(saleFlags({ ...base, role: "Director, 10% owner" }).notable, false);
+  assert.equal(saleFlags({ ...base, owner: "SILVER LAKE PARTNERS LP", role: "Director" }).notable, false);
+  assert.equal(saleFlags({ ...base, role: "Director", shares: 1_000, ownedAfter: 99_000, value: 300_000 }).notable, false);
+  assert.equal(saleFlags({ ...base, role: "Director", shares: 70_000, ownedAfter: 30_000 }).notable, true);
+  assert.equal(saleFlags({ ...base, code: "P" }), null);
 });

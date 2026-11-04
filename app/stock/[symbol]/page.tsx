@@ -4,19 +4,20 @@ import { cikForTicker, insidersForTicker } from "@/lib/sec";
 import { announcements } from "@/lib/news";
 import { withConviction } from "@/lib/conviction.mjs";
 import { loadInsiders, withHistory } from "@/lib/insiderData";
+import { companyName } from "@/lib/people.mjs";
 
 // Rebuilt at most every 30 minutes: the page arrives with its insider trades, fundamentals
 // and announcements already in it, so visitors see them at once and search engines can read them.
 export const revalidate = 1800;
 const SITE = "https://form4-insiders.vercel.app";
 
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const clean = (raw: string) => decodeURIComponent(raw).toUpperCase();
 
 export async function generateMetadata({ params }: { params: Promise<{ symbol: string }> }): Promise<Metadata> {
   const symbol = clean((await params).symbol);
   const co = await cikForTicker(symbol).catch(() => null);
-  const name = co?.name ? titleCase(co.name) : null;
+  const name = co?.name ? titleCase(co.name, symbol) : null;
   const title = name ? `${symbol}: ${name} insider trades` : `${symbol} insider trades`;
   const description = `What ${name ?? symbol}'s executives and directors are buying and selling, which big funds hold it, and how the business is doing, from SEC filings.`;
   return { title, description, alternates: { canonical: `/stock/${encodeURIComponent(symbol)}` }, openGraph: { title: `${title} · Form4`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
