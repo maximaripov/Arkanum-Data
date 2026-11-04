@@ -69,6 +69,9 @@ jobs:
       - name: Insiders overview (home page summary)
         continue-on-error: true
         run: node scripts/build-overview.mjs
+      - name: Insider directory (search)
+        continue-on-error: true
+        run: node scripts/build-people.mjs
       - id: funds
         name: Update big-fund holdings (SEC 13F)
         run: node scripts/build-funds.mjs

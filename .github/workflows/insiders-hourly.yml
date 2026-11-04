@@ -50,13 +50,16 @@ jobs:
       - name: Insiders overview
         continue-on-error: true
         run: node scripts/build-overview.mjs
+      - name: Insider directory (search)
+        continue-on-error: true
+        run: node scripts/build-people.mjs
       - id: commit
         name: Commit data
         run: |
           # Vercel's Hobby plan only deploys commits authored by the project owner.
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
-          git add public/data/insiders-today.json public/data/private.json public/data/overview.json data
+          git add public/data/insiders-today.json public/data/private.json public/data/overview.json public/data/people.json data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "data: insider trades $(date -u +%FT%H:%MZ)"
           # The daily job may have pushed meanwhile; on the shared history cache, keep ours.

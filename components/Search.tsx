@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Hit = { symbol: string; name: string; type: string; exchange: string };
+type Hit = { symbol: string; name: string; type: string; exchange: string; href?: string };
 
 export function Search({ onDone }: { onDone?: () => void }) {
   const [q, setQ] = useState("");
@@ -25,23 +25,24 @@ export function Search({ onDone }: { onDone?: () => void }) {
     return () => document.removeEventListener("click", close);
   }, []);
 
-  const go = (s: string) => { setQ(""); setOpen(false); onDone?.(); router.push(`/stock/${encodeURIComponent(s)}`); };
+  const go = (s: string, href?: string) => { setQ(""); setOpen(false); onDone?.(); router.push(href ?? `/stock/${encodeURIComponent(s)}`); };
 
   return (
     <div className="search" ref={box}>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter" && q.trim()) go(hits[0]?.symbol ?? q.trim().toUpperCase()); }}
-        placeholder="Search stocks, ETFs, crypto, FX…"
-        aria-label="Search symbols"
+        onKeyDown={(e) => { if (e.key === "Enter" && q.trim()) go(hits[0]?.symbol ?? q.trim().toUpperCase(), hits[0]?.href); }}
+        placeholder="Search stocks or insiders by name"
+        aria-label="Search stocks or insiders"
       />
       {open && hits.length > 0 ? (
         <ul className="hits">
           {hits.map((h) => (
-            <li key={h.symbol}>
-              <button onClick={() => go(h.symbol)}>
-                <strong>{h.symbol}</strong> <span>{h.name}</span> <span className="muted small">{h.type} · {h.exchange}</span>
+            <li key={h.href ?? h.symbol}>
+              <button onClick={() => go(h.symbol, h.href)}>
+                {h.href ? <><strong>{h.name}</strong> <span className="muted small">Insider · {h.exchange}</span></>
+                  : <><strong>{h.symbol}</strong> <span>{h.name}</span> <span className="muted small">{h.type} · {h.exchange}</span></>}
               </button>
             </li>
           ))}
