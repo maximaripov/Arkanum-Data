@@ -96,6 +96,8 @@ function Notifications() {
     catch (e: any) { setStatus(`Couldn't save that: ${e.message ?? e}`); }
   }
   const [ownerMode, setOwnerMode] = useState(false);
+  const [ownerSaving, setOwnerSaving] = useState(false);
+  const [ownerMsg, setOwnerMsg] = useState("");
   useEffect(() => setOwnerMode(new URLSearchParams(location.search).has("owner")), []);
   const [env, setEnv] = useState({ supported: true, ios: false, standalone: false });
   useEffect(() => {
@@ -146,11 +148,22 @@ function Notifications() {
       {/* A small link opens the owner box (also /briefing?owner); it still needs the owner code. */}
       {on && !ownerMode ? <button className="linkbtn small owner-link" onClick={() => setOwnerMode(true)}>Site owner</button> : null}
       {on && ownerMode ? (
-        <details className="small muted" open><summary>Site owner</summary>
-          <form className="levelform" onSubmit={async (e) => { e.preventDefault(); try { const r = await register({ ownerCode: owner }); setStatus(r.owner ? "This device will also get alerts if the daily or hourly update fails." : "That code isn't right."); setOwner(""); } catch (err: any) { setStatus(err.message); } }}>
-            <input className="note" type="password" placeholder="Owner code" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner code" />
-            <button type="submit">Save</button>
+        <details className="small owner-box" open><summary className="muted">Site owner</summary>
+          <form className="levelform" onSubmit={async (e) => {
+            e.preventDefault();
+            setOwnerSaving(true); setOwnerMsg("");
+            try {
+              const r = await register({ ownerCode: owner.trim() });
+              setOwnerMsg(r.owner ? "✓ Saved. This phone will get alerts if the daily or hourly update fails." : "That code isn't right. Check capital letters and dashes.");
+              if (r.owner) setOwner("");
+            } catch (err: any) { setOwnerMsg(`Couldn't save: ${err.message ?? err}`); }
+            setOwnerSaving(false);
+          }}>
+            {/* No auto-capitalizing or autocorrect: phones would otherwise change the code. */}
+            <input className="note" type="password" placeholder="Owner code" value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner code" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} />
+            <button type="submit" className="btn primary" disabled={ownerSaving || !owner.trim()}>{ownerSaving ? "Saving…" : "Save"}</button>
           </form>
+          {ownerMsg ? <p className="small owner-msg" role="status">{ownerMsg}</p> : null}
         </details>
       ) : null}
     </section>

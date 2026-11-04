@@ -341,3 +341,6 @@ a.person:hover strong { color: var(--accent); }
 .follow-item { display: flex; align-items: center; gap: .5rem; }
 .follow-item .row-link { flex: 1; }
 .owner-link { display: block; margin-top: .6rem; color: var(--muted); opacity: .75; }
+.owner-box .levelform input.note { font-size: 16px; } /* 16px stops iPhones zooming into the field */
+.owner-box .btn.primary:disabled { opacity: .45; cursor: default; }
+.owner-msg { margin: .5rem 0 0; }
