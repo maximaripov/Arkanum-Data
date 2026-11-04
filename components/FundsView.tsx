@@ -37,12 +37,32 @@ export function HoldingRows({ items, max = 10, maxPct }: { items: Holding[]; max
   );
 }
 
-const TABS = [["new", "New positions"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold completely"]] as const;
+const CHANGES = [["new", "New"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold all"]] as const;
+type Changes = { new?: Holding[]; added?: Holding[]; reduced?: Holding[]; sold?: Holding[] };
+
+/** What changed since the previous quarter, as short ticker lists under the holdings (Big funds and Stakes). */
+export function ChangeLines({ c, since }: { c: Changes; since: string }) {
+  const rows = CHANGES.filter(([k]) => (c[k] ?? []).length);
+  if (!rows.length) return null;
+  return (
+    <div className="changes">
+      <h3 className="small">Changed since {since}</h3>
+      {rows.map(([k, label]) => {
+        const list = c[k] ?? [];
+        return (
+          <div key={k} className="change-line small">
+            <span className="muted">{label}</span>
+            <span>{list.slice(0, 12).map((h, i) => <span key={h.cusip}>{i ? ", " : ""}{h.t ? <Link href={`/stock/${h.t}`}>{h.t}</Link> : titleCase(h.name)}</span>)}{list.length > 12 ? ` +${list.length - 12} more` : ""}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function FundsView() {
   const [funds, setFunds] = useState<Fund[] | null>(null);
   const [sel, setSel] = useState(0);
-  const [tab, setTab] = useState<(typeof TABS)[number][0]>("new");
   const [part, setPart] = useState<"popular" | "fund">("popular");
   useEffect(() => { fetch("/data/funds.json").then((r) => r.json()).then((d) => setFunds(d.funds)).catch(() => setFunds([])); }, []);
 
@@ -61,7 +81,6 @@ export function FundsView() {
   if (funds === null) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!funds.length) return <section className="card"><p className="muted">Fund data isn&apos;t available yet.</p></section>;
   const f = funds[sel];
-  const changes = { new: f.new, added: f.added, reduced: f.reduced, sold: f.sold }[tab];
   return (
     <>
       <section className="card">
@@ -82,30 +101,27 @@ export function FundsView() {
 
       {part === "fund" ? <>
       <section className="card">
-        <h2>Pick a fund</h2>
-        <div className="scroller">{funds.map((x, i) => <button key={x.cik} className={`chip${i === sel ? " on" : ""}`} onClick={() => { setSel(i); setTab("new"); }}>{x.name}</button>)}</div>
+        <label className="picker">
+          <span className="muted small">Fund</span>
+          <select value={sel} onChange={(e) => setSel(Number(e.target.value))}>
+            {funds.map((x, i) => <option key={x.cik} value={i}>{x.name}</option>)}
+          </select>
+        </label>
         <div className="fund-head">
           <div><h2 className="fund-name">{f.name}</h2><div className="muted small">{f.who}</div></div>
           <dl className="stats compact">
             <div><dt>Reported holdings</dt><dd className="mono">${fmtBig(f.total)}</dd></div>
             <div><dt>Stocks</dt><dd className="mono">{f.count.toLocaleString()}</dd></div>
             <div><dt>As of</dt><dd>{q(f.period)}</dd></div>
-            <div><dt>Filed</dt><dd>{new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</dd></div>
           </dl>
         </div>
       </section>
 
-      <div className="twocol">
-        <section className="card">
-          <h2>What changed <span className="muted small">{f.prevPeriod ? `vs ${q(f.prevPeriod)}` : ""}</span></h2>
-          <div className="seg wrap">{TABS.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} ({({ new: f.new, added: f.added, reduced: f.reduced, sold: f.sold })[k].length})</button>)}</div>
-          <HoldingRows items={changes} />
-        </section>
-        <section className="card">
-          <h2>Largest holdings</h2>
-          <HoldingRows items={f.top} maxPct={f.top[0]?.pct} />
-        </section>
-      </div>
+      <section className="card">
+        <h2>Largest holdings <span className="muted small">{q(f.period)}, filed {new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></h2>
+        <HoldingRows items={f.top} max={25} maxPct={f.top[0]?.pct} />
+        {f.prevPeriod ? <ChangeLines c={f} since={q(f.prevPeriod)} /> : null}
+      </section>
       </> : null}
     </>
   );

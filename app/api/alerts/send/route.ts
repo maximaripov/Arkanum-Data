@@ -23,8 +23,6 @@ export async function POST(req: Request) {
   await updateDevices((s) => {
     for (const id of r.gone) delete s.devices[id];
     for (const [id, d] of Object.entries(s.devices)) if (Date.parse(d.seen) < cutoff) delete s.devices[id];
-    for (const [id, m] of Object.entries((body.screenMatches ?? {}) as Record<string, Record<string, string[]>>))
-      if (s.devices[id]) s.devices[id].screenMatches = m;
   }).catch((e) => { saved = false; console.error("Device bookkeeping skipped:", e); });
   return Response.json({ ...r, saved, devices: Object.keys(devices).length, messages: messages.length });
 }

@@ -1,6 +1,6 @@
 // Server side of notifications, for anyone who turns them on. No accounts: each device
 // has a random ID (generated on the device, never shown) and stores only what's needed
-// to send its daily digest — its push address, watchlist and saved screens.
+// to send its daily digest — its push address, watchlist and the insiders it follows.
 //
 // Private Vercel Blob store:
 //   alerts/devices.json → { devices: { [id]: Device } }
@@ -10,13 +10,10 @@ import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
-export type Screen = { id: string; name: string; filter: { text?: string; exch?: string; sector?: string; industry?: string; ranges: Record<string, [number | "", number | ""]> } };
 export type Device = {
   id: string;
   sub: PushSubscription | null;
   watchlist: string[];
-  screens: Screen[];
-  screenMatches: Record<string, string[]>; // saved screen id → symbols that matched last digest
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
   instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
   following?: string[]; // SEC IDs of insiders this device follows
@@ -148,19 +145,4 @@ export function sanitizeSub(s: any): PushSubscription | null {
   const endpoint = String(s.endpoint);
   if (!/^https:\/\//.test(endpoint) || endpoint.length > 600) return null;
   return { endpoint, keys: { p256dh: String(s.keys.p256dh).slice(0, 200), auth: String(s.keys.auth).slice(0, 100) } };
-}
-const bound = (v: unknown): number | "" => (v === "" || v == null ? "" : Number.isFinite(+v!) ? +v! : "");
-const str = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : undefined);
-export function sanitizeScreens(x: unknown): Screen[] | undefined {
-  if (!Array.isArray(x)) return undefined;
-  return x.slice(0, 10).flatMap((s: any) => {
-    if (!s || typeof s.name !== "string" || !s.filter) return [];
-    const ranges: Screen["filter"]["ranges"] = {};
-    for (const [k, v] of Object.entries(s.filter.ranges ?? {}).slice(0, 20)) {
-      if (!/^[a-zA-Z0-9]{1,12}$/.test(k) || !Array.isArray(v)) continue;
-      ranges[k] = [bound(v[0]), bound(v[1])];
-    }
-    const f = s.filter;
-    return [{ id: String(s.id ?? "").slice(0, 12), name: s.name.slice(0, 30), filter: { text: str(f.text, 40), exch: str(f.exch, 12), sector: str(f.sector, 40), industry: str(f.industry, 80), ranges } }];
-  });
 }

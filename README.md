@@ -10,10 +10,9 @@ Live: https://form4-insiders.vercel.app
 |---|---|---|
 | Markets | Ticker tape and market overview (indices, commodities, bonds, forex, crypto), your watchlist, this week's insider buying | TradingView widgets; SEC Form 4 |
 | Stock page | TradingView quote header (incl. next earnings, market cap, P/E, yield) and full chart (indicators, compare); SEC fundamentals; 8-K announcements in plain English; TradingView headlines; big funds holding it; FINRA retail-wholesaler volume; insider trades | TradingView, SEC, FINRA |
-| Screener | ~4,600 US companies on SEC fundamentals: revenue, growth, margins, ROE, debt/equity, free cash flow and FCF margin, payout ratio, officer/director buying; presets and saved screens. Second tab: TradingView's price screener | SEC; TradingView |
 | Insiders | Insider trades (30 days; officers & directors vs funds; cluster buys; live feed) and Big funds (13F) for 13 well-known funds | SEC Form 4, SEC 13F |
-| Calendar | US economic releases and Fed decisions (60 days) plus TradingView's global economic calendar | BEA, Federal Reserve, (FRED); TradingView |
-| Digest | Daily summary after the 4 PM close: biggest insider buys, cluster buys, big-fund filings, coming events, and your watchlist's insider trades and fund moves. Optional push notification personalized to your watchlist and saved screens | All of the above |
+| Stakes | What listed companies (NVIDIA, Amazon, Alphabet…) own in other companies: quarterly holdings and changes, 5%+ stakes, and private investments announced in press releases (unverified, linked) | SEC 13F, SEC 13D/13G; PR Newswire, Business Wire |
+| Digest | Daily summary after the 4 PM close: biggest insider buys, cluster buys, big-fund filings, coming events, and your watchlist's insider trades and fund moves. Optional push notification personalized to your watchlist, plus instant alerts for watchlist buys and people you follow | All of the above |
 | About | Disclaimer, data sources and attribution, privacy | — |
 
 ## Data licensing (why it's built this way)
@@ -29,13 +28,13 @@ Not used, because their terms don't allow showing their data to the public: Yaho
 
 ## How it runs (free)
 
-- **Vercel Hobby** hosts the site (free for non-commercial use). A private **Vercel Blob** store holds devices that turned on notifications (random device ID, push address, watchlist, saved screens) and the latest digest.
+- **Vercel Hobby** hosts the site (free for non-commercial use). A private **Vercel Blob** store holds devices that turned on notifications (random device ID, push address, watchlist, people followed) and the latest digest.
 - **GitHub Actions** (`.github/workflows/data.yml`) runs weekdays at 4:02 PM New York time: SEC fundamentals → insider trades → 13F holdings → big economic releases → health check → digest → commit. `insiders-hourly.yml` adds new filings hourly; `stakes.yml` updates company stakes each weekday morning. If any step fails, nothing is sent or published and the owner's devices get an alert naming the step. The job proves its identity to the site with a GitHub-signed token (no secret stored in GitHub).
 
 ### Settings
 
 - Vercel: `SEC_USER_AGENT` (name + contact email, required by SEC), `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `ALERTS_PASSCODE` (owner code: entering it under Digest → Site owner makes that device receive failure alerts), `ALERTS_SECRET` (manual runs), `BLOB_READ_WRITE_TOKEN`.
-- GitHub Actions secrets: `SEC_USER_AGENT`; optional `FRED_API_KEY` (free) adds jobs report, CPI, PPI, retail sales and jobless claims to the calendar.
+- GitHub Actions secrets: `SEC_USER_AGENT`; optional `FRED_API_KEY` (free) adds jobs report, CPI, PPI, retail sales and jobless claims to Coming up.
 
 ### Run locally
 

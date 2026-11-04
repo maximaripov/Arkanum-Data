@@ -4,7 +4,7 @@
 // private startups from press releases (public/data/private.json, scripts/build-private.mjs).
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { HoldingRows, Badge, type Holding } from "./FundsView";
+import { HoldingRows, Badge, ChangeLines, type Holding } from "./FundsView";
 import { fmtBig } from "@/lib/format";
 
 type Stake = { accession: string; form: string; filed: string; issuer: string; issuerCik: string; t: string | null; pct: number | null; url: string };
@@ -18,7 +18,6 @@ type Company = {
 
 const q = (d?: string | null) => { if (!d) return ""; const [y, m] = d.split("-"); return `Q${Math.ceil(+m / 3)} ${y}`; };
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-const CHANGES = [["new", "New"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold all"]] as const;
 const isAmendment = (f: string) => /\/A$/.test(f);
 /** "11.5%", "Exited" for a final 0% filing, "All" after a takeover, or "5%+" when the filing didn't say. */
 const pctText = (p: number | null) => (p == null ? "5%+" : p === 0 ? "Exited" : p >= 99.95 ? "All" : `${p.toFixed(1)}%`);
@@ -67,7 +66,6 @@ export function StakesView() {
   if (!data.length) return <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running.</p></section>;
   const c = data.find((x) => x.cik === sel) ?? data[0];
   const own = deals.filter((d) => d.investor === c.ticker);
-  const changed = CHANGES.filter(([k]) => (c[k] ?? []).length);
   return (
     <div className="stack">
       <section className="card">
@@ -97,20 +95,7 @@ export function StakesView() {
         <section className="card">
           <h2>What they own <span className="muted small">{q(c.period)}{c.filed ? `, filed ${day(c.filed)}` : ""}</span></h2>
           <HoldingRows items={c.top} max={25} maxPct={c.top[0]?.pct} />
-          {changed.length ? (
-            <div className="changes">
-              <h3 className="small">Changed since {q(c.prevPeriod)}</h3>
-              {changed.map(([k, label]) => {
-                const list = c[k] ?? [];
-                return (
-                  <div key={k} className="change-line small">
-                    <span className="muted">{label}</span>
-                    <span>{list.slice(0, 12).map((h, i) => <span key={h.cusip}>{i ? ", " : ""}{h.t ? <Link href={`/stock/${h.t}`}>{h.t}</Link> : h.name}</span>)}{list.length > 12 ? ` +${list.length - 12} more` : ""}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
+          {c.prevPeriod ? <ChangeLines c={c} since={q(c.prevPeriod)} /> : null}
         </section>
       ) : null}
 

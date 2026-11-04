@@ -143,7 +143,6 @@ footer a { color: inherit; text-decoration: underline; }
 .more { margin: .6rem 0 .2rem; }
 .more summary { cursor: pointer; }
 .more .filterbar { margin-top: .5rem; }
-.seg.wrap { flex-wrap: wrap; margin-bottom: .5rem; }
 .dayhead { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 1rem 0 .25rem; font-weight: 600; }
 .trades { list-style: none; margin: 0; padding: 0; }
 .trade { display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; padding: .7rem 0; border-top: 1px solid var(--line); }
@@ -164,8 +163,6 @@ footer a { color: inherit; text-decoration: underline; }
 .compact-list { list-style: none; padding: 0; margin: .5rem 0 0; }
 .compact-list li { padding: .45rem 0; border-top: 1px solid var(--line); }
 .compact-list li:first-child { border-top: 0; }
-.scroller { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .4rem; scrollbar-width: thin; }
-.scroller .chip { white-space: nowrap; flex: 0 0 auto; }
 .fund-head { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: flex-end; margin-top: .75rem; }
 .fund-name { margin: 0; font-size: 1.25rem; }
 .stats.compact { grid-template-columns: repeat(4, auto); gap: 1.25rem; margin: 0; }
@@ -342,3 +339,6 @@ a.person:hover strong { color: var(--accent); }
 .changes { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--line); }
 .changes h3 { margin: 0 0 .4rem; font-weight: 600; }
 .change-line { display: grid; grid-template-columns: 5.5rem 1fr; gap: .5rem; padding: .2rem 0; }
+/* Phones: all four Insiders tabs fit without sideways scrolling. */
+@media (max-width: 480px) { .tabs { gap: 0; } .tabs button { flex: 1 1 auto; padding: .6rem .3rem; font-size: .92rem; white-space: nowrap; } }
+@media (max-width: 360px) { .tabs button { padding: .6rem .15rem; font-size: .85rem; } }

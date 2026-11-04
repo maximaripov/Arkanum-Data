@@ -1,4 +1,4 @@
-// Plain-English explanations for the economic releases on the calendar.
+// Plain-English explanations for the economic releases in Coming up.
 type Ev = { title: string; kind: string };
 const INFO: [RegExp, string, string][] = [
   [/^Fed rate decision/, "The Fed sets short-term interest rates", "The Federal Reserve announces whether it is raising, cutting or holding interest rates, followed by a press conference. Rate changes move stocks, bonds, mortgages and the dollar. Meetings marked “+ economic projections” also publish the Fed’s forecasts."],
