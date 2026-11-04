@@ -8,7 +8,7 @@
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 import { readFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
-import { SITE, token } from "./lib/site.mjs";
+import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push");
@@ -82,7 +82,7 @@ const marketLine = await (async () => {
 const auth = await token();
 let devices = [];
 if (auth) {
-  const r = await fetch(`${SITE}/api/alerts/devices`, { headers: { Authorization: `Bearer ${auth}` } });
+  const r = await siteFetch(`${SITE}/api/alerts/devices`, { headers: { Authorization: `Bearer ${auth}` } });
   if (r.ok) devices = await r.json(); else console.log(`Couldn't read devices: HTTP ${r.status}`);
 }
 
@@ -135,7 +135,7 @@ if (DRY || !auth) {
   console.log(JSON.stringify({ digest: { ...digest, events: digest.events.length }, devices: devices.length, followed: followed.length, sample: messages.slice(0, 2) }, null, 2));
   process.exit(0);
 }
-const res = await fetch(`${SITE}/api/alerts/send`, {
+const res = await siteFetch(`${SITE}/api/alerts/send`, {
   method: "POST",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` },
   body: JSON.stringify({ digest, messages, notify: !NO_PUSH }),

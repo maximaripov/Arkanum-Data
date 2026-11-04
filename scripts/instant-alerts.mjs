@@ -12,7 +12,7 @@ import { join } from "node:path";
 import { roleKind } from "../lib/conviction.mjs";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 import { personName, roleLabel } from "../lib/people.mjs";
-import { SITE, token } from "./lib/site.mjs";
+import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NEW_OUT = process.env.NEW_TRADES_OUT || join(tmpdir(), "form4-new-trades.json");
@@ -34,7 +34,13 @@ console.log(`${newTrades.length} new trade(s): ${alertable.length} watchlist-wor
 if (!alertable.length && !byOwner.size) process.exit(0);
 const auth = await token();
 if (!auth && !DRY) { console.log("No identity token: not sending."); process.exit(0); }
-const devices = auth ? await fetch(`${SITE}/api/alerts/devices`, { headers: { Authorization: `Bearer ${auth}` } }).then((r) => (r.ok ? r.json() : [])) : [];
+let devices = [];
+if (auth) {
+  const r = await siteFetch(`${SITE}/api/alerts/devices`, { headers: { Authorization: `Bearer ${auth}` } });
+  // Fail loudly: an empty list here would silently skip every alert.
+  if (!r.ok) throw new Error(`Couldn't read devices: HTTP ${r.status}`);
+  devices = await r.json();
+}
 
 const line = (t) => {
   const why = (t.conv?.reasons ?? []).filter((r) => !r.neg).map((r) => r.text).filter((x) => !/^(CEO|CFO|President|Chair)$/.test(x)).slice(0, 2);
@@ -59,6 +65,6 @@ for (const d of devices) {
 console.log(`${messages.length} device(s) to alert`);
 if (DRY || !messages.length) { if (DRY) console.log(JSON.stringify({ alertable: alertable.map(line), followable: byOwner.size, sample: messages.slice(0, 2) }, null, 2)); process.exit(0); }
 
-const r = await fetch(`${SITE}/api/alerts/instant`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` }, body: JSON.stringify({ messages }) });
+const r = await siteFetch(`${SITE}/api/alerts/instant`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` }, body: JSON.stringify({ messages }) });
 console.log(`Send: HTTP ${r.status}`, await r.text());
 if (!r.ok) process.exit(1);
