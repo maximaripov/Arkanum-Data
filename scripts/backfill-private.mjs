@@ -39,9 +39,18 @@ async function get(url, binary = false) {
 const shortlist = [];
 for (let d = new Date(`${since.slice(0, 7)}-01T00:00:00Z`); d <= new Date(); d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))) {
   const name = `${MONTHS[d.getUTCMonth()]}_${d.getUTCFullYear()}`;
-  // The current month isn't archived yet; its releases are in the live sitemap.
   const gz = await get(`https://www.prnewswire.com/Sitemap_Index_${name}.xml.gz`, true);
-  const xml = gz ? gunzipSync(gz).toString("utf8") : await get("https://www.prnewswire.com/sitemap-news.xml");
+  let xml = gz ? gunzipSync(gz).toString("utf8") : null;
+  if (!xml) {
+    // The current month isn't archived yet. The news sitemap is an index of pages
+    // covering only the last ~2 days; earlier days of the month come from the hourly job.
+    const index = await get("https://www.prnewswire.com/sitemap-news.xml");
+    const pages = [...(index ?? "").matchAll(/<sitemap>\s*<loc>([^<]+)<\/loc>/g)].map((m) => decode(m[1]));
+    const parts = [];
+    for (const p of pages) { parts.push(await get(p)); await sleep(500); }
+    xml = pages.length ? parts.filter(Boolean).join("\n") : index;
+    if (xml) console.log(`${name}: not archived yet; reading the news sitemap (last ~2 days only)`);
+  }
   if (!xml) { console.warn(`${name}: no sitemap`); continue; }
   let n = 0, hits = 0;
   for (const m of xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>[\s\S]*?(?:<lastmod>([^<]+)<\/lastmod>|<news:publication_date>([^<]+)<)/g)) {
