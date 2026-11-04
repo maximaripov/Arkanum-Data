@@ -1,0 +1,35 @@
+name: Congress trades
+# House members' STOCK Act transaction reports, read daily (new reports only).
+on:
+  schedule:
+    - cron: "41 23 * * 1-5" # evening ET, after most of the day's filings are posted
+  workflow_dispatch:
+    inputs:
+      rebuild:
+        description: "Re-read every report (after a parser change)"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: PDF text tool
+        run: sudo apt-get install -y -q poppler-utils > /dev/null
+      - name: Congress trades (House Clerk)
+        run: node scripts/build-congress.mjs ${{ github.event_name == 'workflow_dispatch' && inputs.rebuild && '--rebuild' || '' }}
+      - name: Commit data
+        run: |
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
+          git add public/data/congress.json public/data/congress-overview.json data/congress-seen.json
+          git diff --cached --quiet && { echo "Nothing to commit"; exit 0; }
+          git commit -m "data: congress trades $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          exit 1

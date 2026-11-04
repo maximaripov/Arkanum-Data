@@ -7,6 +7,7 @@ import { HBars } from "@/components/Bars";
 import { isExecOrDirector } from "@/lib/insider";
 import { FundHolders } from "@/components/FundsView";
 import { StakeHolders } from "@/components/StakesView";
+import { CongressFor } from "@/components/CongressView";
 import { useWatchlist } from "@/components/useWatchlist";
 import { fmtBig, fmtPct } from "@/lib/format";
 import { tvSymbol } from "@/lib/tv";
@@ -97,6 +98,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
         </section>
       </div>
 
+      <CongressFor symbol={symbol} />
       <StakeHolders symbol={symbol} />
       <FundHolders symbol={symbol} />
 

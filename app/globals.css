@@ -481,3 +481,17 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 .imark.sell { background: var(--down); clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .imark:hover, .imark.on { opacity: 1; transform: translate(-50%, -50%) scale(1.35); z-index: 1; }
 .istrip-axis { display: flex; justify-content: space-between; gap: .5rem; margin-top: .2rem; }
+/* Congress */
+.party { display: inline-block; font: 600 .7rem var(--font-mono), monospace; padding: .05rem .4rem; border-radius: 5px; border: 1px solid var(--line); color: var(--muted); vertical-align: middle; }
+.party.r { color: #f87171; border-color: color-mix(in srgb, #f87171 40%, transparent); }
+.party.d { color: #60a5fa; border-color: color-mix(in srgb, #60a5fa 40%, transparent); }
+html[data-theme="light"] .party.r { color: #b91c1c; } html[data-theme="light"] .party.d { color: #1d4ed8; }
+.linkish { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.linkish:hover { color: var(--accent); }
+.lrow-btn { display: flex; align-items: center; gap: .75rem; padding: .65rem 1rem; width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.lrow-btn:hover { background: var(--card2); }
+.cpick { padding: .75rem 1rem; }
+.cpick .picker { margin: 0; max-width: 34rem; }
+@media (max-width: 760px) { .tabbar a { min-width: 0; flex: 1; font-size: .66rem; } }
+.ttable td.cstock { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 761px) and (max-width: 1299px) { .ttable td.cstock .muted { display: none; } }
