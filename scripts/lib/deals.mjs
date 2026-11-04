@@ -36,7 +36,7 @@ export const INVESTORS = [
   ["CMCSA", "Comcast", ["Comcast Ventures"]],
   ["HON", "Honeywell", ["Honeywell Ventures"]],
   ["LMT", "Lockheed Martin", ["Lockheed Martin Ventures"]],
-  ["BA", "Boeing", ["Boeing", "AE Ventures"]],
+  ["BA", "Boeing", ["Boeing"]],
   ["CVX", "Chevron", ["Chevron Technology Ventures"]],
   ["XOM", "ExxonMobil", ["ExxonMobil"]],
   ["SHEL", "Shell", ["Shell Ventures"]],
@@ -82,7 +82,7 @@ function cleanName(t) {
 }
 // Investments in a country or region are spending (data centres), not stakes.
 const PLACES = new RegExp(`^(?:${["US", "USA", "America", "Europe", "Asia", "Africa", "India", "China", "Japan", "Korea", "South Korea", "Taiwan", "Singapore", "Indonesia", "Malaysia", "Thailand", "Vietnam", "Philippines", "Australia", "New Zealand", "Canada", "Mexico", "Brazil", "Argentina", "Chile", "Colombia", "Peru", "Dominican Republic", "UK", "Britain", "England", "Scotland", "Wales", "Ireland", "Northern Ireland", "France", "Germany", "Italy", "Spain", "Portugal", "Netherlands", "Belgium", "Switzerland", "Austria", "Poland", "Sweden", "Norway", "Denmark", "Finland", "Greece", "Turkey", "Israel", "Saudi Arabia", "UAE", "Qatar", "Egypt", "Nigeria", "Kenya", "South Africa", "Pakistan", "Bangladesh", "Texas", "California", "Ohio", "Virginia", "Georgia", "Arizona", "Oregon", "Iowa", "Nebraska", "Indiana", "Mississippi", "Louisiana", "Pennsylvania", "Michigan", "Wisconsin", "Belgian", "Swiss", "Taiwanese", "Indian", "Chinese", "Japanese", "Korean", "German", "French", "British", "Israeli", "Canadian", "Australian"].join("|")})$`);
-const NOT_A_NAME = /^(the|a|an|this|new|report|exclusive|press release)\b/i;
+const NOT_A_NAME = /^(the|a|an|this|new|report|exclusive|press release|ceo|cfo|coo|cto|president|chair(man)?|board)\b/i;
 
 /** The listed investor named as backing a startup in a release, and the startup; or null. */
 export function extractDeal(item) {
@@ -115,3 +115,9 @@ export function extractDeal(item) {
   }
   return null;
 }
+
+/** One deal per investor and startup ("Verily" and "Verily Health" are one). */
+export const dealKey = (d) => `${d.investor}:${d.target.toLowerCase().replace(/[^a-z0-9 ]/g, "").split(" ")[0]}`;
+
+/** Lowercase alias as it appears in a release's web address ("intel-capital"). */
+export const SLUG_ALIASES = INVESTORS.flatMap(([, , aliases]) => aliases.map((a) => a.toLowerCase().replace(/&/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")));

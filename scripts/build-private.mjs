@@ -4,7 +4,7 @@
 // these are reported, not verified. Feeds only show their latest items, so this runs with
 // the hourly job and keeps what it has found (two years, newest first).
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { parseRss, extractDeal } from "./lib/deals.mjs";
+import { parseRss, extractDeal, dealKey } from "./lib/deals.mjs";
 
 const OUT = "public/data/private.json";
 const FEEDS = [
@@ -15,9 +15,7 @@ const FEEDS = [
   ["Business Wire", "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFtRWA=="],
 ];
 const KEEP_DAYS = 730;
-// One deal per investor and startup ("Verily" and "Verily Health" are one), whichever
-// release came first.
-const key = (d) => `${d.investor}:${d.target.toLowerCase().replace(/[^a-z0-9 ]/g, "").split(" ")[0]}`;
+const key = dealKey;
 
 let prev = { deals: [] };
 try { prev = JSON.parse(await readFile(OUT, "utf8")); } catch {}

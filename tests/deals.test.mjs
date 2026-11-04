@@ -30,3 +30,6 @@ test("RSS parsing decodes entities and dates", () => {
   const [i] = parseRss(`<rss><channel><item><title><![CDATA[Foo &amp; Bar Raises $5M]]></title><link>https://x.test/a</link><pubDate>Tue, 03 Nov 2026 15:12:00 -0500</pubDate><description>&lt;p&gt;Hello&lt;/p&gt;</description></item></channel></rss>`);
   assert.equal(i.title, "Foo & Bar Raises $5M"); assert.equal(i.date, "2026-11-03"); assert.equal(i.link, "https://x.test/a");
 });
+test("a job title isn't the company", () => {
+  assert.equal(d("ALORA Appoints Adam Helms as CEO; Secures Funding from Grantham Environmental Trust and Toyota Ventures"), null);
+});
