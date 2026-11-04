@@ -66,8 +66,9 @@ export function StakesView() {
   if (!data.length) return <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running.</p></section>;
   const c = data.find((x) => x.cik === sel) ?? data[0];
   const own = deals.filter((d) => d.investor === c.ticker);
+  const side = c.top?.length ? "span4" : "span12";
   return (
-    <div className="stack">
+    <div className="ov">
       <section className="card">
         <h1>Company stakes</h1>
         <label className="picker">
@@ -92,13 +93,14 @@ export function StakesView() {
       </section>
 
       {c.top?.length ? (
-        <section className="card">
+        <section className="card span8">
           <h2>What they own <span className="muted small">{q(c.period)}{c.filed ? `, filed ${day(c.filed)}` : ""}</span></h2>
           <HoldingRows items={c.top} max={25} maxPct={c.top[0]?.pct} />
           {c.prevPeriod ? <ChangeLines c={c} since={q(c.prevPeriod)} /> : null}
         </section>
       ) : null}
 
+      {c.stakes.length || own.length ? <div className={`stack ${side}`} style={{ alignContent: "start" }}>
       {c.stakes.length ? (
         <section className="card">
           <h2>5%+ stakes <span className="muted small">filings in the last 12 months</span></h2>
@@ -117,16 +119,17 @@ export function StakesView() {
           <DealRows deals={own} />
         </section>
       ) : null}
+      </div> : null}
 
       {deals.length ? (
-        <section className="card">
+        <section className="card span6">
           <h2>Recent private investments <span className="muted small">press releases, not verified</span></h2>
           <DealRows deals={deals.slice(0, 12)} showInvestor />
         </section>
       ) : null}
 
       {recentStakes.length ? (
-        <section className="card">
+        <section className="card span6">
           <h2>Recent 5%+ stake filings <span className="muted small">all companies</span></h2>
           <ul className="rows">{recentStakes.map((s) => (
             <li key={s.accession} className="row-static">

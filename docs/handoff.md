@@ -10,6 +10,7 @@ Working notes for whoever picks up the project next, human or agent. History of 
 - Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (value is not stored in the repo). Two owner devices are registered.
 
 ## Style rules from the owner
+- Design (round 25): dark by default with a light switch; dense, information-forward desktop (tables, signal meters, ticker band); app-style phone (hero card, stat cards, score rings, bottom tab bar). Mockups of the five directions considered are not in the repo.
 - Logo: a sharp `[4]` in lime `#a3e635`. Keep the FINRA table. Market quotes (SPX, NDX, BTC, gold, 10-year) only through TradingView embeds.
 - No intro blurbs, no "How to read this" sections.
 - Consistent layouts: a dropdown picker (no sideways chip sliders); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.

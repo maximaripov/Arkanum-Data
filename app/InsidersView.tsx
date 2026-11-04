@@ -132,6 +132,24 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     for (const t of buys) { const b = best.get(t.symbol); if (!b || (t.conv?.score ?? 0) > (b.conv?.score ?? 0)) best.set(t.symbol, t); }
     return [...best.values()].sort((a, b) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0)).slice(0, 10);
   }, [buys]);
+  const strongCount = useMemo(() => buys.filter((t) => t.conv?.tier === "strong").length, [buys]);
+  // The 30-day file keeps only sales of $250K or more, so this is labeled "large sales".
+  const largeSales = useMemo(() => {
+    const s = (trades ?? []).filter((t) => t.code === "S" && isExecOrDirector(t));
+    return { n: s.length, value: s.reduce((a, t) => a + (t.value ?? 0), 0) };
+  }, [trades]);
+  // Phones lead with one buy: the strongest filed in the last 7 days (or 30 if none).
+  const hero = useMemo(() => {
+    const week = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const byScore = (a: InsiderTrade, b: InsiderTrade) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0);
+    const recent = buys.filter((t) => (t.filed || t.date) >= week && (t.value ?? 0) >= 25_000).sort(byScore)[0];
+    const t = recent ?? strongest[0];
+    return t ? { t, symbol: t.symbol, recent: !!recent } : null;
+  }, [buys, strongest]);
+  const latest = useMemo(() => (trades ?? [])
+    .filter((t) => (t.code === "P" || t.code === "S") && t.value && isExecOrDirector(t))
+    .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
+    .slice(0, 8), [trades]);
 
   const clusters = useMemo<Cluster[]>(() => {
     const by = new Map<string, Cluster & { names: Set<string> }>();
@@ -178,44 +196,93 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
       </section>
     </>
   );
+  const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); scrollTo({ top: 0 }); };
   return (
     <>
-      <section className="card">
-        <h1>What insiders are buying</h1>
-      </section>
+      <h1 className="sr-only">What insiders are buying</h1>
       {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
       {source === "history" && buys.length ? (
-        <>
-          <section className="card">
-            <div className="card-head"><h2>Strongest buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={() => { setStrongOnly(true); setKind("buys"); go("trades"); scrollTo({ top: 0 }); }}>All strong buys ›</button></div>
-            <ul className="rows cols2">{strongest.map((t) => (
-              <li key={t.accession}>
-                <Link href={`/stock/${t.symbol}`} className="row-link">
-                  <div className="row-main">
-                    <div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></div>
-                    <div className="small muted ellipsis-1">{personName(t.owner)} ({roleLabel(t.role)})</div>
-                    {t.conv ? <Signal c={t.conv} compact /> : null}
-                  </div>
-                  <div className="row-value up mono">${fmtBig(t.value ?? 0)}</div>
-                </Link>
-              </li>
+        <div className="ov">
+          {hero ? (
+            <Link href={`/stock/${hero.symbol}`} className="hero m-only">
+              <span className="hero-tag">⚡ {hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
+              <span className="hero-big mono">${fmtBig(hero.t.value ?? 0)}</span>
+              <span className="hero-sym"><strong>{hero.symbol}</strong> · {titleCase(hero.t.issuer)}</span>
+              <span className="muted">{personName(hero.t.owner)}, {roleLabel(hero.t.role)} · {shortDay(hero.t.date)}{hero.t.price ? ` · $${hero.t.price.toFixed(2)}/share` : ""}</span>
+              {hero.t.conv ? <span className="hero-chips"><span>Signal {hero.t.conv.score}</span>{hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
+            </Link>
+          ) : null}
+
+          <section className="kpis">
+            <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(totals.value)}</span><em>{buys.length.toLocaleString()} buys</em></div>
+            <div className="kpi"><small>Insiders buying</small><span className="mono">{totals.people}</span><em>officers &amp; directors</em></div>
+            <div className="kpi"><small>Strong signals</small><span className="mono up">{strongCount}</span><em>score 75+</em></div>
+            <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(largeSales.value)}</span><em>{largeSales.n.toLocaleString()} sales of $250K+</em></div>
+            <div className="kpi d-only"><small>Companies</small><span className="mono">{totals.cos}</span><em>with insider buys</em></div>
+          </section>
+
+          <section className="card flush span8">
+            <div className="card-title"><h2>Strongest buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All strong buys ›</button></div>
+            <table className="ttable d-only">
+              <thead><tr><th>Stock</th><th>Insider</th><th>Signal</th><th>Why</th><th className="r">Value</th></tr></thead>
+              <tbody>{strongest.slice(0, 8).map((t) => (
+                <tr key={t.accession}>
+                  <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer).slice(0, 18)}</span></Link></td>
+                  <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
+                  <td className="nowrap">{t.conv ? <><Meter score={t.conv.score} /> <span className="mono muted">{t.conv.score}</span></> : null}</td>
+                  <td>{t.conv?.reasons.filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).slice(0, 1).map((r) => <span key={r.text} className="why">{r.text}</span>)}</td>
+                  <td className="r"><span className="mono up"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.date)}</div></td>
+                </tr>
+              ))}</tbody>
+            </table>
+            <ul className="lrows m-only">{strongest.filter((t) => t !== hero?.t).slice(0, 5).map((t) => (
+              <li key={t.accession}><Link href={`/stock/${t.symbol}`}>
+                <Ring score={t.conv?.score ?? 0} />
+                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}</span></span>
+                <span className="lrow-v"><span className="mono up">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.date)}</span></span>
+              </Link></li>
             ))}</ul>
           </section>
-          <section className="card">
+
+          <section className="card flush span4">
+            <div className="card-title"><h2>Buying together <span className="muted small">2+ insiders</span></h2>{clusters.length > 6 ? <button className="linkbtn" onClick={() => { go("groups"); scrollTo({ top: 0 }); }}>All {clusters.length} ›</button> : null}</div>
+            {clusters.length ? <ul className="lrows">{clusters.slice(0, 6).map((c) => (
+              <li key={c.symbol}><Link href={`/stock/${c.symbol}`}>
+                <strong className="lrow-sym">{c.symbol}</strong>
+                <span className="dots" aria-label={`${c.people.length} insiders`}>{Array.from({ length: Math.min(c.people.length, 10) }, (_, i) => <i key={i} />)}</span>
+                <span className="lrow-v"><span className="mono">${fmtBig(c.value)}</span><span className="muted small">{c.people.length} insiders</span></span>
+              </Link></li>
+            ))}</ul> : <p className="muted pad">No stock had several insiders buying in the last 30 days.</p>}
+          </section>
+
+          <section className="card span7 daycard">
             <h2>Insider buying by day</h2>
-            <div className="bigstats">
-              <div><span className="mono up">${fmtBig(totals.value)}</span><span className="muted small">bought in 30 days</span></div>
-              <div><span className="mono">{totals.people}</span><span className="muted small">insiders</span></div>
-              <div><span className="mono">{totals.cos}</span><span className="muted small">companies</span></div>
-            </div>
             <VBars cols={byDay} height={170} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
           </section>
-        </>
-      ) : null}
 
-      <ClusterCards clusters={clusters} preview={3} more={() => { go("groups"); scrollTo({ top: 0 }); }} />
+          <section className="card flush span5">
+            <div className="card-title"><h2>Latest filings</h2><button className="linkbtn" onClick={() => { setKind("all"); go("trades"); scrollTo({ top: 0 }); }}>All trades ›</button></div>
+            <ul className="lrows">{latest.map((t, i) => (
+              <li key={t.accession + t.code + i}><Link href={`/stock/${t.symbol}`}>
+                <span className={`side ${t.code === "P" ? "up" : "down"}`}>{t.code === "P" ? "BUY" : "SELL"}</span>
+                <span className="lrow-main"><strong>{t.symbol}</strong><span className="muted small">{personName(t.owner)} · {shortDay(t.filed || t.date)}</span></span>
+                <span className={`lrow-v mono ${t.code === "P" ? "up" : "down"}`}>${fmtBig(t.value ?? 0)}</span>
+              </Link></li>
+            ))}</ul>
+          </section>
+        </div>
+      ) : null}
     </>
   );
+}
+
+/** Signal strength as ten small bars (desktop tables). */
+function Meter({ score }: { score: number }) {
+  return <span className="meter" aria-label={`Signal ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
+}
+/** Signal strength as a ring with the score inside (phone lists). */
+function Ring({ score }: { score: number }) {
+  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`Signal ${score} of 100`}><b className="mono">{score}</b></span>;
 }
 
 export default function InsidersView() {

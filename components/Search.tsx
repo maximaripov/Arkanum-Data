@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 type Hit = { symbol: string; name: string; type: string; exchange: string };
 
-export function Search() {
+export function Search({ onDone }: { onDone?: () => void }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
@@ -25,7 +25,7 @@ export function Search() {
     return () => document.removeEventListener("click", close);
   }, []);
 
-  const go = (s: string) => { setQ(""); setOpen(false); router.push(`/stock/${encodeURIComponent(s)}`); };
+  const go = (s: string) => { setQ(""); setOpen(false); onDone?.(); router.push(`/stock/${encodeURIComponent(s)}`); };
 
   return (
     <div className="search" ref={box}>

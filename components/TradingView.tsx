@@ -2,12 +2,13 @@
 // Embeds a free TradingView widget. TradingView's terms allow widgets on other sites only
 // with their attribution kept "as originally designed", so the copyright link below
 // must stay. Stock prices in widgets are delayed; forex and crypto are real-time.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useTheme } from "./ThemeToggle";
 
 // Must match --card and --line in globals.css.
 const BLEND = {
-  dark: { backgroundColor: "#12161f", gridColor: "rgba(31, 38, 51, 0.5)" },
-  light: { backgroundColor: "#ffffff", gridColor: "rgba(229, 231, 235, 0.6)" },
+  dark: { backgroundColor: "#121418", gridColor: "rgba(35, 39, 46, 0.5)" },
+  light: { backgroundColor: "#ffffff", gridColor: "rgba(228, 231, 236, 0.6)" },
 };
 
 export function TradingView({ widget, config, height, label, blend }: {
@@ -18,15 +19,9 @@ export function TradingView({ widget, config, height, label, blend }: {
   blend?: boolean; // chart widgets: use the page's card color and faint grid so it looks part of the page
 }) {
   const box = useRef<HTMLDivElement>(null);
-  // Unknown until the browser reports it: embedding before that and again after would leave
-  // the first script running against a removed element (and load every widget twice).
-  const [theme, setTheme] = useState<"dark" | "light" | null>(null);
-  useEffect(() => {
-    const m = matchMedia("(prefers-color-scheme: light)");
-    const on = () => setTheme(m.matches ? "light" : "dark");
-    on(); m.addEventListener("change", on);
-    return () => m.removeEventListener("change", on);
-  }, []);
+  // Unknown until mounted: embedding before that and again after would leave the first
+  // script running against a removed element (and load every widget twice).
+  const theme = useTheme();
   const key = JSON.stringify(config) + theme;
   useEffect(() => {
     const el = box.current;
