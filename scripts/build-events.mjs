@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds public/data/events.json: US economic releases and Fed decisions for the next
 // 60 days, from public-domain government sources (BEA, Federal Reserve) and, with a free
-// FRED_API_KEY, BLS releases (jobs report, CPI, PPI, retail sales, jobless claims).
+// FRED_API_KEY (or else BLS's own calendar), the jobs report and CPI.
 import { writeFile, mkdir } from "node:fs/promises";
 
 const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
@@ -62,6 +62,24 @@ if (FRED) {
     const hit = WANT.find(([re]) => re.test(r.release_name));
     if (hit && inWindow(r.date)) events.push({ date: r.date, time: "8:30 AM ET", kind: "econ", title: hit[1], source: "BLS via FRED" });
   }
+}
+
+// Without FRED: BLS's own release calendar (it refuses requests without contact details,
+// which SEC_USER_AGENT carries). If it refuses anyway, Coming up just lacks jobs and CPI.
+if (!sources.includes("FRED")) {
+  const bls = await get("https://www.bls.gov/schedule/news_release/bls.ics");
+  if (bls?.includes("BEGIN:VEVENT")) {
+    sources.push("BLS");
+    const BLS = [[/^Employment Situation\b/i, "Jobs report"], [/^Consumer Price Index\b/i, "CPI inflation"]];
+    for (const ev of bls.replace(/\r?\n[ \t]/g, "").split("BEGIN:VEVENT").slice(1)) {
+      const start = ev.match(/DTSTART[^:]*:(\d{8})/), summary = ev.match(/SUMMARY[^:]*:(.*)/)?.[1]?.replace(/\\,/g, ",").trim();
+      const label = summary && BLS.find(([re]) => re.test(summary));
+      if (!start || !label) continue;
+      const d = `${start[1].slice(0, 4)}-${start[1].slice(4, 6)}-${start[1].slice(6, 8)}`;
+      const period = summary.match(/\bfor (\w+ \d{4})/i)?.[1];
+      if (inWindow(d)) events.push({ date: d, time: "8:30 AM ET", kind: "econ", title: period ? `${label[1]} (${period})` : label[1], source: "BLS" });
+    }
+  } else console.warn("BLS calendar unavailable; jobs and CPI dates skipped");
 }
 
 events.sort((a, b) => a.date.localeCompare(b.date));

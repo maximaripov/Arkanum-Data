@@ -74,6 +74,11 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: node scripts/build-events.mjs
+      # The hourly job only sees each feed's latest 20 items and doesn't run overnight or
+      # on weekends; PR Newswire's news sitemap lists the last ~2 days, so this fills gaps.
+      - name: Private investments missed by the hourly feeds
+        continue-on-error: true
+        run: node scripts/backfill-private.mjs --since "$(date -u -d '3 days ago' +%F)"
       - id: check_all
         name: Check all data before sending or publishing
         run: node scripts/health-check.mjs all
