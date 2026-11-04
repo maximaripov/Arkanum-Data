@@ -5,7 +5,7 @@
 // Private Vercel Blob store:
 //   alerts/devices.json → { devices: { [id]: Device } }
 //   alerts/digest.json  → the latest public daily digest
-import { BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from "@vercel/blob";
 import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
@@ -41,19 +41,37 @@ export async function readDevices(): Promise<Store> {
   return (await readJson<Store>(DEVICES)).data ?? { devices: {} };
 }
 
+// Version tags can come back quoted or as weak tags from different endpoints; compare the core.
+const tagCore = (t: string | null | undefined) => String(t ?? "").replace(/^W\//, "").replace(/"/g, "");
+
+/** The file's current version straight from the storage API (not the CDN), or null if it doesn't exist. */
+async function currentTag(path: string): Promise<string | null> {
+  try { return (await head(path)).etag; }
+  catch (e) { if (e instanceof BlobNotFoundError) return null; throw e; }
+}
+
 /** Read-modify-write that retries if another request changed the file in between,
  *  so two people turning on notifications at the same moment can't erase each other.
- *  Waits grow on each retry: right after a write, a read can briefly return the old copy. */
+ *  The version to write against comes from the storage API itself; the content is only
+ *  used once a read returns that same version, because a read can briefly serve an
+ *  older copy right after a write. Every rejected attempt is logged with both tags. */
 export async function updateDevices<T>(fn: (s: Store) => T): Promise<T> {
   for (let attempt = 0; attempt < 8; attempt++) {
+    const tag = await currentTag(DEVICES);
     const { data, etag } = await readJson<Store>(DEVICES);
+    if (tag && tagCore(etag) !== tagCore(tag)) {
+      console.warn(`updateDevices: stale read (read ${etag}, current ${tag}), attempt ${attempt + 1}`);
+      await new Promise((r) => setTimeout(r, Math.min(3000, 200 * 2 ** attempt)));
+      continue;
+    }
     const store = data ?? { devices: {} };
     const result = fn(store);
     try {
-      await writeJson(DEVICES, store, etag);
+      await writeJson(DEVICES, store, tag);
       return result;
     } catch (e) {
       if (!(e instanceof BlobPreconditionFailedError)) throw e;
+      console.warn(`updateDevices: write rejected (ifMatch ${tag}, now ${await currentTag(DEVICES).catch(() => "?")}), attempt ${attempt + 1}`);
       await new Promise((r) => setTimeout(r, Math.min(3000, 150 * 2 ** attempt) + Math.random() * 250));
     }
   }
