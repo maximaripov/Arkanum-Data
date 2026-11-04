@@ -1,0 +1,20 @@
+name: Senate probe (temporary)
+# One-off: can a GitHub runner reach the Senate disclosure search? (Owner agreed to its terms.)
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Terms and search with curl
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -sS -A "Mozilla/5.0" -c cj -b cj -o home.html -w "home %{http_code}\n" https://efdsearch.senate.gov/search/home/
+          tok=$(grep -o 'name="csrfmiddlewaretoken" value="[^"]*"' home.html | sed 's/.*value="//;s/"//')
+          curl -sS -A "Mozilla/5.0" -c cj -b cj -e https://efdsearch.senate.gov/search/home/ -d "prohibition_agreement=1&csrfmiddlewaretoken=$tok" -o agree.html -w "agree %{http_code}\n" https://efdsearch.senate.gov/search/home/
+          csrf=$(grep csrftoken cj | awk '{print $7}')
+          curl -sS -A "Mozilla/5.0" -c cj -b cj -e https://efdsearch.senate.gov/search/ -H "X-CSRFToken: $csrf" \
+            --data-urlencode "start=0" --data-urlencode "length=3" --data-urlencode "report_types=[11]" --data-urlencode "filer_types=[]" \
+            --data-urlencode "submitted_start_date=10/01/2026 00:00:00" --data-urlencode "submitted_end_date=" --data-urlencode "candidate_state=" \
+            --data-urlencode "senator_state=" --data-urlencode "office_id=" --data-urlencode "first_name=" --data-urlencode "last_name=" \
+            --data-urlencode "csrfmiddlewaretoken=$csrf" -w "\ndata %{http_code}\n" https://efdsearch.senate.gov/search/report/data/ | head -c 800
