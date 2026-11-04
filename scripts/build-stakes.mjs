@@ -142,7 +142,9 @@ for (const c of filers.companies) {
   try {
     const sub = await getJson(`https://data.sec.gov/submissions/CIK${c.cik.padStart(10, "0")}.json`);
     const old = prev.companies.find((x) => x.cik === c.cik);
-    const s = await summarize13F({ cik: c.cik, sub, old });
+    let s = await summarize13F({ cik: c.cik, sub, old });
+    // A company that stopped filing 13Fs: its last holdings say nothing about today.
+    if (s && s.period < ago(460)) { console.log(`${c.name}: last 13F is for ${s.period}; holdings not shown`); s = null; }
     const stakes = await bigStakes(c.cik, sub, old?.stakes);
     if (!s && !stakes.length) continue;
     if (!c.extra && s && s.count > FUND_LIKE) { console.log(`${c.name}: ${s.count} holdings, a money manager; skipped`); continue; }
