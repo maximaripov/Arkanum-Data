@@ -5,6 +5,8 @@ Working notes for whoever picks up the project next, human or agent. History of 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Free hobby site, no income, no contact address on the site. Must stay free.
 - Next.js App Router on Vercel Hobby. Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; workflows and commits use that identity.
+- Deploying: the owner approved pushing fixes straight to `main` once `npm test` and `tsc` pass (fast-forward from the session branch). Scheduled jobs and Vercel only use `main`.
+- Standing instruction: fix glitches and bugs without asking.
 - Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (value is not stored in the repo). Two owner devices are registered.
 
 ## Style rules from the owner
@@ -28,13 +30,13 @@ Working notes for whoever picks up the project next, human or agent. History of 
 ## Private investments
 - `scripts/lib/deals.mjs`: ~40 investors with venture-arm aliases; `extractDeals()`, `roundSize()` (skips valuations, totals, non-USD); guards for people "of" a company, alumni funds, Lilly Asia Ventures.
 - `scripts/build-private.mjs` hourly: PR Newswire RSS (VC, financing, private placement, all news) + Business Wire home feed.
-- `scripts/backfill-private.mjs [--since YYYY-MM-DD] [--wide]`: PR Newswire monthly sitemap archive. Current month falls back to `sitemap-news.xml`, which parsed 0 rows (known bug).
+- `scripts/backfill-private.mjs [--since YYYY-MM-DD] [--wide]`: PR Newswire monthly sitemap archive. Current month: no archive yet, so it reads the pages of `sitemap-news.xml` (last ~2 days only). `data.yml` runs it daily for the last 3 days to catch deals the hourly feeds miss.
 - `public/data/private.json`: 55 deals YTD 2026, hand-checked. PR Newswire only, so a sample. Google News and GDELT rejected.
 
 ## Open items
 - Owner to delete stale branches `proto-news`, `proto-track` (and `round2`?) at github.com/maximaripov/Foresight/branches.
 - Check the first scheduled stakes run is fast now the skip cache exists (first manual run took 35 of 60 min).
-- Fix current-month parsing in the backfill.
+- Set a free `FRED_API_KEY` secret only if BLS keeps refusing the GitHub runner (check Coming up for jobs/CPI after the next 4 PM run).
 - Business Wire / GlobeNewswire backfill (GlobeNewswire RSS returns 403).
 
 ## How the owner wants the work done

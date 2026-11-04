@@ -270,3 +270,11 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **More companies on Stakes:** besides 13F filers, any listed non-financial company that appears with another listed company in a 5%+ filing is checked; filings that turn out to be someone else's stake in it are remembered (`data/stakes-skip.json`) so they aren't re-read daily. A Gilead stake of 100% (Arcellx, no longer listed) shows as "All".
 - **Layout:** intro blurbs and "How to read this" / "What do these mean?" sections removed everywhere. Stakes and Big funds now match: a dropdown to pick the company or fund, "what changed" as short ticker lines inside the holdings card, and on Stakes the cross-company lists (recent private investments, recent 5%+ filings) at the bottom. The Insiders tabs fit on small phones.
 - **Leftovers removed:** saved-screens fields in the device store and alert routes (old records drop them on their next save); About, README and code comments no longer mention the screener or calendar, and About lists the stakes and press-release sources.
+
+## Round 24: everything refreshes on its own (2026-11-04)
+
+- Audit of every data feed: insiders (hourly + daily), big funds (daily, latest two 13Fs per fund, so new quarters appear by themselves), stakes (daily; company list rediscovered monthly), private investments (hourly), events and fundamentals (daily). All files on the live site were fresh.
+- **Jobs report and CPI were missing from Coming up:** they came only from FRED, and no `FRED_API_KEY` secret is set, so they were silently skipped. [scripts/build-events.mjs](../scripts/build-events.mjs) now falls back to BLS's own release calendar (quietly skipped if BLS refuses the request).
+- **Private investments missed between hourly runs:** each feed shows only its latest 20 releases and nothing ran overnight or at weekends. The daily job now re-reads PR Newswire's last ~2 days of releases (`backfill-private.mjs --since` 3 days ago; ~13 seconds).
+- **Backfill current month fixed:** `sitemap-news.xml` is an index of pages, not a list of releases, so it parsed 0 rows; it now follows the pages (~2,000 releases).
+- Notes for the next session: [docs/handoff.md](handoff.md).
