@@ -18,6 +18,8 @@ const q = (d?: string | null) => { if (!d) return ""; const [y, m] = d.split("-"
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 const TABS = [["new", "New"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold completely"]] as const;
 const isAmendment = (f: string) => /\/A$/.test(f);
+/** "11.5%", "Exited" for a final 0% filing, or "5%+" when the filing didn't state it. */
+const pctText = (p: number | null) => (p == null ? "5%+" : p === 0 ? "Exited" : `${p.toFixed(1)}%`);
 
 export function StakesView() {
   const [data, setData] = useState<Company[] | null>(null);
@@ -64,7 +66,7 @@ export function StakesView() {
           <ul className="rows">{recentStakes.map((s) => (
             <li key={s.accession} className="row-static">
               <div className="row-main">
-                <div><strong>{s.owner.name}</strong> <span className="muted">owns</span> {s.pct != null ? <strong className="mono">{s.pct.toFixed(1)}%</strong> : "5%+"} <span className="muted">of</span> {s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div>
+                <div><strong>{s.owner.name}</strong> {s.pct === 0 ? <span className="muted">sold its stake in</span> : <><span className="muted">owns</span> <strong className="mono">{pctText(s.pct)}</strong> <span className="muted">of</span></>} {s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div>
                 <div className="small muted">{isAmendment(s.form) ? "Updated stake" : "New stake filing"} · {day(s.filed)} · <a href={s.url} target="_blank" rel="noreferrer">SEC filing ↗</a></div>
               </div>
             </li>
@@ -111,7 +113,7 @@ export function StakesView() {
           <ul className="rows">{c.stakes.map((s) => (
             <li key={s.accession} className="row-static">
               <div className="row-main"><div>{s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div><div className="small muted">{day(s.filed)} · <a href={s.url} target="_blank" rel="noreferrer">SEC filing ↗</a></div></div>
-              <div className="row-value mono">{s.pct != null ? `${s.pct.toFixed(1)}%` : "5%+"}</div>
+              <div className="row-value mono">{pctText(s.pct)}</div>
             </li>
           ))}</ul>
         </section>
@@ -140,7 +142,7 @@ export function StakeHolders({ symbol }: { symbol: string }) {
       <h2>Companies that own {symbol} <span className="muted small">from their SEC filings</span></h2>
       <ul className="holdings">{rows.map((r) => (
         <li key={r.name}>
-          <div className="h-name"><Link href={`/stakes?c=${r.ticker ?? ""}`}><strong>{r.name}</strong></Link><span className="muted small">{r.stake ? `${r.stake.pct != null ? r.stake.pct.toFixed(1) + "% stake" : "5%+ stake"}, filed ${day(r.stake.filed)}` : q(r.period)}</span></div>
+          <div className="h-name"><Link href={`/stakes?c=${r.ticker ?? ""}`}><strong>{r.name}</strong></Link><span className="muted small">{r.stake ? `${r.stake.pct === 0 ? "Sold its stake" : pctText(r.stake.pct) + " stake"}, filed ${day(r.stake.filed)}` : q(r.period)}</span></div>
           <div className="h-right">
             <div className="mono">{r.h && r.h.change !== "sold" ? `$${fmtBig(r.h.value)}` : r.h ? "—" : ""}</div>
             {r.h ? <Badge h={r.h} /> : null}

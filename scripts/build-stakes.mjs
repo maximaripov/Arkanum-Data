@@ -19,6 +19,18 @@ const ALSO = [/^SOFTBANK GROUP/i];
 const ymd = (d) => d.toISOString().slice(0, 10);
 const ago = (days) => ymd(new Date(Date.now() - days * 86_400_000));
 const titleCase = (s) => String(s).toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+// SEC lists every ticker a company has (share classes, warrants, notes) and not always the
+// main one first; the shortest is the common stock (GOOG not GOOGM, AUR not AUROW).
+async function mainTickers() {
+  const best = new Map();
+  for (const c of Object.values((await getJson("https://www.sec.gov/files/company_tickers.json")) ?? {})) {
+    const k = String(c.cik_str), t = String(c.ticker);
+    if (!best.has(k) || t.length < best.get(k).length) best.set(k, t);
+  }
+  return best;
+}
+const FUND_LIKE = 300; // a company reporting hundreds of holdings is managing money, not making investments
+const MIN_TOTAL = 10e6;
 
 // ---- 1. Which companies file 13Fs (refreshed monthly) -------------------------------------
 let filers = null;
@@ -39,7 +51,7 @@ if (!filers || filers.checked < ago(30)) {
     }
     console.log(`${q}: ${thirteenF.size} 13F filers so far`);
   }
-  const listed = new Map(Object.values((await getJson("https://www.sec.gov/files/company_tickers.json")) ?? {}).map((c) => [String(c.cik_str), c]));
+  const listed = await mainTickers();
   const candidates = [...thirteenF].filter(([cik, name]) => listed.has(cik) || ALSO.some((re) => re.test(name)));
   console.log(`${candidates.length} 13F filers are listed companies or on the extra list`);
   const found = [];
@@ -48,7 +60,7 @@ if (!filers || filers.checked < ago(30)) {
     const sic = Number(sub?.sic) || 0;
     const extra = ALSO.some((re) => re.test(name));
     if (!extra && (!sic || (sic >= 6000 && sic <= 6799))) return; // banks, insurers, brokers, asset managers, REITs
-    found.push({ cik, name: titleCase(sub?.name ?? name), ticker: listed.get(cik)?.ticker ?? null, industry: sub?.sicDescription ?? "" });
+    found.push({ cik, name: titleCase(sub?.name ?? name), ticker: listed.get(cik) ?? null, industry: sub?.sicDescription ?? "", extra });
   });
   filers = { checked: ymd(new Date()), companies: found.sort((a, b) => a.name.localeCompare(b.name)) };
   await mkdir("data", { recursive: true });
@@ -78,7 +90,9 @@ async function bigStakes(cik, sub, old) {
     if (!xml) continue;
     const issuerCik = String(Number(tag(xml, "issuerCik") ?? tag(xml, "issuerCIK") ?? 0) || "");
     if (!issuerCik || issuerCik === String(Number(cik))) continue;
-    const pct = Number((xml.match(/<(?:\w+:)?(?:percentOfClass|classPercent|aggregatePercent\w*)>\s*([\d.]+)/i) ?? [])[1]);
+    // The percent owned: the largest "percent of class" figure among the reporting persons.
+    const pcts = [...xml.matchAll(/<(?:\w+:)?(?:percentOfClass|classPercent|aggregatePercent\w*|percentOfClassRepresented\w*)>\s*([\d.]+)/gi)].map((m) => Number(m[1])).filter((x) => x >= 0 && x <= 100); // 0% = the stake was sold off
+    const pct = pcts.length ? Math.max(...pcts) : NaN;
     out.push({
       accession: acc, form: r.form[i], filed: r.filingDate[i],
       issuer: titleCase(tag(xml, "issuerName") ?? ""), issuerCik, cusip: (tag(xml, "issuerCusip") ?? tag(xml, "issuerCUSIP") ?? "").toUpperCase() || null,
@@ -100,6 +114,8 @@ for (const c of filers.companies) {
     const s = await summarize13F({ cik: c.cik, sub, old });
     const stakes = await bigStakes(c.cik, sub, old?.stakes);
     if (!s && !stakes.length) continue;
+    if (!c.extra && s && s.count > FUND_LIKE) { console.log(`${c.name}: ${s.count} holdings, a money manager; skipped`); continue; }
+    if ((s?.total ?? 0) < MIN_TOTAL && !stakes.length) { console.log(`${c.name}: holdings too small to show; skipped`); continue; }
     const { unchanged, ...data } = s ?? {};
     out.push({ ...c, ...data, stakes });
     console.log(`${c.name}: ${s ? `${s.count} holdings, $${(s.total / 1e9).toFixed(2)}B (${s.period})${unchanged ? ", unchanged" : ""}` : "no 13F"}; ${stakes.length} 5%+ stake filing(s)`);
@@ -108,8 +124,8 @@ for (const c of filers.companies) {
 
 // Tickers for holdings, and for 5%+ stakes by CUSIP or SEC ID.
 await addTickers(out.flatMap((c) => [c.top ?? [], c.new ?? [], c.added ?? [], c.reduced ?? [], c.sold ?? []]));
-const listed = new Map(Object.values((await getJson("https://www.sec.gov/files/company_tickers.json")) ?? {}).map((x) => [String(x.cik_str), x.ticker]));
-for (const c of out) for (const s of c.stakes) s.t = listed.get(s.issuerCik) ?? null;
+const tickers = await mainTickers();
+for (const c of out) { c.ticker = tickers.get(c.cik) ?? c.ticker; for (const s of c.stakes) s.t = tickers.get(s.issuerCik) ?? null; }
 
 await mkdir("public/data", { recursive: true });
 await writeFile(OUT, JSON.stringify({ updated: new Date().toISOString(), companies: out.sort((a, b) => (b.total ?? 0) - (a.total ?? 0)) }));
