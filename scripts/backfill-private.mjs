@@ -7,7 +7,7 @@
 //   node scripts/backfill-private.mjs [--since 2026-01-01]
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { gunzipSync } from "node:zlib";
-import { extractDeal, dealKey, SLUG_ALIASES } from "./lib/deals.mjs";
+import { extractDeals, dealKey, SLUG_ALIASES } from "./lib/deals.mjs";
 
 const OUT = "public/data/private.json";
 const UA = { "User-Agent": "Form4 (form4-insiders.vercel.app)" };
@@ -69,13 +69,13 @@ for (const s of shortlist) {
   // The opening paragraphs, where releases name the round's investors.
   const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map((m) => decode(m[1].replace(/<[^>]+>/g, " "))).filter((t) => t.length > 60).slice(0, 4).join(" ");
   const summary = (paras || meta(html, "og:description") || meta(html, "description")).slice(0, 1500);
-  const d = extractDeal({ title, summary, date: s.date, link: s.url });
-  if (!d) continue;
-  const k = dealKey(d);
-  if (deals.has(k) && (deals.get(k).date ?? "") <= (d.date ?? "")) continue;
-  deals.set(k, { ...d, source: "PR Newswire" });
-  added++;
-  console.log(`  ${d.date} ${d.investorName} → ${d.target}${d.amount ? ` ($${d.amount / 1e6}M)` : ""}: ${title.slice(0, 90)}`);
+  for (const d of extractDeals({ title, summary, date: s.date, link: s.url })) {
+    const k = dealKey(d);
+    if (deals.has(k) && (deals.get(k).date ?? "") <= (d.date ?? "")) continue;
+    deals.set(k, { ...d, source: "PR Newswire" });
+    added++;
+    console.log(`  ${d.date} ${d.investorName} → ${d.target}${d.amount ? ` ($${d.amount / 1e6}M)` : ""}: ${title.slice(0, 90)}`);
+  }
 }
 
 const list = [...deals.values()].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));

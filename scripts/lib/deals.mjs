@@ -30,7 +30,7 @@ export const INVESTORS = [
   ["MRK", "Merck & Co.", ["MRK Ventures", "Merck Global Health Innovation Fund"]],
   ["GSK", "GSK", ["GSK"]],
   ["SNY", "Sanofi", ["Sanofi Ventures", "Sanofi"]],
-  ["LLY", "Eli Lilly", ["Eli Lilly", "Lilly"]],
+  ["LLY", "Eli Lilly", ["Eli Lilly"]], // not "Lilly": Lilly Asia Ventures is a separate firm
   ["GILD", "Gilead", ["Gilead"]],
   ["BABA", "Alibaba", ["Alibaba"]],
   ["CMCSA", "Comcast", ["Comcast Ventures"]],
@@ -84,37 +84,40 @@ function cleanName(t) {
 const PLACES = new RegExp(`^(?:${["US", "USA", "America", "Europe", "Asia", "Africa", "India", "China", "Japan", "Korea", "South Korea", "Taiwan", "Singapore", "Indonesia", "Malaysia", "Thailand", "Vietnam", "Philippines", "Australia", "New Zealand", "Canada", "Mexico", "Brazil", "Argentina", "Chile", "Colombia", "Peru", "Dominican Republic", "UK", "Britain", "England", "Scotland", "Wales", "Ireland", "Northern Ireland", "France", "Germany", "Italy", "Spain", "Portugal", "Netherlands", "Belgium", "Switzerland", "Austria", "Poland", "Sweden", "Norway", "Denmark", "Finland", "Greece", "Turkey", "Israel", "Saudi Arabia", "UAE", "Qatar", "Egypt", "Nigeria", "Kenya", "South Africa", "Pakistan", "Bangladesh", "Texas", "California", "Ohio", "Virginia", "Georgia", "Arizona", "Oregon", "Iowa", "Nebraska", "Indiana", "Mississippi", "Louisiana", "Pennsylvania", "Michigan", "Wisconsin", "Belgian", "Swiss", "Taiwanese", "Indian", "Chinese", "Japanese", "Korean", "German", "French", "British", "Israeli", "Canadian", "Australian"].join("|")})$`);
 const NOT_A_NAME = /^(the|a|an|this|new|report|exclusive|press release|ceo|cfo|coo|cto|president|chair(man)?|board)\b/i;
 
-/** The listed investor named as backing a startup in a release, and the startup; or null. */
-export function extractDeal(item) {
+/** Every tracked listed investor named as backing a startup in a release (one deal each). */
+export function extractDeals(item) {
+  const found = [];
   const text = `${item.title}. ${item.summary ?? ""}`;
-  if (!FUNDING.test(text)) return null;
+  if (!FUNDING.test(text)) return found;
   for (const [ticker, name, aliases] of INVESTORS) {
     const al = aliases.map(esc).join("|");
     // The investor named after "led by", "participation from", "investors include"… in the
     // same sentence ("Acme raises $20M led by Sequoia and NVentures"), not just mentioned.
-    const roleBefore = new RegExp(`\\b(?:${ROLE})\\b[^.!?]{0,200}?\\b(?:${al})\\b(?!\\s+(?:Cloud|Marketplace|Play|Maps|Search|Store|Prime|Web Services|Azure|Teams)\\b)`);
+    const roleBefore = new RegExp(`\\b(?:${ROLE})\\b[^.!?]{0,200}?(?<!\\bof\\s)\\b(?:${al})\\b(?!\\)|\\s+(?:Alumni|Asia Ventures|Cloud|Marketplace|Play|Maps|Search|Store|Prime|Web Services|Azure|Teams)\\b)`);
     const backed = new RegExp(`\\b(?:${al})-backed\\b`);
     const invests = new RegExp(`^(?:${al})\\b[^.]{0,40}?\\b(?:${ci("invests|leads|backs|makes an investment|makes a strategic investment|makes strategic investment|announces investment|announces an investment|announces a strategic investment|announces strategic investment")})\\b[^.]*?\\b(?:${ci("in|into")})\\s+([A-Z0-9][^,;:()]{1,80}?)(?=\\s+(?:to|for|at|as|and|amid|with|ahead|after|in|on|of|via|valued)\\b|[,;:(]|$)`);
     let target = null;
     const inv = item.title.match(invests);
     if (inv) target = inv[1];
     else if (roleBefore.test(text) || backed.test(text)) {
-      const r = item.title.match(RAISER);
+      const r = item.title.split(/:\s+/).pop().match(RAISER); // "From Seed to Unicorn: Upscale AI Closes…"
       if (r) target = r[1];
     }
     if (!target) continue;
     target = cleanName(target);
     if (!target || NOT_A_NAME.test(target) || PLACES.test(target) || new RegExp(`^(?:${al})\\b`, "i").test(target)) continue;
     const amt = text.match(AMOUNT), round = text.match(ROUND);
-    return {
+    found.push({
       investor: ticker, investorName: name, target,
       amount: amt ? Math.round(parseFloat(amt[1].replace(",", ".")) * (/^b/i.test(amt[2]) ? 1e9 : 1e6)) : null,
       round: round ? round[1].replace(/^./, (c) => c.toUpperCase()).replace(/series (\w)/i, (_, l) => `Series ${l.toUpperCase()}`) : null,
       date: item.date, title: item.title, url: item.link,
-    };
+    });
   }
-  return null;
+  return found;
 }
+/** The first one, or null. */
+export const extractDeal = (item) => extractDeals(item)[0] ?? null;
 
 /** One deal per investor and startup ("Verily" and "Verily Health" are one). */
 export const dealKey = (d) => `${d.investor}:${d.target.toLowerCase().replace(/[^a-z0-9 ]/g, "").split(" ")[0]}`;

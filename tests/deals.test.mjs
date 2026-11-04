@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { extractDeal, parseRss } from "../scripts/lib/deals.mjs";
+import { extractDeal, extractDeals, parseRss } from "../scripts/lib/deals.mjs";
 
 const d = (title, summary = "") => extractDeal({ title, summary, date: "2026-11-03", link: "https://example.com/x" });
 
@@ -32,4 +32,17 @@ test("RSS parsing decodes entities and dates", () => {
 });
 test("a job title isn't the company", () => {
   assert.equal(d("ALORA Appoints Adam Helms as CEO; Secures Funding from Grantham Environmental Trust and Toyota Ventures"), null);
+});
+test("people at a company and funds named after it aren't the company", () => {
+  assert.equal(d("Payam Music Raises Funding", "It raised funding from executives including Mark Cuban, Dara Khosrowshahi (CEO of Uber), and others."), null);
+  assert.equal(d("Valor Closes Series B Round of Capital Investment", "This Series B round was led by Ladd Wilks, of Cisco; and the Moncrief family."), null);
+  assert.equal(d("Sophia Space Announces $7 Million SAFE Financing", "Strategic investors include EverGreen Fund - The NVIDIA Alumni Investment Network and others."), null);
+  assert.equal(d("StairMed Secures RMB 500 Million Financing", "Existing shareholders including Tencent, OrbiMed and Lilly Asia Ventures (LAV) participated."), null);
+});
+test("headline with a lead-in before the company", () => {
+  assert.equal(d("From $100M Seed to Unicorn in Months: Upscale AI Closes Oversubscribed $200M Series A", "With participation from Intel Capital and others.").target, "Upscale AI");
+});
+test("every tracked investor in a round gets the deal", () => {
+  const all = extractDeals({ title: "Censys Raises $70 Million in Strategic Funding", summary: "Its Series D was led by Morgan Stanley Expansion Capital, with participation from Decibel Partners, GV, Intel Capital, and others.", date: "2026-03-31", link: "x" });
+  assert.deepEqual(all.map((x) => x.investor).sort(), ["GOOG", "INTC"]);
 });

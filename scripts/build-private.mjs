@@ -4,7 +4,7 @@
 // these are reported, not verified. Feeds only show their latest items, so this runs with
 // the hourly job and keeps what it has found (two years, newest first).
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { parseRss, extractDeal, dealKey } from "./lib/deals.mjs";
+import { parseRss, extractDeals, dealKey } from "./lib/deals.mjs";
 
 const OUT = "public/data/private.json";
 const FEEDS = [
@@ -31,9 +31,10 @@ for (const [source, url] of FEEDS) {
     ok++;
     let found = 0;
     for (const it of items) {
-      const d = extractDeal(it);
-      if (!d || !d.url) continue;
-      if (!deals.has(key(d))) { deals.set(key(d), { ...d, source }); found++; console.log(`  ${d.investorName} → ${d.target}: ${d.title}`); }
+      for (const d of extractDeals(it)) {
+        if (!d.url || deals.has(key(d))) continue;
+        deals.set(key(d), { ...d, source }); found++; console.log(`  ${d.investorName} → ${d.target}: ${d.title}`);
+      }
     }
     console.log(`${source}: ${items.length} releases, ${found} new deal(s)`);
   } catch (e) { console.warn(`${source}: ${e.message}`); }
