@@ -74,6 +74,7 @@ function roleOf(rel, title) {
   return parts.join(", ");
 }
 
+await mkdir(TMP, { recursive: true });
 const events = new Map(); // accession|owner → event
 let skippedQuarters = [];
 for (const quarter of quarters) {
