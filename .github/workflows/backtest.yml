@@ -1,0 +1,33 @@
+name: Signal backtest (owner-only)
+# Run by hand: scores past insider buys with the site's formula and measures what happened
+# next. Writes docs/backtest/results.md (private repo; not published on the site).
+on:
+  workflow_dispatch:
+    inputs:
+      from: { description: "First quarter scored", default: "2023q1" }
+      to: { description: "Last quarter scored", default: "2025q4" }
+      history: { description: "History starts (for 'first buy in N years')", default: "2020q1" }
+permissions:
+  contents: write
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Backtest
+        run: node scripts/backtest.mjs --from "${{ inputs.from }}" --to "${{ inputs.to }}" --history-from "${{ inputs.history }}"
+      - name: Commit results
+        run: |
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
+          git add docs/backtest
+          git diff --cached --quiet && exit 0
+          git commit -m "Backtest results $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase origin main && git push && exit 0; sleep 10; done
+          exit 1
