@@ -46,3 +46,11 @@ test("every tracked investor in a round gets the deal", () => {
   const all = extractDeals({ title: "Censys Raises $70 Million in Strategic Funding", summary: "Its Series D was led by Morgan Stanley Expansion Capital, with participation from Decibel Partners, GV, Intel Capital, and others.", date: "2026-03-31", link: "x" });
   assert.deepEqual(all.map((x) => x.investor).sort(), ["GOOG", "INTC"]);
 });
+test("round size skips valuations, totals and other currencies", () => {
+  assert.equal(d("Ricursive Intelligence Raises $300 Million Series A at $4 Billion Valuation", "Led by Lightspeed, alongside NVentures.").amount, 300e6);
+  assert.equal(d("Resolve AI announces Series A Extension at a $1.5B valuation", "The round was led by DST Global and Salesforce Ventures.").amount, null);
+  assert.equal(d("Cohere Announces Series E Fundraise Targeting CAD $7 Billion", "Returning investors include NVIDIA and Inovia Capital.").amount, null);
+});
+test("round size from the headline's main clause", () => {
+  assert.equal(d("From $100M Seed to Unicorn in Months: Upscale AI Closes Oversubscribed $200M Series A", "With participation from Intel Capital.").amount, 200e6);
+});

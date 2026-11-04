@@ -69,6 +69,18 @@ export function parseRss(xml) {
 
 const FUNDING = /\b(raises?|raised|secures?|closes?|closed|completes?|lands|announces?|receives?)\b[^.]*?\b(funding|financing|investment|round|seed|series [a-h]\b|capital)\b|\binvests?\b|\binvestment (from|by)\b|-backed\b/i;
 const AMOUNT = /(?:US)?\$\s?(\d+(?:[.,]\d+)?)\s?(million|billion|mn|bn|m|b)\b/i;
+/** The round's size in US dollars: not a valuation ("at a $4B valuation"), a running total
+ * ("bringing total funding to $22M") or another currency ("CAD $7 billion"). */
+function roundSize(text) {
+  for (const m of text.matchAll(new RegExp(AMOUNT.source, "gi"))) {
+    const before = text.slice(Math.max(0, m.index - 30), m.index), after = text.slice(m.index + m[0].length, m.index + m[0].length + 40);
+    if (/\b(?:at|of|to)\s+(?:a|an)?\s*(?:post-money\s+|pre-money\s+)?$/i.test(before) && /^\s*(?:post-money\s+|pre-money\s+)?valuation/i.test(after)) continue;
+    if (/^\s*(?:post-money\s+|pre-money\s+)?valuation/i.test(after) || /valuation\s+(?:of\s+)?$/i.test(before)) continue;
+    if (/\btotal\b[^.]{0,30}$/i.test(before) || /(?:^|\s)(?:CAD|C|A|AU|NZ|HK|S|SG|NT|R)\s?$/.test(before)) continue;
+    return Math.round(parseFloat(m[1].replace(",", ".")) * (/^b/i.test(m[2]) ? 1e9 : 1e6));
+  }
+  return null;
+}
 const ROUND = /\b(pre-seed|seed|series [a-h])\b/i;
 // "{Startup} Raises/Secures/Closes ..." — the startup is whatever comes before the verb.
 const RAISER = /^(.{2,60}?)\s*(?:,\s*[^,]{3,60},\s*)?\b(?:raises|secures|closes|completes|lands|announces|receives|nabs|bags)\b/i;
@@ -106,10 +118,10 @@ export function extractDeals(item) {
     if (!target) continue;
     target = cleanName(target);
     if (!target || NOT_A_NAME.test(target) || PLACES.test(target) || new RegExp(`^(?:${al})\\b`, "i").test(target)) continue;
-    const amt = text.match(AMOUNT), round = text.match(ROUND);
+    const round = text.match(ROUND);
     found.push({
       investor: ticker, investorName: name, target,
-      amount: amt ? Math.round(parseFloat(amt[1].replace(",", ".")) * (/^b/i.test(amt[2]) ? 1e9 : 1e6)) : null,
+      amount: roundSize(item.title.split(/:\s+/).pop()) ?? roundSize(text),
       round: round ? round[1].replace(/^./, (c) => c.toUpperCase()).replace(/series (\w)/i, (_, l) => `Series ${l.toUpperCase()}`) : null,
       date: item.date, title: item.title, url: item.link,
     });
