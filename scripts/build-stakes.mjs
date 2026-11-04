@@ -99,7 +99,9 @@ const STAKE_FORM = /^(SC 13[DG]|SCHEDULE 13[DG])(\/A)?$/;
 const SKIP = "data/stakes-skip.json";
 let skip = {};
 try { skip = JSON.parse(await readFile(SKIP, "utf8")); } catch {}
-const tag = (xml, name) => xml.match(new RegExp(`<(?:\\w+:)?${name}>\\s*([^<]*?)\\s*</`, "i"))?.[1] ?? null;
+// XML escapes "&" and friends; decode them so "Genco Shipping &amp; Trading" reads normally.
+const unescape = (v) => v.replace(/&(amp|lt|gt|quot|apos);/gi, (_, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" })[e.toLowerCase()]);
+const tag = (xml, name) => { const v = xml.match(new RegExp(`<(?:\\w+:)?${name}>\\s*([^<]*?)\\s*</`, "i"))?.[1]; return v == null ? null : unescape(v); };
 
 async function bigStakes(cik, sub, old) {
   const r = sub?.filings?.recent;
@@ -158,7 +160,7 @@ for (const c of filers.companies) {
 // Tickers for holdings, and for 5%+ stakes by CUSIP or SEC ID.
 await addTickers(out.flatMap((c) => [c.top ?? [], c.new ?? [], c.added ?? [], c.reduced ?? [], c.sold ?? []]));
 const tickers = await mainTickers();
-for (const c of out) { c.ticker = tickers.get(c.cik) ?? c.ticker; for (const s of c.stakes) s.t = tickers.get(s.issuerCik) ?? null; }
+for (const c of out) { c.ticker = tickers.get(c.cik) ?? c.ticker; for (const s of c.stakes) { s.t = tickers.get(s.issuerCik) ?? null; s.issuer = unescape(s.issuer); } } // also repairs names cached before the fix
 
 await mkdir("data", { recursive: true });
 await writeFile(SKIP, JSON.stringify(skip));
