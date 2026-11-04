@@ -18,22 +18,6 @@ const shortDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(und
 
 type Cluster = { symbol: string; issuer: string; value: number; last: string; people: { name: string; role: string }[] };
 
-function HowToRead() {
-  return (
-    <details className="howto">
-      <summary>How to read this</summary>
-      <ul>
-        <li><strong>Insiders</strong> are a company&apos;s executives and board directors (plus anyone owning 10%+). They must report every trade in their own company&apos;s stock to the SEC within 2 business days.</li>
-        <li><strong>Buys matter more than sells.</strong> Insiders sell for many reasons (taxes, a house, diversifying), but they usually buy for one: they expect the stock to rise.</li>
-        <li><strong>Signal labels</strong> (Strong signal, Notable, Routine) weigh who bought (a CEO or CFO counts most), how much it grew their own stake, whether it&apos;s their first buy in years, and whether other insiders are buying too. Pre-planned trades and token amounts score low. It&apos;s a guide to what&apos;s unusual, not a prediction.</li>
-        <li><strong>Several insiders buying the same stock</strong> at around the same time is the strongest signal.</li>
-        <li><strong>&quot;Planned&quot;</strong> trades were scheduled months in advance under a trading plan, so they say less about the insider&apos;s current view.</li>
-        <li>Grants, option exercises and tax withholding are routine pay, so they&apos;re hidden unless you choose &quot;All&quot;.</li>
-      </ul>
-    </details>
-  );
-}
-
 function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; preview?: number; more?: () => void }) {
   const [all, setAll] = useState(false);
   if (!clusters.length) return null;
@@ -198,8 +182,6 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
     <>
       <section className="card">
         <h1>What insiders are buying</h1>
-        <p className="muted">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Here&apos;s what they bought in the last 30 days, strongest signals first.</p>
-        <HowToRead />
       </section>
       {trades === null ? <section className="card"><p className="muted">Loading…</p></section> : null}
       {source === "history" && buys.length ? (

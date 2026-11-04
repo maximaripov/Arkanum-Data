@@ -1,12 +1,14 @@
 "use client";
-// Company stakes: what listed companies (NVIDIA, Amazon, Alphabet…) own in other public
-// companies, from their SEC filings. Data: public/data/stakes.json (scripts/build-stakes.mjs).
+// Company stakes: what listed companies (NVIDIA, Amazon, Alphabet…) own in other companies.
+// Public companies from their SEC filings (public/data/stakes.json, scripts/build-stakes.mjs);
+// private startups from press releases (public/data/private.json, scripts/build-private.mjs).
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { HoldingRows, Badge, type Holding } from "./FundsView";
 import { fmtBig } from "@/lib/format";
 
 type Stake = { accession: string; form: string; filed: string; issuer: string; issuerCik: string; t: string | null; pct: number | null; url: string };
+type Deal = { investor: string; investorName: string; target: string; amount: number | null; round: string | null; date: string | null; title: string; url: string; source: string };
 type Company = {
   cik: string; name: string; ticker: string | null; industry: string;
   period?: string; filed?: string; prevPeriod?: string | null; total?: number; count?: number;
@@ -16,67 +18,66 @@ type Company = {
 
 const q = (d?: string | null) => { if (!d) return ""; const [y, m] = d.split("-"); return `Q${Math.ceil(+m / 3)} ${y}`; };
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-const TABS = [["new", "New"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold completely"]] as const;
+const CHANGES = [["new", "New"], ["added", "Added to"], ["reduced", "Cut"], ["sold", "Sold all"]] as const;
 const isAmendment = (f: string) => /\/A$/.test(f);
-/** "11.5%", "Exited" for a final 0% filing, or "5%+" when the filing didn't state it. */
-const pctText = (p: number | null) => (p == null ? "5%+" : p === 0 ? "Exited" : `${p.toFixed(1)}%`);
+/** "11.5%", "Exited" for a final 0% filing, "All" after a takeover, or "5%+" when the filing didn't say. */
+const pctText = (p: number | null) => (p == null ? "5%+" : p === 0 ? "Exited" : p >= 99.95 ? "All" : `${p.toFixed(1)}%`);
+const dealText = (d: Deal) => [d.round, d.amount ? `$${fmtBig(d.amount)} round` : null].filter(Boolean).join(" · ") || "Investment";
+
+/** Press-release deals. Unverified, so each links to its release. */
+function DealRows({ deals, showInvestor }: { deals: Deal[]; showInvestor?: boolean }) {
+  return (
+    <ul className="rows">{deals.map((d) => (
+      <li key={d.url} className="row-static">
+        <div className="row-main">
+          <div>{showInvestor ? <><strong>{d.investorName}</strong> <span className="muted">invested in</span> </> : null}<strong>{d.target}</strong></div>
+          <div className="small muted">{dealText(d)}{d.date ? ` · ${day(d.date)}` : ""} · <a href={d.url} target="_blank" rel="noreferrer">{d.source} ↗</a></div>
+        </div>
+      </li>
+    ))}</ul>
+  );
+}
 
 export function StakesView() {
   const [data, setData] = useState<Company[] | null>(null);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [sel, setSel] = useState<string | null>(null);
-  const [tab, setTab] = useState<(typeof TABS)[number][0]>("new");
   useEffect(() => {
-    fetch("/data/stakes.json").then((r) => (r.ok ? r.json() : { companies: [] })).then((d) => {
-      const list: Company[] = d.companies ?? [];
+    Promise.all([
+      fetch("/data/stakes.json").then((r) => (r.ok ? r.json() : { companies: [] })).catch(() => ({ companies: [] })),
+      fetch("/data/private.json").then((r) => (r.ok ? r.json() : { deals: [] })).catch(() => ({ deals: [] })),
+    ]).then(([s, p]) => {
+      const list: Company[] = s.companies ?? [];
+      const ds: Deal[] = p.deals ?? [];
+      // Investors with press-release deals but no SEC holdings (Microsoft, Salesforce…) get an entry too.
+      for (const d of ds) if (!list.some((c) => c.ticker === d.investor)) list.push({ cik: d.investor, name: d.investorName, ticker: d.investor, industry: "", stakes: [] });
       setData(list);
+      setDeals(ds);
       const want = new URLSearchParams(location.search).get("c")?.toUpperCase();
       const pick = list.find((c) => c.ticker === want || c.cik === want) ?? list[0];
       if (pick) setSel(pick.cik);
-    }).catch(() => setData([]));
+    });
   }, []);
-  const choose = (c: Company) => { setSel(c.cik); setTab("new"); history.replaceState(null, "", `?c=${c.ticker ?? c.cik}`); };
+  const choose = (cik: string) => { const c = data?.find((x) => x.cik === cik); if (!c) return; setSel(cik); history.replaceState(null, "", `?c=${c.ticker ?? c.cik}`); };
 
-  // The most recent 5%+ stake filings across every company: the timeliest signal here.
   const recentStakes = useMemo(() => (data ?? []).flatMap((c) => c.stakes.map((s) => ({ ...s, owner: c }))).sort((a, b) => b.filed.localeCompare(a.filed)).slice(0, 12), [data]);
+  const sorted = useMemo(() => [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [data]);
 
   if (data === null) return <section className="card"><p className="muted">Loading…</p></section>;
-  if (!data.length) return (
-    <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running. Company holdings will appear here shortly.</p></section>
-  );
+  if (!data.length) return <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running.</p></section>;
   const c = data.find((x) => x.cik === sel) ?? data[0];
-  const changes = (c[tab] ?? []) as Holding[];
+  const own = deals.filter((d) => d.investor === c.ticker);
+  const changed = CHANGES.filter(([k]) => (c[k] ?? []).length);
   return (
     <div className="stack">
       <section className="card">
         <h1>Company stakes</h1>
-        <p className="muted">What big companies own in other public companies, from their own SEC filings. NVIDIA, Amazon, Alphabet and others report their stock holdings every quarter, and must file within days whenever they own more than 5% of a company.</p>
-        <details className="howto"><summary>How to read this</summary>
-          <ul>
-            <li><strong>Quarterly holdings</strong> (Form 13F) are filed up to 45 days after each quarter ends, so they can be 2–5 months old.</li>
-            <li><strong>5%+ stakes</strong> (Schedules 13D and 13G) are filed within days of crossing 5% or making a big change, so they&apos;re the most up to date.</li>
-            <li><strong>Private companies don&apos;t appear.</strong> Stakes in startups that aren&apos;t publicly traded aren&apos;t reported in these filings.</li>
-            <li>Only companies big enough to file are listed; many (Apple, Microsoft, Meta…) don&apos;t file 13Fs.</li>
-          </ul>
-        </details>
-      </section>
-
-      {recentStakes.length ? (
-        <section className="card">
-          <h2>Recent 5%+ stake filings <span className="muted small">last 12 months</span></h2>
-          <ul className="rows">{recentStakes.map((s) => (
-            <li key={s.accession} className="row-static">
-              <div className="row-main">
-                <div><strong>{s.owner.name}</strong> {s.pct === 0 ? <span className="muted">sold its stake in</span> : <><span className="muted">owns</span> <strong className="mono">{pctText(s.pct)}</strong> <span className="muted">of</span></>} {s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div>
-                <div className="small muted">{isAmendment(s.form) ? "Updated stake" : "New stake filing"} · {day(s.filed)} · <a href={s.url} target="_blank" rel="noreferrer">SEC filing ↗</a></div>
-              </div>
-            </li>
-          ))}</ul>
-        </section>
-      ) : null}
-
-      <section className="card">
-        <h2>Pick a company</h2>
-        <div className="scroller">{data.map((x) => <button key={x.cik} className={`chip${x.cik === c.cik ? " on" : ""}`} onClick={() => choose(x)}>{x.name}{x.ticker ? <span className="muted"> {x.ticker}</span> : null}</button>)}</div>
+        <label className="picker">
+          <span className="muted small">Company</span>
+          <select value={c.cik} onChange={(e) => choose(e.target.value)}>
+            {sorted.map((x) => <option key={x.cik} value={x.cik}>{x.name}{x.ticker ? ` (${x.ticker})` : ""}</option>)}
+          </select>
+        </label>
         <div className="fund-head">
           <div>
             <h2 className="fund-name">{c.name}</h2>
@@ -87,33 +88,67 @@ export function StakesView() {
               <div><dt>Reported stock holdings</dt><dd className="mono">${fmtBig(c.total)}</dd></div>
               <div><dt>Companies</dt><dd className="mono">{c.count}</dd></div>
               <div><dt>As of</dt><dd>{q(c.period)}</dd></div>
-              <div><dt>Filed</dt><dd>{c.filed ? day(c.filed) : "—"}</dd></div>
             </dl>
           ) : null}
         </div>
       </section>
 
       {c.top?.length ? (
-        <div className="twocol">
-          <section className="card">
-            <h2>What they own <span className="muted small">{q(c.period)}</span></h2>
-            <HoldingRows items={c.top} max={25} maxPct={c.top[0]?.pct} />
-          </section>
-          <section className="card">
-            <h2>What changed <span className="muted small">{c.prevPeriod ? `vs ${q(c.prevPeriod)}` : ""}</span></h2>
-            <div className="seg wrap">{TABS.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} ({(c[k] ?? []).length})</button>)}</div>
-            <HoldingRows items={changes} />
-          </section>
-        </div>
+        <section className="card">
+          <h2>What they own <span className="muted small">{q(c.period)}{c.filed ? `, filed ${day(c.filed)}` : ""}</span></h2>
+          <HoldingRows items={c.top} max={25} maxPct={c.top[0]?.pct} />
+          {changed.length ? (
+            <div className="changes">
+              <h3 className="small">Changed since {q(c.prevPeriod)}</h3>
+              {changed.map(([k, label]) => {
+                const list = c[k] ?? [];
+                return (
+                  <div key={k} className="change-line small">
+                    <span className="muted">{label}</span>
+                    <span>{list.slice(0, 12).map((h, i) => <span key={h.cusip}>{i ? ", " : ""}{h.t ? <Link href={`/stock/${h.t}`}>{h.t}</Link> : h.name}</span>)}{list.length > 12 ? ` +${list.length - 12} more` : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
       ) : null}
 
       {c.stakes.length ? (
         <section className="card">
-          <h2>{c.name}&apos;s 5%+ stakes <span className="muted small">filings in the last 12 months</span></h2>
+          <h2>5%+ stakes <span className="muted small">filings in the last 12 months</span></h2>
           <ul className="rows">{c.stakes.map((s) => (
             <li key={s.accession} className="row-static">
               <div className="row-main"><div>{s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div><div className="small muted">{day(s.filed)} · <a href={s.url} target="_blank" rel="noreferrer">SEC filing ↗</a></div></div>
               <div className="row-value mono">{pctText(s.pct)}</div>
+            </li>
+          ))}</ul>
+        </section>
+      ) : null}
+
+      {own.length ? (
+        <section className="card">
+          <h2>Private investments <span className="muted small">reported in press releases, not verified</span></h2>
+          <DealRows deals={own} />
+        </section>
+      ) : null}
+
+      {deals.length ? (
+        <section className="card">
+          <h2>Recent private investments <span className="muted small">press releases, not verified</span></h2>
+          <DealRows deals={deals.slice(0, 12)} showInvestor />
+        </section>
+      ) : null}
+
+      {recentStakes.length ? (
+        <section className="card">
+          <h2>Recent 5%+ stake filings <span className="muted small">all companies</span></h2>
+          <ul className="rows">{recentStakes.map((s) => (
+            <li key={s.accession} className="row-static">
+              <div className="row-main">
+                <div><strong>{s.owner.name}</strong> {s.pct === 0 ? <span className="muted">sold its stake in</span> : <><span className="muted">owns</span> <strong className="mono">{pctText(s.pct)}</strong> <span className="muted">of</span></>} {s.t ? <Link href={`/stock/${s.t}`}><strong>{s.t}</strong></Link> : null} <span className="muted">{s.issuer}</span></div>
+                <div className="small muted">{isAmendment(s.form) ? "Updated stake" : "New stake filing"} · {day(s.filed)} · <a href={s.url} target="_blank" rel="noreferrer">SEC filing ↗</a></div>
+              </div>
             </li>
           ))}</ul>
         </section>

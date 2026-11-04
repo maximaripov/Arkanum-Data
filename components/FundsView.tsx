@@ -66,14 +66,6 @@ export function FundsView() {
     <>
       <section className="card">
         <h1>What big funds are doing</h1>
-        <p className="muted">Every quarter, investment funds managing over $100M must publish their US stock holdings (an SEC &quot;13F&quot; filing). Compare two quarters and you see what they bought and sold.</p>
-        <details className="howto"><summary>How to read this</summary>
-          <ul>
-            <li>Filings are due 45 days after each quarter ends, so positions are <strong>6–20 weeks old</strong> when you see them. The fund may have traded since.</li>
-            <li>Only US stocks and ETFs they own are reported. Short bets, cash and most foreign holdings aren&apos;t.</li>
-            <li>&quot;% of portfolio&quot; is the holding&apos;s share of everything the fund reported.</li>
-          </ul>
-        </details>
         <div className="seg big part-seg"><button className={part === "popular" ? "on" : ""} onClick={() => setPart("popular")}>What funds are buying</button><button className={part === "fund" ? "on" : ""} onClick={() => setPart("fund")}>Look up a fund</button></div>
       </section>
 

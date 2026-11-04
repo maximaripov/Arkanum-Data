@@ -41,13 +41,18 @@ jobs:
       - id: today
         name: Today's insider trades (SEC Form 4 live feed)
         run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/build-insiders-today.mjs
+      # Private investments announced in press releases (Stakes page). Feeds only show their
+      # latest items, hence hourly. Best effort: a feed outage doesn't fail the job or alert.
+      - name: Private investments (press releases)
+        continue-on-error: true
+        run: node scripts/build-private.mjs
       - id: commit
         name: Commit data
         run: |
           # Vercel's Hobby plan only deploys commits authored by the project owner.
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
-          git add public/data/insiders-today.json data
+          git add public/data/insiders-today.json public/data/private.json data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "data: insider trades $(date -u +%FT%H:%MZ)"
           # The daily job may have pushed meanwhile; on the shared history cache, keep ours.

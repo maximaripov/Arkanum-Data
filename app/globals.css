@@ -138,10 +138,6 @@ footer a { color: inherit; text-decoration: underline; }
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); }
 .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: .6rem .9rem; font-size: 1rem; color: var(--muted); cursor: pointer; }
 .tabs button.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-.howto { margin-top: .6rem; color: var(--muted); }
-.howto summary { cursor: pointer; color: var(--accent); font-size: .9rem; }
-.howto ul { margin: .5rem 0 0; padding-left: 1.1rem; font-size: .9rem; line-height: 1.5; }
-.howto li { margin: .3rem 0; }
 .filterbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .filter-input { flex: 1 1 14rem; min-width: 0; padding: .5rem .75rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
 .more { margin: .6rem 0 .2rem; }
@@ -217,9 +213,6 @@ a.btn { display: inline-block; text-decoration: none; }
 .event-body { display: grid; gap: .2rem; min-width: 0; }
 .event-actions { display: flex; gap: 1rem; margin-top: .2rem; }
 .event-more { margin: .3rem 0 0; line-height: 1.5; color: var(--muted); }
-.glossary { margin-top: .5rem; }
-.glossary dt { font-weight: 600; margin-top: .4rem; }
-.glossary dd { margin: 0; color: var(--muted); }
 
 /* Markets & economy board */
 .weeksum { margin: .25rem 0 .75rem; padding-left: 1.1rem; display: grid; gap: .2rem; }
@@ -344,3 +337,8 @@ a.person:hover strong { color: var(--accent); }
 .owner-box .levelform input.note { font-size: 16px; } /* 16px stops iPhones zooming into the field */
 .owner-box .btn.primary:disabled { opacity: .45; cursor: default; }
 .owner-msg { margin: .5rem 0 0; }
+.picker { display: flex; flex-direction: column; gap: .25rem; margin-top: .5rem; max-width: 26rem; }
+.picker select { padding: .6rem .7rem; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 1rem; width: 100%; }
+.changes { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+.changes h3 { margin: 0 0 .4rem; font-weight: 600; }
+.change-line { display: grid; grid-template-columns: 5.5rem 1fr; gap: .5rem; padding: .2rem 0; }
