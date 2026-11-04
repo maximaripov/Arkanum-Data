@@ -1,0 +1,257 @@
+{
+ "checked": "2026-11-04",
+ "companies": [
+  {
+   "cik": "2488",
+   "name": "Advanced Micro Devices Inc",
+   "ticker": "AMD",
+   "industry": "Semiconductors & Related Devices",
+   "extra": false
+  },
+  {
+   "cik": "1577552",
+   "name": "Alibaba Group Holding Ltd",
+   "ticker": "BABA",
+   "industry": "Services-Business Services, NEC",
+   "extra": false
+  },
+  {
+   "cik": "1652044",
+   "name": "Alphabet Inc.",
+   "ticker": "GOOG",
+   "industry": "Services-Computer Programming, Data Processing, Etc.",
+   "extra": false
+  },
+  {
+   "cik": "1018724",
+   "name": "Amazon Com Inc",
+   "ticker": "AMZN",
+   "industry": "Retail-Catalog & Mail-Order Houses",
+   "extra": false
+  },
+  {
+   "cik": "6201",
+   "name": "American Airlines Group Inc.",
+   "ticker": "AAL",
+   "industry": "Air Transportation, Scheduled",
+   "extra": false
+  },
+  {
+   "cik": "1069183",
+   "name": "Axon Enterprise, Inc.",
+   "ticker": "AXON",
+   "industry": "Ordnance & Accessories, (No Vehicles/Guided Missiles)",
+   "extra": false
+  },
+  {
+   "cik": "313807",
+   "name": "Bp Plc",
+   "ticker": "BP",
+   "industry": "Petroleum Refining",
+   "extra": false
+  },
+  {
+   "cik": "1704720",
+   "name": "Cannae Holdings, Inc.",
+   "ticker": "CNNE",
+   "industry": "Retail-Eating & Drinking Places",
+   "extra": false
+  },
+  {
+   "cik": "93410",
+   "name": "Chevron Corp",
+   "ticker": "CVX",
+   "industry": "Petroleum Refining",
+   "extra": false
+  },
+  {
+   "cik": "858877",
+   "name": "Cisco Systems, Inc.",
+   "ticker": "CSCO",
+   "industry": "Computer Communications Equipment",
+   "extra": false
+  },
+  {
+   "cik": "64803",
+   "name": "Cvs Health Corp",
+   "ticker": "CVS",
+   "industry": "Retail-Drug Stores and Proprietary Stores",
+   "extra": false
+  },
+  {
+   "cik": "783412",
+   "name": "Daily Journal Corp",
+   "ticker": "DJCO",
+   "industry": "Newspapers: Publishing or  Publishing & Printing",
+   "extra": false
+  },
+  {
+   "cik": "1481045",
+   "name": "Daiwa Securities Group Inc.",
+   "ticker": "DSEEY",
+   "industry": "American Depositary Receipts",
+   "extra": false
+  },
+  {
+   "cik": "27904",
+   "name": "Delta Air Lines, Inc.",
+   "ticker": "DAL",
+   "industry": "Air Transportation, Scheduled",
+   "extra": false
+  },
+  {
+   "cik": "1090012",
+   "name": "Devon Energy Corp/De",
+   "ticker": "DVN",
+   "industry": "Crude Petroleum & Natural Gas",
+   "extra": false
+  },
+  {
+   "cik": "40545",
+   "name": "General Electric Co",
+   "ticker": "GE",
+   "industry": "Electronic & Other Electrical Equipment (No Computer Equip)",
+   "extra": false
+  },
+  {
+   "cik": "882095",
+   "name": "Gilead Sciences, Inc.",
+   "ticker": "GILD",
+   "industry": "Biological Products, (No Diagnostic Substances)",
+   "extra": false
+  },
+  {
+   "cik": "104889",
+   "name": "Graham Holdings Co",
+   "ticker": "GHC",
+   "industry": "Services-Educational Services",
+   "extra": false
+  },
+  {
+   "cik": "1131399",
+   "name": "Gsk Plc",
+   "ticker": "GSK",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "1048268",
+   "name": "Ies Holdings, Inc.",
+   "ticker": "IESC",
+   "industry": "Electrical Work",
+   "extra": false
+  },
+  {
+   "cik": "1058811",
+   "name": "Immersion Corp",
+   "ticker": "IMMR",
+   "industry": "Computer Peripheral Equipment, NEC",
+   "extra": false
+  },
+  {
+   "cik": "50863",
+   "name": "Intel Corp",
+   "ticker": "INTC",
+   "industry": "Semiconductors & Related Devices",
+   "extra": false
+  },
+  {
+   "cik": "200406",
+   "name": "Johnson & Johnson",
+   "ticker": "JNJ",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "920760",
+   "name": "Lennar Corp /New/",
+   "ticker": "LEN",
+   "industry": "General Bldg Contractors - Residential Bldgs",
+   "extra": false
+  },
+  {
+   "cik": "310158",
+   "name": "Merck & Co., Inc.",
+   "ticker": "MRK",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "1110646",
+   "name": "Netease, Inc.",
+   "ticker": "NTES",
+   "industry": "Services-Prepackaged Software",
+   "extra": false
+  },
+  {
+   "cik": "1045810",
+   "name": "Nvidia Corp",
+   "ticker": "NVDA",
+   "industry": "Semiconductors & Related Devices",
+   "extra": false
+  },
+  {
+   "cik": "78003",
+   "name": "Pfizer Inc",
+   "ticker": "PFE",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "872589",
+   "name": "Regeneron Pharmaceuticals, Inc.",
+   "ticker": "REGN",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "1121404",
+   "name": "Sanofi",
+   "ticker": "SNY",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "873303",
+   "name": "Sarepta Therapeutics, Inc.",
+   "ticker": "SRPT",
+   "industry": "Pharmaceutical Preparations",
+   "extra": false
+  },
+  {
+   "cik": "1065521",
+   "name": "Softbank Group Corp.",
+   "ticker": "SFTBF",
+   "industry": "",
+   "extra": true
+  },
+  {
+   "cik": "1094517",
+   "name": "Toyota Motor Corp/",
+   "ticker": "TM",
+   "industry": "Motor Vehicles & Passenger Car Bodies",
+   "extra": false
+  },
+  {
+   "cik": "1543151",
+   "name": "Uber Technologies, Inc",
+   "ticker": "UBER",
+   "industry": "Services-Business Services, NEC",
+   "extra": false
+  },
+  {
+   "cik": "100517",
+   "name": "United Airlines Holdings, Inc.",
+   "ticker": "UAL",
+   "industry": "Air Transportation, Scheduled",
+   "extra": false
+  },
+  {
+   "cik": "104169",
+   "name": "Walmart Inc.",
+   "ticker": "WMT",
+   "industry": "Retail-Variety Stores",
+   "extra": false
+  }
+ ]
+}
