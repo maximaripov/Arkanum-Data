@@ -1,7 +1,6 @@
 "use client";
-// The next few US economic releases and Fed decisions (BEA, Federal Reserve).
+// The next few big US economic releases and Fed decisions (BEA, Federal Reserve).
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { EVENT_INFO, eventDay } from "@/lib/events";
 
 type Ev = { date: string; time: string | null; kind: string; title: string };
@@ -14,7 +13,7 @@ export function ComingUp({ limit = 4 }: { limit?: number }) {
   }, [limit]);
   return (
     <section className="card">
-      <div className="card-head"><h2>Coming up</h2><Link href="/calendar" className="small">Calendar ›</Link></div>
+      <div className="card-head"><h2>Coming up</h2><span className="muted small">big US releases</span></div>
       {ev === null ? <p className="muted">Loading…</p> : !ev.length ? <p className="muted">No major US releases scheduled soon.</p> : (
         <ul className="rows">{ev.map((e) => (
           <li key={e.date + e.title} className="row-static">

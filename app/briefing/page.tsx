@@ -138,10 +138,10 @@ function Notifications() {
         </div>
       ) : (
         <>
-          <p className="muted">One notification each weekday after the 4 PM close (usually by about 4:30 PM ET) with your watchlist&apos;s insider trades, company announcements and fund moves, plus new matches for your saved screens.</p>
+          <p className="muted">One notification each weekday after the 4 PM close (usually by about 4:30 PM ET) with your watchlist&apos;s insider trades, company announcements and fund moves.</p>
           <label className="check"><input type="checkbox" checked={instant} onChange={(e) => (on ? toggleInstant(e.target.checked) : setInstant(e.target.checked))} /> <span><strong>Instant alerts:</strong> also tell me within about an hour when a CEO, CFO or other top executive buys a stock on my watchlist (or anyone makes a strong-signal buy of it), and whenever someone I follow buys or makes a large sale.</span></label>
           <div className="toolbar">{on ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary big" onClick={enable}>Turn on notifications</button>}</div>
-          <p className="muted small">No account, email or name. While it&apos;s on we keep your watchlist and saved screens to personalize it; turning it off deletes them.</p>
+          <p className="muted small">No account, email or name. While it&apos;s on we keep your watchlist and the people you follow to personalize it; turning it off deletes them.</p>
         </>
       )}
       {status ? <p className="small status">{status}</p> : null}

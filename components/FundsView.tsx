@@ -3,14 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fmtBig, fmtPct } from "@/lib/format";
 
-type Holding = { cusip: string; t: string | null; name: string; cls: string; value: number; shares: number; pct: number; change: string; chgPct: number | null };
+export type Holding = { cusip: string; t: string | null; name: string; cls: string; value: number; shares: number; pct: number; change: string; chgPct: number | null };
 type Fund = { cik: number; name: string; who: string; period: string; filed: string; prevPeriod: string | null; total: number; count: number; top: Holding[]; new: Holding[]; added: Holding[]; reduced: Holding[]; sold: Holding[] };
 
 const q = (d: string) => { const [y, m] = d.split("-"); return `Q${Math.ceil(+m / 3)} ${y}`; };
 const share = (pct: number) => (pct < 0.1 ? "<0.1%" : `${pct.toFixed(1)}%`);
 const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
 
-function Badge({ h }: { h: Holding }) {
+export function Badge({ h }: { h: Holding }) {
   if (h.change === "new") return <span className="badge up">New</span>;
   if (h.change === "added") return <span className="badge up">Added {fmtPct(h.chgPct, 0)}</span>;
   if (h.change === "reduced") return <span className="badge down">Cut {fmtPct(h.chgPct, 0).replace("-", "−")}</span>;
@@ -18,7 +18,7 @@ function Badge({ h }: { h: Holding }) {
   return null;
 }
 
-function HoldingRows({ items, max = 10, maxPct }: { items: Holding[]; max?: number; maxPct?: number }) {
+export function HoldingRows({ items, max = 10, maxPct }: { items: Holding[]; max?: number; maxPct?: number }) {
   if (!items.length) return <p className="muted small">None this quarter.</p>;
   return (
     <ul className="holdings">{items.slice(0, max).map((h) => (

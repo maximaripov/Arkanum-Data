@@ -1,0 +1,40 @@
+name: Company stakes
+# Weekday mornings: which listed companies own stakes in other public companies, from
+# their 13F holdings reports and 5%+ ownership filings (SEC). Separate from the 4 PM job
+# so a problem here can't hold up the digest. A minute or two a run after the first.
+on:
+  schedule:
+    - cron: "37 10 * * 1-5" # about 6:37 AM New York time
+  workflow_dispatch:
+permissions:
+  contents: write
+  id-token: write # lets the job prove to the site that it is this repo's job
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      SITE_URL: https://form4-insiders.vercel.app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Company stakes (SEC 13F and 13D/13G)
+        run: node scripts/build-stakes.mjs
+      - name: Commit data
+        run: |
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
+          git add public/data/stakes.json data
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "data: company stakes $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          exit 1
+      - name: Notify on failure
+        if: failure()
+        run: |
+          node scripts/notify.mjs "Form4: company stakes update failed" "The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

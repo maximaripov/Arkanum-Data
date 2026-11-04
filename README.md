@@ -30,7 +30,7 @@ Not used, because their terms don't allow showing their data to the public: Yaho
 ## How it runs (free)
 
 - **Vercel Hobby** hosts the site (free for non-commercial use). A private **Vercel Blob** store holds devices that turned on notifications (random device ID, push address, watchlist, saved screens) and the latest digest.
-- **GitHub Actions** (`.github/workflows/data.yml`) runs weekdays at 4:02 PM New York time: SEC fundamentals → insider trades → 13F holdings → economic calendar → health check → digest → commit. If any step fails, nothing is sent or published and the owner's devices get an alert naming the step. The job proves its identity to the site with a GitHub-signed token (no secret stored in GitHub).
+- **GitHub Actions** (`.github/workflows/data.yml`) runs weekdays at 4:02 PM New York time: SEC fundamentals → insider trades → 13F holdings → big economic releases → health check → digest → commit. `insiders-hourly.yml` adds new filings hourly; `stakes.yml` updates company stakes each weekday morning. If any step fails, nothing is sent or published and the owner's devices get an alert naming the step. The job proves its identity to the site with a GitHub-signed token (no secret stored in GitHub).
 
 ### Settings
 

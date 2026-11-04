@@ -25,7 +25,7 @@ export default function About() {
           <li><strong>Insider trades, big-fund holdings (13F), company announcements (8-K) and fundamentals:</strong> <a href="https://www.sec.gov/edgar" target="_blank" rel="noreferrer">SEC EDGAR</a> (public domain). Insider trades update hourly on weekdays from about 7 AM to 11 PM Eastern; everything else after 4 PM Eastern. 13F filings are due 45 days after each quarter, so fund positions are 6–20 weeks old.</li>
           <li><strong>Signal labels</strong> (Strong signal, Notable, Routine) are Form4&apos;s own estimate from what each filing says: the insider&apos;s role, how much the buy grew their stake, how long since they last bought, how many insiders are buying, and the size. Pre-planned trades and token amounts score low. A label is not a recommendation.</li>
           <li><strong>Retail trading volume:</strong> <a href="https://otctransparency.finra.org/" target="_blank" rel="noreferrer">FINRA OTC Transparency data</a>, published with a 2–4 week delay. Shown for personal, non-commercial use; not for redistribution.</li>
-          <li><strong>US economic calendar:</strong> the Bureau of Economic Analysis and the Federal Reserve (public domain).</li>
+          <li><strong>Big US economic releases</strong> (GDP, PCE inflation, Fed decisions): the Bureau of Economic Analysis and the Federal Reserve (public domain).</li>
           <li><strong>Ticker lookups for fund holdings:</strong> <a href="https://www.openfigi.com/" target="_blank" rel="noreferrer">OpenFIGI</a>.</li>
         </ul>
       </section>

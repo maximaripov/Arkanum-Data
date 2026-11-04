@@ -16,11 +16,11 @@ const inWindow = (d) => d >= today && d <= end;
 const events = [];
 const sources = [];
 
-// BEA: GDP, PCE inflation (Personal Income and Outlays), trade balance.
+// BEA: GDP and PCE inflation (Personal Income and Outlays). Big releases only.
 const bea = await get("https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics");
 if (bea) {
   sources.push("BEA");
-  const BEA = [[/^GDP/i, "GDP"], [/Personal Income and Outlays/i, "PCE inflation, income & spending"], [/Trade in Goods and Services/i, "Trade balance"]];
+  const BEA = [[/^GDP/i, "GDP"], [/Personal Income and Outlays/i, "PCE inflation, income & spending"]];
   for (const ev of bea.replace(/\r?\n[ \t]/g, "").split("BEGIN:VEVENT").slice(1)) {
     const start = ev.match(/DTSTART[^:]*:(\d{8})/), summary = ev.match(/SUMMARY[^:]*:(.*)/)?.[1]?.replace(/\\,/g, ",").trim();
     if (!start || !summary) continue;
@@ -56,7 +56,7 @@ if (fomc) {
 // FRED (optional free key): BLS releases.
 if (FRED) {
   const d = await get(`https://api.stlouisfed.org/fred/releases/dates?api_key=${FRED}&file_type=json&realtime_start=${today}&realtime_end=${end}&include_release_dates_with_no_data=true&limit=1000&sort_order=asc`, "json");
-  const WANT = [[/^Employment Situation$/i, "Jobs report"], [/^Consumer Price Index$/i, "CPI inflation"], [/^Producer Price Index$/i, "PPI inflation"], [/Advance Monthly Sales for Retail/i, "Retail sales"], [/Unemployment Insurance Weekly Claims/i, "Jobless claims"], [/Job Openings and Labor Turnover/i, "Job openings (JOLTS)"]];
+  const WANT = [[/^Employment Situation$/i, "Jobs report"], [/^Consumer Price Index$/i, "CPI inflation"]]; // the market-moving ones
   if (d) sources.push("FRED");
   for (const r of d?.release_dates ?? []) {
     const hit = WANT.find(([re]) => re.test(r.release_name));

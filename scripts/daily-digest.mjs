@@ -7,7 +7,6 @@
 //   node scripts/daily-digest.mjs --dry-run   build and print, send nothing
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 import { readFile } from "node:fs/promises";
-import { execBuysBySymbol, matchesFilter } from "../lib/screen.mjs";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 import { SITE, token } from "./lib/site.mjs";
 
@@ -32,7 +31,6 @@ const weekday = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US"
 const ins = mergeInsiders(await load("public/data/insiders.json", { trades: [] }), await load("public/data/insiders-today.json", null));
 const funds = await load("public/data/funds.json", { funds: [] });
 const events = (await load("public/data/events.json", { events: [] })).events.filter((e) => e.date >= today && e.date <= addDays(today, 7));
-const sc = await load("public/data/screener.json", null);
 
 const isExec = (role) => String(role).split(",").map((s) => s.trim()).some((p) => p && p !== "10% owner" && p !== "Other");
 const filed = ins.trades.map((t) => t.filed).sort().at(-1) ?? null; // latest filing day in the data
@@ -109,12 +107,8 @@ for (const s of followed) {
   if (items.length) filingsToday.set(s, [...new Set(items)]);
 }
 
-const rows = sc ? sc.rows.map((r) => Object.fromEntries(sc.fields.map((f, i) => [f, r[i]]))) : [];
-const buys = execBuysBySymbol(ins.trades);
-for (const r of rows) r.ins = buys.get(r.t) ?? null;
 
 const messages = [];
-const screenMatches = {};
 for (const d of devices) {
   const w = new Set(d.watchlist);
   const lines = [];
@@ -128,16 +122,6 @@ for (const d of devices) {
     const hit = [...f.new, ...f.sold].find((h) => w.has(h.t));
     if (hit) lines.push(`${f.name} ${hit.change === "sold" ? "sold all of" : "bought"} ${hit.t}`);
   }
-  // Saved screens: companies that newly match.
-  const matchesNow = {};
-  for (const s of d.screens ?? []) {
-    const hits = rows.filter((r) => matchesFilter(r, s.filter)).map((r) => r.t).slice(0, 500);
-    matchesNow[s.id] = hits;
-    const before = d.screenMatches?.[s.id];
-    const added = before ? hits.filter((t) => !before.includes(t)) : [];
-    if (added.length) lines.push(`Screen "${s.name}": ${added.length} new (${added.slice(0, 3).join(", ")}${added.length > 3 ? "…" : ""})`);
-  }
-  if (d.screens?.length) screenMatches[d.id] = matchesNow;
   // Fill with market-wide highlights if nothing personal happened.
   if (!lines.length && clusters[0]) lines.push(`${clusters[0].insiders} insiders bought ${clusters[0].symbol} this week (${money(clusters[0].value)})`);
   if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Strongest insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
@@ -154,7 +138,7 @@ if (DRY || !auth) {
 const res = await fetch(`${SITE}/api/alerts/send`, {
   method: "POST",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` },
-  body: JSON.stringify({ digest, messages, screenMatches, notify: !NO_PUSH }),
+  body: JSON.stringify({ digest, messages, notify: !NO_PUSH }),
 });
 console.log(`Send: HTTP ${res.status}`, await res.text());
 if (!res.ok) process.exit(1);

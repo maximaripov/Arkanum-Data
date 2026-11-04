@@ -1,6 +1,6 @@
 "use client";
 // This device's notification registration. No accounts: a random ID made on first use
-// identifies the device to the server. The watchlist and saved screens stay on the
+// identifies the device to the server. The watchlist and followed insiders stay on the
 // device; they're sent to the server only while notifications are on, so the 4 PM
 // digest can be personalized.
 import { DEFAULT_WATCHLIST } from "./markets";
@@ -27,10 +27,9 @@ export function deviceId() {
 export const notificationsOn = () => ls.get(ON) === "1";
 
 /** Sends this device's watchlist (exactly what the Markets tab shows, defaults included)
- *  and saved screens, plus any extra fields. */
+ *  and followed insiders, plus any extra fields. */
 const prefs = () => ({
   watchlist: ls.json<string[] | null>("foresight.watchlist", null) ?? DEFAULT_WATCHLIST,
-  screens: ls.json("foresight.screens", []),
   following: ls.json<{ cik: string }[]>("foresight.following", []).map((p) => p.cik),
 });
 const SYNCED = "foresight.synced"; // what the server last received, and when
