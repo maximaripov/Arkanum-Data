@@ -97,7 +97,7 @@ for (const quarter of quarters) {
     if ((r[T("TRANS_CODE")] ?? "").trim() !== "P") continue;
     if ((r[T("TRANS_ACQUIRED_DISP_CD")] ?? "A").trim() === "D") continue;
     const a = r[T("ACCESSION_NUMBER")], s = subs.get(a), o = owners.get(a)?.[0];
-    if (!s || !o || !s.filed || !/^4/.test(s.type ?? "4")) continue;
+    if (!s || !o || !s.filed || (s.type ?? "4").trim() !== "4") continue; // originals only; 4/A amendments repeat them
     const shares = +r[T("TRANS_SHARES")] || 0, price = +r[T("TRANS_PRICEPERSHARE")] || 0;
     if (!shares || !price) continue;
     const key = `${a}|${o.cik}`;
@@ -136,10 +136,10 @@ for (const e of tested) {
 }
 console.log(`${tested.length} officer/director buys filed ${testStart} or later`);
 
-// ---- 3. Prices (daily adjusted closes) -----------------------------------------------------
+// ---- 3. Prices (daily closes: adjusted for returns, raw to check the ticker) ---------------
 async function closes(symbol) {
   const y = symbol.replace(".", "-");
-  const p1 = Math.floor(Date.parse(testStart) / 1000) - 86400 * 10, p2 = Math.floor(Date.now() / 1000);
+  const p1 = Math.floor(Date.parse(testStart) / 1000) - 86400 * 40, p2 = Math.floor(Date.now() / 1000);
   for (let i = 0; i < 3; i++) {
     try {
       const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?period1=${p1}&period2=${p2}&interval=1d&events=split,div`, { headers: { "User-Agent": "Mozilla/5.0 (research)" }, signal: AbortSignal.timeout(20_000) });
@@ -147,8 +147,8 @@ async function closes(symbol) {
       if (r.status === 429) { await sleep(5000 * (i + 1)); continue; }
       if (!r.ok) return null;
       const j = await r.json(), res = j.chart?.result?.[0];
-      const ts = res?.timestamp ?? [], adj = res?.indicators?.adjclose?.[0]?.adjclose ?? res?.indicators?.quote?.[0]?.close ?? [];
-      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k]]);
+      const ts = res?.timestamp ?? [], raw = res?.indicators?.quote?.[0]?.close ?? [], adj = res?.indicators?.adjclose?.[0]?.adjclose ?? raw;
+      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k]]);
       return out.length ? out : null;
     } catch { await sleep(2000); }
   }
@@ -156,35 +156,57 @@ async function closes(symbol) {
 }
 const symbols = [...new Set(tested.map((e) => e.symbol))].slice(0, MAX_TICKERS);
 const px = new Map();
-const spy = await closes("SPY");
-if (!spy) throw new Error("No SPY prices: the price source is unavailable");
+const spy = await closes("SPY"), iwm = await closes("IWM");
+if (!spy || !iwm) throw new Error("No SPY/IWM prices: the price source is unavailable");
 let done = 0;
 for (const s of symbols) { const c = await closes(s); if (c) px.set(s, c); if (++done % 250 === 0) console.log(`prices: ${done}/${symbols.length} (${px.size} found)`); await sleep(150); }
 console.log(`prices for ${px.size} of ${symbols.length} stocks`);
 
 /** Return from the first close after `filed` to `h` trading days later. */
 function ret(series, filed, h) {
-  let i = series.findIndex(([d]) => d > filed);
+  const i = series.findIndex(([d]) => d > filed);
   if (i < 0 || i + h >= series.length) return null;
   return series[i + h][1] / series[i][1] - 1;
 }
-const rows = [];
+// Ticker check: the unadjusted close around the trade date must be near the price in the
+// filing, or the symbol probably belongs to another company (SEC's field can be stale).
+function tickerOk(series, e) {
+  const paid = e.value / e.shares;
+  const i = series.findIndex(([d]) => d >= e.date);
+  const c = series[i]?.[2] ?? series.at(-1)?.[2];
+  if (!c || !paid) return false;
+  const ratio = c / paid;
+  return ratio > 0.67 && ratio < 1.5;
+}
+const rows = []; let mismatched = 0;
 for (const e of tested) {
   const s = px.get(e.symbol); if (!s) continue;
-  const r = {}, entry = s.find(([d]) => d > e.filed)?.[1];
-  for (const [label, h] of HORIZONS) { const a = ret(s, e.filed, h), b = ret(spy, e.filed, h); r[label] = a == null || b == null ? null : a - b; }
-  rows.push({ ...e, entry, ex: r });
+  if (!tickerOk(s, e)) { mismatched++; continue; }
+  const raw = {}, spyEx = {}, iwmEx = {};
+  for (const [label, h] of HORIZONS) {
+    const a = ret(s, e.filed, h), b = ret(spy, e.filed, h), c = ret(iwm, e.filed, h);
+    raw[label] = a; spyEx[label] = a == null || b == null ? null : a - b; iwmEx[label] = a == null || c == null ? null : a - c;
+  }
+  rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx });
+}
+// Versus other insider buys filed the same month: takes out market and timing, so what's
+// left is whether the score picks the better buys.
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
+for (const [label] of HORIZONS) {
+  const byMonth = new Map();
+  for (const r of rows) if (r.raw[label] != null) { const m = r.filed.slice(0, 7); if (!byMonth.has(m)) byMonth.set(m, []); byMonth.get(m).push(r.raw[label]); }
+  const med = new Map([...byMonth].map(([m, xs]) => [m, median(xs)]));
+  for (const r of rows) { r.month ??= {}; r.month[label] = r.raw[label] == null ? null : r.raw[label] - med.get(r.filed.slice(0, 7)); }
 }
 
 // ---- 4. Statistics -------------------------------------------------------------------------
 const winsor = (xs) => { const s = [...xs].sort((a, b) => a - b); const lo = s[Math.floor(s.length * 0.01)], hi = s[Math.ceil(s.length * 0.99) - 1]; return xs.map((x) => Math.min(hi, Math.max(lo, x))); };
-function stats(list, label) {
-  const xs = list.map((r) => r.ex[label]).filter((x) => x != null);
+function stats(list, bench, label) {
+  const xs = list.map((r) => r[bench][label]).filter((x) => x != null);
   if (xs.length < 20) return { n: xs.length };
   const w = winsor(xs), mean = w.reduce((a, b) => a + b, 0) / w.length;
   const sd = Math.sqrt(w.reduce((a, b) => a + (b - mean) ** 2, 0) / (w.length - 1));
-  const med = [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-  return { n: xs.length, mean, median: med, hit: xs.filter((x) => x > 0).length / xs.length, t: mean / (sd / Math.sqrt(w.length)) };
+  return { n: xs.length, mean, median: median(xs), hit: xs.filter((x) => x > 0).length / xs.length, t: mean / (sd / Math.sqrt(w.length)) };
 }
 const groups = {
   "All officer/director buys": () => true,
@@ -194,21 +216,28 @@ const groups = {
   "Top executive (CEO/CFO/President/Chair)": (r) => roleKind(r.role) === "top", "Other officer": (r) => roleKind(r.role) === "officer", "Director only": (r) => roleKind(r.role) === "director",
   "First buy in 2+ years": (r) => r.conv.reasons.some((x) => /First buy in \d/.test(x.text)), "Not a first buy": (r) => !r.conv.reasons.some((x) => /First buy/.test(x.text)),
   "Stake +50% or more": (r) => r.conv.reasons.some((x) => /Stake \+(\d+)/.test(x.text) && +x.text.match(/\d+/)[0] >= 50) || r.conv.reasons.some((x) => x.text === "First shares"),
+  "Stake under +10%": (r) => !r.conv.reasons.some((x) => /^Stake|First shares/.test(x.text)),
   "2+ insiders buying": (r) => r.insiders >= 2, "3+ insiders buying": (r) => r.insiders >= 3, "Alone": (r) => r.insiders === 1,
   "Value $1M+": (r) => r.value >= 1e6, "Value $100K–1M": (r) => r.value >= 1e5 && r.value < 1e6, "Value under $100K": (r) => r.value < 1e5,
   "Pre-planned": (r) => r.planned,
+  "Price $5+": (r) => r.entry >= 5, "Price under $5": (r) => r.entry < 5,
   "Strong, price $5+": (r) => r.conv.tier === "strong" && r.entry >= 5, "Routine, price $5+": (r) => r.conv.tier === "routine" && r.entry >= 5,
 };
-const table = Object.entries(groups).map(([name, f]) => { const g = rows.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stats(g, l)]))]; });
+const BENCH = [["month", "Versus other insider buys filed the same month (isolates the score)"], ["iwm", "Versus small caps (IWM)"], ["spy", "Versus the S&P 500 (SPY)"]];
+const tables = Object.fromEntries(BENCH.map(([b]) => [b, Object.entries(groups).map(([name, f]) => { const g = rows.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stats(g, b, l)]))]; })]));
 
 const pct = (x) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}%`;
+const cell = (s) => s.mean == null ? `n=${s.n}` : `${s.n} · ${pct(s.mean)} · ${pct(s.median)} · ${(s.hit * 100).toFixed(0)}% · ${s.t.toFixed(1)}`;
+const gap = (b, l) => { const t = Object.fromEntries(tables[b]); const s = t["Strong (60+)"][l], r = t["Routine (<40)"][l]; return s.mean == null || r.mean == null ? "not enough data" : `${pct(s.mean - r.mean)} mean, ${pct(s.median - r.median)} median`; };
 const md = [`# Signal backtest (owner-only)`, ``,
-  `Generated ${new Date().toISOString().slice(0, 10)}. Officer and director open-market purchases filed ${testStart} to the end of ${TO.toUpperCase()}, scored with the site's \`conviction()\`; returns from the first close after the filing date, minus SPY over the same days. History for "first buy in N years" from ${histStart}.`, ``,
-  `${tested.length} buys scored; ${rows.length} had prices (${symbols.length - px.size} of ${symbols.length} stocks had none, mostly delisted or renamed: survivorship bias, see notes).`, ``,
-  `Excess return = stock − SPY. Mean is winsorized at 1%/99%; t is mean ÷ standard error and overstates confidence because buys overlap in time.`, ``,
-  `| Group | ${HORIZONS.map(([l]) => `${l}: n · mean · median · beat SPY · t`).join(" | ")} |`, `|---|${HORIZONS.map(() => "---").join("|")}|`,
-  ...table.map(([name, h]) => `| ${name} | ${HORIZONS.map(([l]) => { const s = h[l]; return s.mean == null ? `n=${s.n}` : `${s.n} · ${pct(s.mean)} · ${pct(s.median)} · ${(s.hit * 100).toFixed(0)}% · ${s.t.toFixed(1)}`; }).join(" | ")} |`),
-  ``, `## Notes`, `- Prices: Yahoo daily adjusted closes, used only to compute these numbers (not published). Stocks with no price history are dropped, which favors survivors.`,
+  `Generated ${new Date().toISOString().slice(0, 10)}. Officer and director open-market purchases (original Form 4s) filed ${testStart} to the end of ${TO.toUpperCase()}, scored with the site's \`conviction()\`; returns from the first close after the filing date. History for "first buy in N years" from ${histStart}.`, ``,
+  `${tested.length} buys scored; ${rows.length} kept. Dropped: stocks with no price history (${symbols.length - px.size} of ${symbols.length}, mostly delisted or renamed: survivorship bias) and ${mismatched} buys whose filing price didn't match the ticker's price (wrong or reused symbol).`, ``,
+  `## Does the score pick better buys?`, ``,
+  `Strong minus Routine, versus same-month insider buys: 1 month ${gap("month", "1 month")}; 3 months ${gap("month", "3 months")}; 6 months ${gap("month", "6 months")}.`, ``,
+  `Cells: n · mean (winsorized 1%/99%) · median · share above the benchmark · t (overstates confidence: buys overlap in time).`, ``,
+  ...BENCH.flatMap(([b, title]) => [`## ${title}`, ``, `| Group | ${HORIZONS.map(([l]) => l).join(" | ")} |`, `|---|${HORIZONS.map(() => "---").join("|")}|`,
+    ...tables[b].map(([name, h]) => `| ${name} | ${HORIZONS.map(([l]) => cell(h[l])).join(" | ")} |`), ``]),
+  `## Notes`, `- Prices: Yahoo daily closes, used only to compute these numbers (not published).`,
   `- Entry is the first close after the filing date (when the public could act), not the trade date.`,
   `- One event per filing and insider; several fills are combined. 10% owners who aren't officers or directors are excluded, as on the site.`,
   `- "First buy" uses only the history in this data set (${HIST} on), capped at 5 years, like the site's own lookback.`,
@@ -216,5 +245,5 @@ const md = [`# Signal backtest (owner-only)`, ``,
 ].join("\n");
 await mkdir(OUT, { recursive: true });
 await writeFile(`${OUT}/results.md`, md + "\n");
-await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: TO, scored: tested.length, priced: rows.length, table }, null, 1));
+await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: TO, scored: tested.length, kept: rows.length, mismatched, tables }, null, 1));
 console.log(md);
