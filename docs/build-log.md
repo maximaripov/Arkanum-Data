@@ -278,3 +278,4 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Private investments missed between hourly runs:** each feed shows only its latest 20 releases and nothing ran overnight or at weekends. The daily job now re-reads PR Newswire's last ~2 days of releases (`backfill-private.mjs --since` 3 days ago; ~13 seconds).
 - **Backfill current month fixed:** `sitemap-news.xml` is an index of pages, not a list of releases, so it parsed 0 rows; it now follows the pages (~2,000 releases).
 - Notes for the next session: [docs/handoff.md](handoff.md).
+- **Stakes, first scheduled run:** started 55 min late (GitHub's scheduler was running behind), finished in 3.5 min instead of 35 thanks to the skip cache; 136 companies. Holdings from a 13F more than ~15 months old are no longer shown (Qualcomm and Palantir stopped filing in 2023); their recent 5%+ filings still are.

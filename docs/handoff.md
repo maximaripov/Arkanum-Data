@@ -35,7 +35,7 @@ Working notes for whoever picks up the project next, human or agent. History of 
 
 ## Open items
 - Owner to delete stale branches `proto-news`, `proto-track` (and `round2`?) at github.com/maximaripov/Foresight/branches.
-- Check the first scheduled stakes run is fast now the skip cache exists (first manual run took 35 of 60 min).
+- Stakes run time confirmed: 3.5 min on the first scheduled run (2026-11-04).
 - Set a free `FRED_API_KEY` secret only if BLS keeps refusing the GitHub runner (check Coming up for jobs/CPI after the next 4 PM run).
 - Business Wire / GlobeNewswire backfill (GlobeNewswire RSS returns 403).
 
