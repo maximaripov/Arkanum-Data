@@ -20,6 +20,6 @@ export async function token() {
   if (process.env.ALERTS_SECRET) return process.env.ALERTS_SECRET;
   const { ACTIONS_ID_TOKEN_REQUEST_URL: u, ACTIONS_ID_TOKEN_REQUEST_TOKEN: b } = process.env;
   if (!u || !b) return null;
-  const r = await siteFetch(`${u}&audience=foresight-alerts`, { headers: { Authorization: `Bearer ${b}` } });
+  const r = await siteFetch(`${u}&audience=form4-alerts`, { headers: { Authorization: `Bearer ${b}` } });
   return r.ok ? (await r.json()).value : null;
 }
