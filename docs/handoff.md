@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–31); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–32); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Foresight (private, `main`). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -29,6 +29,7 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 - `/stock/[symbol]`: chart + insider strip under it (buys/sales marks over the chart's range), SEC fundamentals, 8-Ks, Congress trades, companies that own it, big funds, insider trades. (FINRA retail table removed 2026-11-05.)
 - `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
 - Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years).
+- RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); linked in the footer. Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
 
 ## Data jobs (GitHub Actions; SEC work runs there)
 - `data.yml` weekdays 4:02 PM ET (two crons; a gate skips the wrong one for DST): fundamentals, 30-day insiders, overview, people directory, funds, events (BEA, Fed, BLS), private-deal catch-up (PR Newswire news sitemap, last ~2 days), health check, digest push.

@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memberSlug } from "@/lib/congress.mjs";
+import { memberSlug, amountRange } from "@/lib/congress.mjs";
 
 export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string };
 export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
@@ -19,9 +19,7 @@ export type Overview = {
 };
 
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
-const k = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(n % 1e6 ? 1 : 0)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${Math.round(n)}`);
-/** "$1K–15K": most reports give a range; a few give the exact amount. */
-export const range = (lo: number | null, hi: number | null) => (lo == null ? "—" : hi == null ? `over ${k(lo)}` : hi === lo ? k(lo) : `${k(lo)}–${k(hi)}`);
+const range = amountRange;
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
 const delay = (t: CTrade) => Math.round((Date.parse(t.f) - Date.parse(t.d)) / 86_400_000);
 export const Party = ({ p, sd }: { p: string | null; sd: string }) => <span className={`party${p === "R" ? " r" : p === "D" ? " d" : ""}`}>{p ? `${p}-` : ""}{sd}</span>;
