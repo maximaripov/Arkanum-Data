@@ -5,12 +5,20 @@ import { searchCompanies } from "@/lib/sec";
 type Person = [cik: string, name: string, symbol: string, role: string];
 const words = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
 
+// The directory is kept in memory for an hour: at a few MB it is over the fetch cache's limit.
+let directory: { at: number; people: Person[] } | null = null;
+async function loadPeople(origin: string) {
+  if (directory && Date.now() - directory.at < 3_600_000) return directory.people;
+  const r = await fetch(new URL("/data/people.json", origin), { cache: "no-store" });
+  if (!r.ok) return directory?.people ?? [];
+  directory = { at: Date.now(), people: (await r.json()) as Person[] };
+  return directory.people;
+}
+
 async function searchPeople(q: string, origin: string) {
   const terms = words(q);
   if (!terms.length || q.replace(/\s/g, "").length < 3) return [];
-  const r = await fetch(new URL("/data/people.json", origin), { next: { revalidate: 3600 } });
-  if (!r.ok) return [];
-  const people = (await r.json()) as Person[];
+  const people = await loadPeople(origin);
   const out: Person[] = [];
   for (const p of people) {
     const name = words(p[1]);

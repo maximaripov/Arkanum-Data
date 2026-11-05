@@ -362,3 +362,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Findable:** the research page was linked only from one bullet on About, and the owner couldn't find it. Now also "Research findings" in the footer's link row on every page, next to About and Terms (owner's choice: footer only, no links inside cards).
 - **RSS links removed from the footer:** on phones they opened a raw XML file, which looks broken to anyone without a feed reader. The feeds stay, and feed readers still find them from the link in each page's head.
 
+## Round 37: famous insiders findable (2026-11-05)
+
+- **Sitemap:** also lists every stock and executive/director with a $250K+ sale in the last 30 days, not only buyers: 758 stock pages (was 307) and 1,224 insider pages (was 436). Well-known executives mostly sell, so their pages weren't in the sitemap. Not every insider is listed on purpose: each insider page reads their filings from SEC, and crawling tens of thousands would run into SEC's rate limits.
+- **Search directory backfill:** [scripts/backfill-people.mjs](../scripts/backfill-people.mjs) adds everyone with a trade the site would show (any open-market purchase, or $250K+ of sales in one filing) over the last two years from SEC's quarterly data sets; manual workflow `people-backfill.yml`, then `build-people.mjs` as usual (newer records win). Test in `tests/backfill-people.test.mjs`.
+- The quarterly data-set reader moved from the backtest into [scripts/lib/form345.mjs](../scripts/lib/form345.mjs) (shared; a local test folder no longer tries to download missing quarters).
+- `/api/search` keeps the directory in memory for an hour, since a backfilled file can exceed the 2 MB fetch-cache limit.
+

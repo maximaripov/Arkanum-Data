@@ -9,9 +9,8 @@
 // and daily closes from Yahoo's chart endpoint. The prices are used only to compute these
 // statistics and are never published; only the summary in docs/backtest/ is written.
 // Needs SEC_USER_AGENT (SEC refuses requests without contact details) and `unzip`.
-import { execFileSync } from "node:child_process";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from "./lib/form345.mjs";
 import { conviction, roleKind } from "../lib/conviction.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
@@ -25,54 +24,10 @@ const HORIZONS = [["1 month", 21], ["3 months", 63], ["6 months", 126]];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- Quarters ------------------------------------------------------------------------------
-const q = (s) => { const [y, n] = s.toLowerCase().split("q"); return +y * 4 + (+n - 1); };
-const qs = (n) => `${Math.floor(n / 4)}q${(n % 4) + 1}`;
-const quarters = []; for (let n = q(HIST); n <= q(TO); n++) quarters.push(qs(n));
-
-// ---- TSV reading ---------------------------------------------------------------------------
-function tsv(zip, file) {
-  const text = execFileSync("unzip", ["-p", zip, file], { maxBuffer: 1 << 30, encoding: "latin1" });
-  const lines = text.split(/\r?\n/);
-  const head = lines[0].split("\t").map((h) => h.trim().toUpperCase());
-  const col = (name) => head.indexOf(name);
-  return { head, col, rows: lines.slice(1).filter(Boolean).map((l) => l.split("\t")) };
-}
-const MON = { JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06", JUL: "07", AUG: "08", SEP: "09", OCT: "10", NOV: "11", DEC: "12" };
-function isoDate(s) {
-  s = (s ?? "").trim();
-  let m = s.match(/^(\d{1,2})-([A-Z]{3})-(\d{4})/i); if (m) return `${m[3]}-${MON[m[2].toUpperCase()]}-${m[1].padStart(2, "0")}`;
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  return null;
-}
-const truthy = (v) => /^(1|true|y|yes)$/i.test(String(v ?? "").trim());
-
-async function getZip(quarter) {
-  const file = LOCAL ? `${LOCAL}/${quarter}.zip` : `${TMP}/${quarter}.zip`;
-  if (existsSync(file)) return file;
-  const url = `https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/${quarter}_form345.zip`;
-  for (let i = 0; i < 4; i++) {
-    const r = await fetch(url, { headers: { "User-Agent": UA } });
-    if (r.ok) {
-      const buf = Buffer.from(await r.arrayBuffer());
-      if (buf.subarray(0, 2).toString() !== "PK") throw new Error(`${quarter}: not a zip (SEC refused? check SEC_USER_AGENT)`);
-      await writeFile(file, buf); return file;
-    }
-    if (r.status === 404) return null;
-    await sleep(2000 * (i + 1));
-  }
-  throw new Error(`${quarter}: download failed`);
-}
+const quarters = quarterRange(HIST, TO);
+const getZip = (quarter) => getZipFor(quarter, { tmp: TMP, local: LOCAL, ua: UA });
 
 // ---- 1. Every open-market purchase, one event per filing and insider -------------------------
-/** Role string in the site's format: "<officer title>, Director, 10% owner". */
-function roleOf(rel, title) {
-  const r = String(rel ?? "").toLowerCase(), parts = [];
-  if (r.includes("officer")) parts.push((title ?? "").trim() || "Officer");
-  if (r.includes("director")) parts.push("Director");
-  if (r.includes("ten") || r.includes("10")) parts.push("10% owner");
-  if (!parts.length && r.includes("other")) parts.push("Other");
-  return parts.join(", ");
-}
 
 await mkdir(TMP, { recursive: true });
 const events = new Map(); // accession|owner → event

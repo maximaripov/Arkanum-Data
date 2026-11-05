@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–36); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–37); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -30,7 +30,7 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 - `/stock/[symbol]`: chart + insider strip under it (buys/sales marks over the chart's range), SEC fundamentals, 8-Ks, Congress trades, companies that own it, big funds, insider trades. (FINRA retail table removed 2026-11-05.)
 - `/research/insider-buys`: the backtest for readers (linked from About).
 - `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
-- Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years).
+- Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years; backfilled from SEC's quarterly data sets by the manual `people-backfill.yml`).
 - RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); found by feed readers from the page head (not linked visibly: raw XML looks broken on phones). Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
 
 ## Data jobs (GitHub Actions; SEC work runs there)
@@ -56,6 +56,5 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 
 ## Open ideas (not started)
 - Form 144 planned-sale notices; notable-sale alerts for watchlist stocks; buybacks from 10-Q share counts.
-- Backfill the insider search directory from older SEC history (Jensen Huang isn't in it until he files again).
 - Owner to delete stale branches `proto-news`, `proto-track`, `round2`.
 - Mockup files of the five redesign directions were only in a scratchpad (not in the repo).
