@@ -1,47 +1,58 @@
 # Form4 handoff (read this first)
 
-Working notes for whoever picks up the project next, human or agent. History of what was built is in [build-log.md](build-log.md); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–30); add new rounds there.
 
 ## Basics
-- Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Free hobby site, no income, no contact address on the site. Must stay free.
-- Next.js App Router on Vercel Hobby. Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; workflows and commits use that identity.
-- Deploying: the owner approved pushing fixes straight to `main` once `npm test` and `tsc` pass (fast-forward from the session branch). Scheduled jobs and Vercel only use `main`.
-- Standing instruction: fix glitches and bugs without asking.
-- Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (value is not stored in the repo). Two owner devices are registered.
+- Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Foresight (private, `main`). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
+- Free hobby site: no income, no accounts, no contact address. Must stay free (no paid APIs or hosting).
+- Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; commits and workflows use that identity.
+- **Working rules:** fix bugs and glitches without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions develop on a `claude/...` branch; push to both). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes.
+- Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (never store its value anywhere). Two owner devices are registered. GitHub secrets: `SEC_USER_AGENT` (contact string SEC requires); no `FRED_API_KEY` (not needed: BLS works).
+- Never put the owner's email in request headers or code.
 
-## Style rules from the owner
-- **No emoji anywhere** on the site or in notifications (owner rule, 2026-11-05). Use words or simple line-drawn SVG icons; plain marks like ▲ ▼ › ↗ × are fine. Enforced by `tests/no-emoji.test.mjs`.
-- Design (round 25): dark by default with a light switch; dense, information-forward desktop (tables, signal meters, ticker band); app-style phone (hero card, stat cards, score rings, bottom tab bar). Mockups of the five directions considered are not in the repo.
-- Logo: a sharp `[4]` in lime `#a3e635`. The FINRA retail-trading table was removed at the owner's request (2026-11-05). Market quotes (SPX, NDX, BTC, gold, 10-year) only through TradingView embeds.
-- No intro blurbs, no "How to read this" sections. Exception: the first-visit welcome popup stays (owner decision, 2026-11-04).
-- Consistent layouts: a dropdown picker (no sideways chip sliders); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
+## Owner's style rules
+- **No emoji anywhere** (site, notifications, copy). Words or line-drawn SVG icons; plain marks ▲ ▼ › ↗ × are fine. `tests/no-emoji.test.mjs` enforces it.
+- No intro blurbs or "How to read this" sections. Exception: the first-visit welcome popup stays.
+- Consistent layouts: dropdown pickers (no sideways chip sliders); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
+- Logo: sharp `[4]` in lime `#a3e635`. Market quotes (S&P 500, Nasdaq 100, BTC, gold, 10-year) only through TradingView embeds (index levels are licensed; FRED's S&P series is copyrighted).
+- How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language, no jargon.
 
-## Pages (nav: Insiders / Markets / Stakes / Digest)
-- `/` Insiders: tabs Overview, Group buys, All trades, Big funds (13 funds' 13F holdings + fund dropdown).
-- `/markets`: TradingView overview, watchlist, People you follow, Coming up (Fed, jobs, CPI, GDP, PCE only).
-- `/stakes`: company dropdown, holdings card (top 25) with "Changed since Qx"; 5%+ stakes (13D/13G); private investments from press releases ("not verified", linked to source); bottom: Recent private investments, Recent 5%+ stake filings.
-- `/stock/[symbol]`, `/insider/[cik]` (Follow button), `/briefing` (Digest + owner box), `/about` (privacy; owner hasn't decided whether to keep it).
-- Redirects: `/screener` → `/stakes`, `/calendar` → `/markets`, `/insiders` → `/`.
+## Design (round 25)
+Dark by default; sun/moon button switches to light (per device, `form4.theme` in localStorage, applied before first paint by a script in `app/layout.tsx`; constants in `lib/theme.ts`). Inter + JetBrains Mono via `next/font`. Desktop: top bar, ticker band of today's insider trades, dense tables with 10-bar signal meters. Phone: compact header with search button, hero card, 2x2 stat cards, score rings, bottom tab bar (Insiders / Congress / Markets / Stakes / Digest).
 
-## Data jobs (GitHub Actions; www.sec.gov blocks dev machines, data.sec.gov works)
-- `data.yml` weekdays 4:02 PM ET: screener.json (fundamentals for stock pages), insiders, funds, events, health check, digest.
-- `insiders-hourly.yml` weekdays ~7 AM–11 PM ET: Form 4 feed → insiders-today.json, instant alerts, `scripts/build-private.mjs` (continue-on-error). Failure/recovery alerts to owner devices; manual run has `test_failure` input.
-- `stakes.yml` weekdays 10:37 UTC: `scripts/build-stakes.mjs` → `public/data/stakes.json`. Filers discovered monthly (`data/stakes-filers.json` v2); excludes SIC 6000–6799 (except SoftBank) and 300+ holdings; `data/stakes-skip.json` caches filings that aren't the company's own stake. Last run: 1540 tracked → 136 shown.
-- `tests.yml`: `npm test` (34 tests) + tsc.
+## Pages
+- `/` Insiders. Tabs Overview, Group buys, All trades, Big funds. Overview reads `public/data/overview.json` (15 KB; the 850 KB 30-day file loads only for the trade lists): headline numbers, Strongest buys, Buying together, buying by day, Latest filings, Notable sales. Phone leads with the week's strongest buy.
+- `/congress` House members' stock trades: member dropdown, 30-day numbers, latest disclosures (linked to the PDF), most bought/sold (90 days), most active members.
+- `/markets` TradingView overview, watchlist, people you follow, Coming up (Fed, jobs, CPI, GDP, PCE).
+- `/stakes` what listed companies own: company dropdown, holdings, 5%+ stakes, private investments ("not verified"), cross-company lists.
+- `/stock/[symbol]`: chart + insider strip under it (buys/sales marks over the chart's range), SEC fundamentals, 8-Ks, Congress trades, companies that own it, big funds, insider trades. (FINRA retail table removed 2026-11-05.)
+- `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
+- Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years).
 
-## Private investments
-- `scripts/lib/deals.mjs`: ~40 investors with venture-arm aliases; `extractDeals()`, `roundSize()` (skips valuations, totals, non-USD); guards for people "of" a company, alumni funds, Lilly Asia Ventures.
-- `scripts/build-private.mjs` hourly: PR Newswire RSS (VC, financing, private placement, all news) + Business Wire home feed.
-- `scripts/backfill-private.mjs [--since YYYY-MM-DD] [--wide]`: PR Newswire monthly sitemap archive. Current month: no archive yet, so it reads the pages of `sitemap-news.xml` (last ~2 days only). `data.yml` runs it daily for the last 3 days to catch deals the hourly feeds miss.
-- `public/data/private.json`: 55 deals YTD 2026, hand-checked. PR Newswire only, so a sample. Google News and GDELT rejected.
+## Data jobs (GitHub Actions; SEC work runs there)
+- `data.yml` weekdays 4:02 PM ET (two crons; a gate skips the wrong one for DST): fundamentals, 30-day insiders, overview, people directory, funds, events (BEA, Fed, BLS), private-deal catch-up (PR Newswire news sitemap, last ~2 days), health check, digest push.
+- `insiders-hourly.yml` weekdays ~7 AM–11 PM ET: live Form 4 feed → `insiders-today.json`, private deals, overview, people, instant alerts. Failure/recovery alerts to owner devices. Calls to the site retry network errors (`siteFetch` in `scripts/lib/site.mjs`).
+- `stakes.yml` weekdays 10:37 UTC (~3.5 min). `congress.yml` weekdays 23:41 UTC: House Clerk yearly index → new PTR PDFs → `pdftotext` (poppler) → `public/data/congress.json` (full, served by `/api/congress?symbol=|member=`) + `congress-overview.json`; `--rebuild` re-reads all. `tests.yml`: tests + tsc. `backtest.yml`: manual, owner-only.
+- GitHub's scheduler often starts jobs 30–60 min late; normal.
+- Private repo: 2,000 free Actions minutes/month; current use is well under.
 
-## Open items
-- Owner to delete stale branches `proto-news`, `proto-track` (and `round2`?) at github.com/maximaripov/Foresight/branches.
-- Stakes run time confirmed: 3.5 min on the first scheduled run (2026-11-04).
-- Set a free `FRED_API_KEY` secret only if BLS keeps refusing the GitHub runner (check Coming up for jobs/CPI after the next 4 PM run).
-- Business Wire / GlobeNewswire backfill (GlobeNewswire RSS returns 403).
+## Scoring and flags (`lib/conviction.mjs`)
+- Buys: score 0–100 (role, stake increase, first buy in N years, other insiders buying, size, pre-planned penalty); Strong 60+, Notable 40–59. Vice presidents are officers, not top executives.
+- Sales: `saleFlags()`: top executive, share of holding sold, several insiders selling, not pre-planned. "Notable" = not pre-planned, not a fund/10% owner, and a top executive selling 25%+ or $1M+, or anyone selling half or more.
+- Holdings: Form 4 parsing adds every account into `ownedTotal` (round 30). Share-sold figures use only that and say nothing for older rows without it (so Notable sales is ~72 for now and refills over ~30 days).
 
-## How the owner wants the work done
-- Rigorous, honest advisor: lead with the main criticism, flag inference vs evidence, say when something is good enough to ship.
-- Verify on the live site (Playwright, phone and desktop) before reporting.
-- Ping the owner's phone when a long task finishes.
+## Backtest (owner-only, `docs/backtest/`)
+2023–2025, 22,969 officer/director buys, scored with the site's formula. **The score does not pick better buys:** Strong vs Routine no difference against same-month buys; 80+ did worst; $1M+ buys and top-executive buys did worse; only the pre-planned penalty holds up. Insider buys overall didn't beat small caps. Proposed (not approved): rename tiers "Unusual / Somewhat unusual / Routine" and/or reweight tested out of sample. Owner said leave it for now.
+
+## Decisions and constraints
+- Senate trades: impossible. The owner agreed to the eFD terms, but Akamai blocks automated access from this dev machine and GitHub runners (even headless Chromium).
+- AI assistant: skipped for now (paid; risk of dressing noise up as insight). If ever: capped daily batch summaries of 8-K filings.
+- Monetization: wait for traction. Ads would need a domain, Vercel Pro, removal of non-commercial data, a privacy policy + consent banner, ads.txt, and a lawyer's view on Congress data (5 U.S.C. §13107 news-media exception).
+- Kept on purpose: welcome popup; "Strong signal" labels (for now).
+
+## Open ideas (not started)
+- Server-rendered Congress member pages (`/congress/[member]`) in the sitemap: biggest search-traffic lever.
+- Form 144 planned-sale notices; notable-sale alerts for watchlist stocks; buybacks from 10-Q share counts.
+- Backfill the insider search directory from older SEC history (Jensen Huang isn't in it until he files again).
+- Owner to delete stale branches `proto-news`, `proto-track`, `round2`.
+- Mockup files of the five redesign directions were only in a scratchpad (not in the repo).
