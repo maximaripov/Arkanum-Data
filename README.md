@@ -9,7 +9,7 @@ Live: https://form4-insiders.vercel.app
 | Page | What it does | Data |
 |---|---|---|
 | Markets | Ticker tape and market overview (indices, commodities, bonds, forex, crypto), your watchlist, this week's insider buying | TradingView widgets; SEC Form 4 |
-| Stock page | TradingView quote header (incl. next earnings, market cap, P/E, yield) and full chart (indicators, compare); SEC fundamentals; 8-K announcements in plain English; TradingView headlines; big funds holding it; FINRA retail-wholesaler volume; insider trades | TradingView, SEC, FINRA |
+| Stock page | TradingView quote header (incl. next earnings, market cap, P/E, yield) and full chart (indicators, compare); SEC fundamentals; 8-K announcements in plain English; TradingView headlines; big funds holding it; insider trades; Congress trades | TradingView, SEC, House Clerk |
 | Insiders | Insider trades (30 days; officers & directors vs funds; cluster buys; live feed) and Big funds (13F) for 13 well-known funds | SEC Form 4, SEC 13F |
 | Stakes | What listed companies (NVIDIA, Amazon, Alphabet…) own in other companies: quarterly holdings and changes, 5%+ stakes, and private investments announced in press releases (unverified, linked) | SEC 13F, SEC 13D/13G; PR Newswire, Business Wire |
 | Digest | Daily summary after the 4 PM close: biggest insider buys, cluster buys, big-fund filings, coming events, and your watchlist's insider trades and fund moves. Optional push notification personalized to your watchlist, plus instant alerts for watchlist buys and people you follow | All of the above |
@@ -21,7 +21,6 @@ Everything shown is either public domain or explicitly licensed for free display
 
 - **SEC EDGAR, BEA, Federal Reserve:** public domain.
 - **TradingView widgets:** free to embed on other sites as long as TradingView's attribution stays as designed (the "by TradingView" links under each widget). US stock prices in widgets are delayed; forex and crypto are real-time.
-- **FINRA OTC Transparency data:** may be shown to end users for non-commercial use with FINRA credited as the source; users may not redistribute it.
 - **OpenFIGI:** CUSIP → ticker lookups.
 
 Not used, because their terms don't allow showing their data to the public: Yahoo Finance, Nasdaq's site API (options, analyst ratings, earnings/dividend calendars), Coinbase market data, ApeWisdom (Reddit mentions).
@@ -52,7 +51,7 @@ node scripts/daily-digest.mjs --dry-run
 - **Free-tier limits:** Vercel Hobby and the Blob store have usage limits; notifications are capped at 5,000 devices. If Form4 gets popular, these are the first things to revisit.
 - **Fundamentals** use the last 4 reported quarters where SEC data allows, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year. Banks, insurers and funds don't get free cash flow or debt/equity.
 - **ETFs** aren't in SEC's company list, so search doesn't suggest them; typing the ticker and pressing Enter still opens a TradingView chart.
-- **13F holdings** are 6–20 weeks old when published. **FINRA** volume is 2–4 weeks delayed and doesn't show buys vs sells.
+- **13F holdings** are 6–20 weeks old when published.
 - **Notifications on iPhone** need iOS 16.4+ and the Home Screen app.
 
 See [docs/build-log.md](docs/build-log.md) for the history and decisions.

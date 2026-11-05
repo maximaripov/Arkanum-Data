@@ -312,3 +312,7 @@ The owner asked to show market data in Foresight's own design rather than embedd
 ## Round 28: no emoji (2026-11-05)
 
 - Owner rule: no emoji anywhere. Removed the lightning bolt on the phone's lead buy, the chart and bell in the welcome popup (now line-drawn icons like the nav), the stars on Follow and watchlist buttons, check marks on filter buttons and in the owner box, and the share glyph in the iPhone tip. `tests/no-emoji.test.mjs` fails the tests if any comes back; the rule is in AGENTS.md and the handoff notes.
+
+## Round 29: retail trading section removed (2026-11-05)
+
+- The owner asked to drop the FINRA retail-wholesaler table from stock pages. Removed the section, `/api/retail` and `lib/retail.ts`, and FINRA from About, Terms and the README. (Its terms were non-commercial only, so this also clears one item from the monetization checklist.)

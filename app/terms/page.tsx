@@ -7,7 +7,7 @@ export default function Terms() {
     <div className="stack prose">
       <section className="card">
         <h1>Terms of use</h1>
-        <p className="muted small">Last updated November 2, 2026</p>
+        <p className="muted small">Last updated November 5, 2026</p>
         <p>Form4 is a free website that shows public market information in plain English. By using it, you agree to these terms. If you don&apos;t agree, please don&apos;t use the site.</p>
       </section>
 
@@ -18,12 +18,12 @@ export default function Terms() {
 
       <section className="card">
         <h2>The data can be wrong or late</h2>
-        <p>Form4 collects information from public sources such as SEC filings, FINRA, the Federal Reserve, CoinGecko and TradingView (see <Link href="/about">About</Link> for the full list). Prices are delayed, filings can be misread, and any source can contain errors or stop working. Form4 is provided &quot;as is&quot;, without warranties of any kind, including accuracy, completeness or availability. To the fullest extent the law allows, Form4 and its creator are not liable for any loss arising from your use of the site or reliance on its information.</p>
+        <p>Form4 collects information from public sources such as SEC filings, the House Clerk, the Federal Reserve, CoinGecko and TradingView (see <Link href="/about">About</Link> for the full list). Prices are delayed, filings can be misread, and any source can contain errors or stop working. Form4 is provided &quot;as is&quot;, without warranties of any kind, including accuracy, completeness or availability. To the fullest extent the law allows, Form4 and its creator are not liable for any loss arising from your use of the site or reliance on its information.</p>
       </section>
 
       <section className="card">
         <h2>Third-party data and widgets</h2>
-        <p>Some data and charts come from other companies and remain theirs, under their own terms. Charts and quotes are provided by TradingView; crypto and gold figures are powered by CoinGecko; retail trading volume comes from FINRA for personal, non-commercial use. Don&apos;t copy or resell that data from Form4.</p>
+        <p>Some data and charts come from other companies and remain theirs, under their own terms. Charts and quotes are provided by TradingView; crypto and gold figures are powered by CoinGecko. Don&apos;t copy or resell that data from Form4.</p>
       </section>
 
       <section className="card">

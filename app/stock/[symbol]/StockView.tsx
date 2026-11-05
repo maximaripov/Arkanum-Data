@@ -13,7 +13,6 @@ import { fmtBig, fmtPct } from "@/lib/format";
 import { tvSymbol } from "@/lib/tv";
 import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement } from "@/lib/news";
-import type { RetailFlow } from "@/lib/retail";
 import { companyName } from "@/lib/people.mjs";
 
 type Company = { ticker: string; name: string | null; exchange: string | null };
@@ -30,14 +29,12 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
   const [fund, setFund] = useState<Record<string, any> | null>(initial?.fund ?? null);
   const [insiders, setInsiders] = useState<InsiderTrade[] | null>(initial?.insiders ?? null);
   const [news, setNews] = useState<Announcement[] | null>(initial?.news ?? null);
-  const [flow, setFlow] = useState<RetailFlow | null | undefined>(undefined);
   const { has, toggle } = useWatchlist();
   const [range, setRange] = useState("1Y");
   const [tools, setTools] = useState(false);
 
   useEffect(() => {
     // Anything the server couldn't load is fetched here instead.
-    setFlow(undefined);
     if (!initial?.co) fetch(`/api/company?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then(setCo).catch(() => setCo({ ticker: symbol, name: null, exchange: null }));
     if (!initial?.fund) fetch("/data/screener.json").then((r) => r.json()).then((d) => {
       const row = d.rows.find((r: any[]) => r[0] === symbol);
@@ -45,7 +42,6 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
     }).catch(() => {});
     if (!initial?.insiders) fetch(`/api/insiders?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setInsiders(Array.isArray(d) ? d : [])).catch(() => setInsiders([]));
     if (!initial?.news) fetch(`/api/news?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setNews(d.announcements ?? [])).catch(() => setNews([]));
-    fetch(`/api/retail?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json()).then((d) => setFlow(d.flow)).catch(() => setFlow(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
@@ -101,25 +97,6 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
       <CongressFor symbol={symbol} />
       <StakeHolders symbol={symbol} />
       <FundHolders symbol={symbol} />
-
-      {flow ? (
-        <section className="card">
-          <h2>Retail trading <span className="muted small">FINRA, 2–4 weeks delayed</span></h2>
-          <p className="small">
-            Brokers like Robinhood, Schwab and Fidelity send most customer orders to a few wholesalers (Citadel Securities, Virtu, G1, Jane Street…), which fill them off-exchange.
-            Their weekly volume is the best free gauge of retail trading. It shows how much retail-type trading happened, not whether it was buying or selling.
-          </p>
-          <div className="tablewrap">
-            <table className="table compact">
-              <thead><tr><th>Week of</th><th className="r">Wholesaler shares</th><th className="r">Share of off-exchange</th><th className="r">Trades</th><th className="r hide-sm">Avg size</th></tr></thead>
-              <tbody>{flow.map((w) => (
-                <tr key={w.week}><td>{day(w.week)}</td><td className="r mono">{fmtBig(w.shares)}</td><td className="r mono">{w.wholesalerSharePct == null ? "—" : `${w.wholesalerSharePct.toFixed(0)}%`}</td><td className="r mono">{fmtBig(w.trades)}</td><td className="r mono hide-sm">{w.avgTradeSize}</td></tr>
-              ))}</tbody>
-            </table>
-          </div>
-          <p className="muted small">Source: FINRA OTC Transparency data. Provided for personal, non-commercial use; not for redistribution.</p>
-        </section>
-      ) : null}
 
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
