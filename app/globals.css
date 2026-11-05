@@ -432,6 +432,7 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 .lrows a:hover { background: var(--card2); }
 .lrow-main { flex: 1; min-width: 0; display: grid; gap: .05rem; }
 .lrow-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow-main > .wraps { white-space: normal; } /* a line that must not lose its end (e.g. what an insider did) */
 .lrow-v { margin-left: auto; display: grid; justify-items: end; text-align: right; white-space: nowrap; font-weight: 600; }
 .lrow-v .mono { font-weight: 600; }
 .lrow-v .small { font-weight: 400; }

@@ -5,14 +5,24 @@
 // in the insider directory (data/people.json); Wikimedia's pageview API gives the views.
 // Writes public/data/famous.json. Keeps the previous file if a source is down.
 // Run after build-people.mjs (daily job). Needs SEC_USER_AGENT for SEC's ticker list.
+// --activity-only (hourly job): just refreshes each person's last-30-days trading line.
 import { readFile, writeFile } from "node:fs/promises";
 import { getJson } from "./lib/sec.mjs";
-import { matchFamous } from "./lib/famous.mjs";
+import { matchFamous, withActivity } from "./lib/famous.mjs";
+import { mergeInsiders } from "../lib/insiderMerge.mjs";
 
 const UA = "Form4 (free, non-commercial insider-trading site; form4-insiders.vercel.app)";
 const OUT = "public/data/famous.json";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const read = async (f) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return null; } };
+// Each person's buys and large sales in the site's 30-day + today trade data.
+const addActivity = async (people) => withActivity(people, mergeInsiders(await read("public/data/insiders.json"), await read("public/data/insiders-today.json")).trades);
+
+if (process.argv.includes("--activity-only")) {
+  const cur = await read(OUT);
+  if (cur?.people) { cur.people = await addActivity(cur.people); await writeFile(OUT, JSON.stringify(cur)); console.log(`famous.json: activity refreshed for ${cur.people.length}`); }
+  process.exit(0);
+}
 
 // 1. CEOs and chairs (current: no end date) of companies with an SEC ID, with an English article.
 const QUERY = `SELECT ?cik ?personLabel ?article WHERE {
@@ -58,6 +68,6 @@ for (const p of people) {
 if (missing.length) console.warn(`Wikipedia views not fetched for ${missing.length}: ${missing.join(", ")}`);
 if (people.filter((p) => p.views == null).length > people.length / 4) { console.warn("Too many missing; keeping the previous list"); process.exit(0); }
 
-const list = people.filter((p) => p.views > 0).sort((a, b) => b.views - a.views).slice(0, 100);
+const list = await addActivity(people.filter((p) => p.views > 0).sort((a, b) => b.views - a.views).slice(0, 100));
 await writeFile(OUT, JSON.stringify({ updated: new Date().toISOString(), from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10), people: list }));
 console.log(`famous.json: ${list.length} insiders; top: ${list.slice(0, 5).map((p) => `${p.label} (${p.views})`).join(", ")}`);

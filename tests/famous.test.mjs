@@ -31,3 +31,19 @@ test("each Wikidata CEO is matched to the one filer at that company with that na
   assert.deepEqual(got.map((x) => [x.cik, x.label]), [["1197649", "Jensen Huang"], ["3", "Jeff Bezos"]]);
   assert.equal(got[0].role, "CEO & director", "the role comes from the filings, not Wikidata");
 });
+
+test("activity sums each person's buys and large sales, and marks all-pre-planned selling", async () => {
+  const { withActivity } = await import("../scripts/lib/famous.mjs");
+  const people = [{ cik: "1" }, { cik: "2" }, { cik: "3" }];
+  const trades = [
+    { ownerCik: "1", code: "S", value: 2e6, date: "2026-10-01", planned: true },
+    { ownerCik: "1", code: "S", value: 1e6, date: "2026-10-15", planned: true },
+    { ownerCik: "2", code: "P", value: 3e6, date: "2026-10-28" },
+    { ownerCik: "2", code: "S", value: 5e5, date: "2026-10-02", planned: false },
+    { ownerCik: "3", code: "A", value: 9e6, date: "2026-10-02" }, // a grant: not open-market
+  ];
+  const [a, b, c] = withActivity(people, trades);
+  assert.deepEqual(a.activity, { bought: 0, boughtLast: null, sold: 3e6, soldLast: "2026-10-15", planned: true });
+  assert.deepEqual(b.activity, { bought: 3e6, boughtLast: "2026-10-28", sold: 5e5, soldLast: "2026-10-02", planned: false });
+  assert.equal(c.activity, null);
+});

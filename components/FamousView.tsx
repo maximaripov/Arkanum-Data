@@ -3,12 +3,22 @@
 // them up on Wikipedia in the last 30 days (public/data/famous.json, built daily).
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fmtBig } from "@/lib/format";
 
-type Famous = { cik: string; label: string; title: string; name: string; role: string; symbol: string; company: string; last: string; views: number };
+type Activity = { bought: number; boughtLast: string | null; sold: number; soldLast: string | null; planned: boolean };
+type Famous = { cik: string; label: string; title: string; name: string; role: string; symbol: string; company: string; last: string; views: number; activity?: Activity | null };
 type Data = { updated: string; from: string; to: string; people: Famous[] };
 
 const views = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
+
+/** "Bought $3.0M · Oct 28" (green), "Sold $2.1B · pre-planned · Oct 15" (red), or nothing to report. */
+function Did({ a, last }: { a?: Activity | null; last: string }) {
+  if (a?.bought) return <span className="up">Bought ${fmtBig(a.bought)} · {day(a.boughtLast!)}{a.sold ? <span className="down"> · sold ${fmtBig(a.sold)}</span> : null}</span>;
+  if (a?.sold) return <span className="down">Sold ${fmtBig(a.sold)}{a.planned ? " · pre-planned" : ""} · {day(a.soldLast!)}</span>;
+  // The directory records only buys and $250K+ sales, so its date is the last one of those.
+  return <span className="muted">Last buy or big sale: {new Date(last + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>;
+}
 
 export function FamousView() {
   const [d, setD] = useState<Data | null | undefined>(undefined);
@@ -19,25 +29,25 @@ export function FamousView() {
     <section className="card flush">
       <div className="card-title"><h2>Well-known insiders <span className="muted small">most looked up on Wikipedia, {day(d.from)} – {day(d.to)}</span></h2></div>
       <table className="ttable d-only">
-        <thead><tr><th>#</th><th>Insider</th><th>Company</th><th className="r">Wikipedia views</th><th className="r">Latest filing</th></tr></thead>
+        <thead><tr><th>#</th><th>Insider</th><th>Company</th><th className="r">Wikipedia views</th><th>Last 30 days</th></tr></thead>
         <tbody>{d.people.map((p, i) => (
           <tr key={p.cik}>
             <td className="mono muted">{i + 1}</td>
             <td><Link href={`/insider/${p.cik}`}><strong>{p.label}</strong></Link><div className="muted small">{p.role}</div></td>
             <td className="cstock"><Link href={`/stock/${p.symbol}`}><strong>{p.symbol}</strong> <span className="muted">{p.company}</span></Link></td>
             <td className="mono r">{views(p.views)}</td>
-            <td className="mono muted r">{day(p.last)}</td>
+            <td className="small"><Did a={p.activity} last={p.last} /></td>
           </tr>
         ))}</tbody>
       </table>
       <ul className="lrows m-only">{d.people.map((p, i) => (
         <li key={p.cik}><Link href={`/insider/${p.cik}`}>
           <span className="lrow-rank mono muted">{i + 1}</span>
-          <span className="lrow-main"><span><strong>{p.label}</strong> <span className="muted">· {p.symbol}</span></span><span className="muted small">{p.role}, {p.company}</span></span>
+          <span className="lrow-main"><span><strong>{p.label}</strong> <span className="muted">· {p.symbol}</span></span><span className="small wraps"><Did a={p.activity} last={p.last} /></span></span>
           <span className="lrow-v"><span className="mono">{views(p.views)}</span><span className="muted small">views</span></span>
         </Link></li>
       ))}</ul>
-      <p className="muted small pad">CEOs and chairs listed on Wikidata, matched to the people who report their trades to the SEC, ranked by English Wikipedia page views. Views measure how much people look someone up, not how they trade.</p>
+      <p className="muted small pad">CEOs and chairs listed on Wikidata, matched to the people who report their trades to the SEC, ranked by English Wikipedia page views. Views measure how much people look someone up, not how they trade. Trading covers the last 30 days: every open-market purchase, and sales of $250K or more.</p>
     </section>
   );
 }

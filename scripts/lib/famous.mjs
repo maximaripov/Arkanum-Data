@@ -35,3 +35,25 @@ export function matchFamous(rows, directory, tickersByCik) {
   }
   return [...out.values()];
 }
+
+/**
+ * Each person's open-market trading in the site's trade data (30 days + today): purchases
+ * (all are kept) and sales (only $250K+ are kept), with whether every sale was pre-planned.
+ * @param people famous entries ({ cik, ... }) @param trades merged insider trades
+ * @returns the same entries with `activity: { bought, boughtLast, sold, soldLast, planned } | null`
+ */
+export function withActivity(people, trades) {
+  const by = new Map();
+  for (const t of trades) {
+    if (!t.ownerCik || (t.code !== "P" && t.code !== "S")) continue;
+    const a = by.get(t.ownerCik) ?? { bought: 0, boughtLast: null, sold: 0, soldLast: null, planned: true };
+    const d = t.date || t.filed;
+    if (t.code === "P") { a.bought += t.value ?? 0; if (!a.boughtLast || d > a.boughtLast) a.boughtLast = d; }
+    else { a.sold += t.value ?? 0; if (!a.soldLast || d > a.soldLast) a.soldLast = d; if (!t.planned) a.planned = false; }
+    by.set(t.ownerCik, a);
+  }
+  return people.map((p) => {
+    const a = by.get(p.cik);
+    return { ...p, activity: a ? { ...a, planned: a.sold > 0 && a.planned } : null };
+  });
+}

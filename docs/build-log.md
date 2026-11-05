@@ -384,3 +384,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Tabs wrap** on narrow phones instead of scrolling sideways (5 tabs didn't fit an iPhone SE; the fifth was off-screen). The unused `.scroll-tabs` style was removed.
 - **First run (2026-11-05):** 491 Wikidata CEO/chair entries → 109 matched → 86 listed. 23 were dropped because Wikipedia refused requests from GitHub's shared servers (Elon Musk and Andy Jassy among them). Now: one request a second, waits as long as Wikipedia asks (Retry-After), five tries, then yesterday's count, and logs anyone still missing by name. Wikidata's own gaps: Tim Cook's Apple CEO entry has an end date (August 2026) and Apple's chair entry is out of date, so he isn't matched; entries without an English name now use the article title.
 
+## Round 40: what well-known insiders did (2026-11-05)
+
+- The owner asked whether people who only sell belong on the list. Of the 100, in the last 30 days: 80 had no buys or $250K+ sales, 18 sold (12 entirely under pre-planned 10b5-1 plans), 2 bought (Julie Sweet, $3.0M; C. C. Wei, $11K). Kept the list (it's for people searching famous names), and each row now says what the person did: "Bought $3.0M · Oct 26" (green), "Sold $2.7M · pre-planned · Oct 13" (red), or "Last buy or big sale: Oct 2025".
+- `withActivity()` in [scripts/lib/famous.mjs](../scripts/lib/famous.mjs) (tested) sums each person's buys and $250K+ sales from the 30-day + today data; `build-famous.mjs --activity-only` refreshes it hourly (new step in `insiders-hourly.yml`; famous.json added to its commit) and the daily run adds it after ranking.
+- The activity line wraps instead of being cut off on small phones (`.lrow-main > .wraps`): an ellipsis had hidden the year in "last filing Oct 31, 2025", which read as a recent date.
+
