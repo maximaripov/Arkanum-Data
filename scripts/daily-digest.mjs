@@ -124,7 +124,7 @@ for (const d of devices) {
   }
   // Fill with market-wide highlights if nothing personal happened.
   if (!lines.length && clusters[0]) lines.push(`${clusters[0].insiders} insiders bought ${clusters[0].symbol} this week (${money(clusters[0].value)})`);
-  if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Strongest insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
+  if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Most unusual insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
   if (lines.length < 4 && events[0]) lines.push(`Next: ${events[0].title} ${weekday(events[0].date)}`);
   const body = marketLine ? [...lines.slice(0, 3), marketLine] : lines.slice(0, 4);
   messages.push({ id: d.id, title: digest.title, body: body.join("\n") });

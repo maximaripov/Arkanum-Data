@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–33); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–34); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Foresight (private, `main`). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -39,18 +39,18 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 - Private repo: 2,000 free Actions minutes/month; current use is well under.
 
 ## Scoring and flags (`lib/conviction.mjs`)
-- Buys: score 0–100 (role, stake increase, first buy in N years, other insiders buying, size, pre-planned penalty); Strong 60+, Notable 40–59. Vice presidents are officers, not top executives.
+- Buys: score 0–100 (role, stake increase, first buy in N years, other insiders buying, size, pre-planned penalty); shown as Unusual 60+, Somewhat unusual 40–59, Routine (stored tiers still `strong`/`notable`/`routine`). Vice presidents are officers, not top executives.
 - Sales: `saleFlags()`: top executive, share of holding sold, several insiders selling, not pre-planned. "Notable" = not pre-planned, not a fund/10% owner, and a top executive selling 25%+ or $1M+, or anyone selling half or more.
 - Holdings: Form 4 parsing adds every account into `ownedTotal` (round 30). Share-sold figures use only that and say nothing for older rows without it (so Notable sales is ~72 for now and refills over ~30 days).
 
 ## Backtest (owner-only, `docs/backtest/`)
-2023–2025, 22,969 officer/director buys, scored with the site's formula. **The score does not pick better buys:** Strong vs Routine no difference against same-month buys; 80+ did worst; $1M+ buys and top-executive buys did worse; only the pre-planned penalty holds up. Insider buys overall didn't beat small caps. Proposed (not approved): rename tiers "Unusual / Somewhat unusual / Routine" and/or reweight tested out of sample. Owner said leave it for now.
+2023–2025, 22,969 officer/director buys, scored with the site's formula. **The score does not pick better buys:** Strong vs Routine no difference against same-month buys; 80+ did worst; $1M+ buys and top-executive buys did worse; only the pre-planned penalty holds up. Insider buys overall didn't beat small caps. Tiers renamed to Unusual / Somewhat unusual / Routine (round 34). Not done: reweighting tested out of sample; a public write-up of the backtest.
 
 ## Decisions and constraints
 - Senate trades: impossible. The owner agreed to the eFD terms, but Akamai blocks automated access from this dev machine and GitHub runners (even headless Chromium).
 - AI assistant: skipped for now (paid; risk of dressing noise up as insight). If ever: capped daily batch summaries of 8-K filings.
 - Monetization: wait for traction. Ads would need a domain, Vercel Pro, removal of non-commercial data, a privacy policy + consent banner, ads.txt, and a lawyer's view on Congress data (5 U.S.C. §13107 news-media exception).
-- Kept on purpose: welcome popup; "Strong signal" labels (for now).
+- Kept on purpose: welcome popup.
 
 ## Open ideas (not started)
 - Form 144 planned-sale notices; notable-sale alerts for watchlist stocks; buybacks from 10-Q share counts.

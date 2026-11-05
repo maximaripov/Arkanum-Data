@@ -101,7 +101,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
           <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
-          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Buys by several insiders are the strongest signal; grants and option exercises are routine pay.</p>
+          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out.</p>
           {insiders?.length ? (() => {
             const ex = insiders.filter(isExecOrDirector);
             const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);

@@ -141,7 +141,7 @@ function Notifications() {
       ) : (
         <>
           <p className="muted">One notification each weekday after the 4 PM close (usually by about 4:30 PM ET) with your watchlist&apos;s insider trades, company announcements and fund moves.</p>
-          <label className="check"><input type="checkbox" checked={instant} onChange={(e) => (on ? toggleInstant(e.target.checked) : setInstant(e.target.checked))} /> <span><strong>Instant alerts:</strong> also tell me within about an hour when a CEO, CFO or other top executive buys a stock on my watchlist (or anyone makes a strong-signal buy of it), and whenever someone I follow buys or makes a large sale.</span></label>
+          <label className="check"><input type="checkbox" checked={instant} onChange={(e) => (on ? toggleInstant(e.target.checked) : setInstant(e.target.checked))} /> <span><strong>Instant alerts:</strong> also tell me within about an hour when a CEO, CFO or other top executive buys a stock on my watchlist (or anyone makes an unusual buy of it), and whenever someone I follow buys or makes a large sale.</span></label>
           <div className="toolbar">{on ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary big" onClick={enable}>Turn on notifications</button>}</div>
           <p className="muted small">No account, email or name. While it&apos;s on we keep your watchlist and the people you follow to personalize it; turning it off deletes them.</p>
         </>
@@ -181,7 +181,7 @@ export default function DigestPage() {
   const summary = d && d !== "none" ? [
     a.list.length ? `${a.mine.length ? `${a.mine.length} insider ${a.mine.length === 1 ? "trade" : "trades"}` : "No insider trades"} in your watchlist this week${a.byStock.length ? `; ${a.byStock.length} of your stocks moved by big funds last quarter` : ""}.` : null,
     d.clusters[0] ? `${d.clusters[0].insiders} insiders bought ${d.clusters[0].symbol} (${titleCase(d.clusters[0].issuer, d.clusters[0].symbol)}) this week, $${fmtBig(d.clusters[0].value)} in total.` : null,
-    d.topBuys[0] ? `Strongest buy: ${personName(d.topBuys[0].owner)} at ${d.topBuys[0].symbol}, $${fmtBig(d.topBuys[0].value ?? 0)}.` : null,
+    d.topBuys[0] ? `Most unusual buy: ${personName(d.topBuys[0].owner)} at ${d.topBuys[0].symbol}, $${fmtBig(d.topBuys[0].value ?? 0)}.` : null,
     d.fundFilings.length ? `${d.fundFilings.length} tracked ${d.fundFilings.length === 1 ? "fund" : "funds"} filed new holdings this week.` : null,
     d.events[0] ? `Next: ${d.events[0].title} on ${day(d.events[0].date)}.` : null,
   ].filter(Boolean) as string[] : [];
@@ -210,7 +210,7 @@ export default function DigestPage() {
           <YourWatchlist a={a} />
           <div className="twocol">
             <section className="card">
-              <div className="card-head"><h2>Strongest insider buys</h2><Link href="/?view=trades&signal=1" className="small">All trades ›</Link></div>
+              <div className="card-head"><h2>Most unusual insider buys</h2><Link href="/?view=trades&signal=1" className="small">All trades ›</Link></div>
               <p className="muted small">Filed {d.filed ? day(d.filed) : "recently"} by executives and directors.</p>
               {d.topBuys.length ? <ul className="rows">{d.topBuys.map((t, i) => (
                 <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
@@ -221,7 +221,7 @@ export default function DigestPage() {
             </section>
             <section className="card">
               <div className="card-head"><h2>Several insiders buying</h2><Link href="/?view=groups" className="small">More ›</Link></div>
-              <p className="muted small">2+ executives or directors buying the same stock this week, the strongest signal.</p>
+              <p className="muted small">2+ executives or directors buying the same stock this week.</p>
               {d.clusters.length ? <ul className="rows">{d.clusters.map((c) => (
                 <li key={c.symbol}><Link href={`/stock/${c.symbol}`} className="row-link">
                   <div className="row-main"><div><strong>{c.symbol}</strong> <span className="muted">{titleCase(c.issuer, c.symbol)}</span></div><div className="small up">{c.insiders} insiders</div></div>

@@ -158,7 +158,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
 
   if (view === "groups") return (
     <>
-      <p className="muted small section-note">Stocks that two or more executives or directors bought in the last 30 days: the strongest insider signal.</p>
+      <p className="muted small section-note">Stocks that two or more executives or directors bought in the last 30 days.</p>
       {trades === null ? <p className="muted">Loading…</p> : clusters.length ? <ClusterCards clusters={clusters} /> : <section className="card"><p className="muted">No stock had several insiders buying in the last 30 days.</p></section>}
     </>
   );
@@ -170,7 +170,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
         <div className="filterbar">
           <div className="seg">{(["buys", "sells", "all"] as Kind[]).map((k) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{k === "buys" ? "Buys" : k === "sells" ? "Sells" : "All"}</button>)}</div>
           <button className={`toggle${execOnly ? " on" : ""}`} onClick={() => setExecOnly(!execOnly)} aria-pressed={execOnly}>Executives &amp; directors only</button>
-          <button className={`toggle${strongOnly ? " on" : ""}`} onClick={() => { setStrongOnly(!strongOnly); if (!strongOnly) setKind("buys"); }} aria-pressed={strongOnly}>Strong &amp; notable buys only</button>
+          <button className={`toggle${strongOnly ? " on" : ""}`} onClick={() => { setStrongOnly(!strongOnly); if (!strongOnly) setKind("buys"); }} aria-pressed={strongOnly}>Unusual buys only</button>
           <div className="seg">{SIZES.map(([v, l]) => <button key={v} className={min === v ? "on" : ""} onClick={() => setMin(v)}>{l}</button>)}</div>
           <input className="filter-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by ticker, company or name" aria-label="Filter trades" />
         </div>
@@ -196,26 +196,26 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
         <div className="ov">
           {o.hero ? (
             <Link href={`/stock/${o.hero.t.symbol}`} className="hero m-only">
-              <span className="hero-tag">{o.hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
+              <span className="hero-tag">{o.hero.recent ? "Most unusual buy this week" : "Most unusual buy, last 30 days"}</span>
               <span className="hero-big mono">${fmtBig(o.hero.t.value ?? 0)}</span>
               <span className="hero-sym"><strong>{o.hero.t.symbol}</strong> · {titleCase(o.hero.t.issuer, o.hero.t.symbol)}</span>
               <span className="muted">{personName(o.hero.t.owner)}, {roleLabel(o.hero.t.role)} · {shortDay(o.hero.t.date)}{o.hero.t.price ? ` · $${o.hero.t.price.toFixed(2)}/share` : ""}</span>
-              {o.hero.t.conv ? <span className="hero-chips"><span>Signal {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
+              {o.hero.t.conv ? <span className="hero-chips"><span>Score {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
             </Link>
           ) : null}
 
           <section className="kpis">
             <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(o.totals.value)}</span><em>{o.totals.buys.toLocaleString()} buys</em></div>
             <div className="kpi"><small>Insiders buying</small><span className="mono">{o.totals.people}</span><em>officers &amp; directors</em></div>
-            <div className="kpi"><small>Strong signals</small><span className="mono up">{o.totals.strong}</span><em>score 60+</em></div>
+            <div className="kpi"><small>Unusual buys</small><span className="mono up">{o.totals.strong}</span><em>score 60+</em></div>
             <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(o.totals.salesValue)}</span><em>{o.totals.sales.toLocaleString()} sales of $250K+</em></div>
             <div className="kpi d-only"><small>Companies</small><span className="mono">{o.totals.cos}</span><em>with insider buys</em></div>
           </section>
 
           <section className="card flush span8">
-            <div className="card-title"><h2>Strongest buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All strong buys ›</button></div>
+            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
             <table className="ttable d-only">
-              <thead><tr><th>Stock</th><th>Insider</th><th>Signal</th><th>Why</th><th className="r">Value</th></tr></thead>
+              <thead><tr><th>Stock</th><th>Insider</th><th>Score</th><th>Why</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
                 <tr key={t.accession}>
                   <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
@@ -291,13 +291,13 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
   );
 }
 
-/** Signal strength as ten small bars (desktop tables). */
+/** The buy score as ten small bars (desktop tables). */
 function Meter({ score }: { score: number }) {
-  return <span className="meter" aria-label={`Signal ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
+  return <span className="meter" aria-label={`Score ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
 }
-/** Signal strength as a ring with the score inside (phone lists). */
+/** The buy score as a ring with the score inside (phone lists). */
 function Ring({ score }: { score: number }) {
-  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`Signal ${score} of 100`}><b className="mono">{score}</b></span>;
+  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`Score ${score} of 100`}><b className="mono">{score}</b></span>;
 }
 
 export default function InsidersView() {

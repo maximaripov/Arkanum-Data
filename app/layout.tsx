@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Form4: what insiders are buying", description: DESCRIPTION },
   appleWebApp: { capable: true, title: "Form4", statusBarStyle: "black-translucent" },
   // Lets feed readers find the RSS feeds (pages that set their own canonical link drop this).
-  alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Form4: top insider buys" }, { url: "/feeds/congress.xml", title: "Form4: Congress stock trades" }] } },
+  alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Form4: unusual insider buys" }, { url: "/feeds/congress.xml", title: "Form4: Congress stock trades" }] } },
 };
 export const viewport: Viewport = { themeColor: THEME_COLORS.dark, width: "device-width", initialScale: 1, viewportFit: "cover" };
 
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Ticker />
         <main>{children}</main>
         <footer className="muted small">
-          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/terms">Terms</Link> · RSS: <a href="/feeds/insider-buys.xml">top insider buys</a>, <a href="/feeds/congress.xml">Congress trades</a>
+          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/terms">Terms</Link> · RSS: <a href="/feeds/insider-buys.xml">unusual insider buys</a>, <a href="/feeds/congress.xml">Congress trades</a>
         </footer>
         <TabBar />
       </body>

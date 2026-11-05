@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // After each hourly update, tell devices right away when:
-//   - a CEO, CFO, President or Chair (or anyone with a "Strong signal" buy) bought a stock
+//   - a CEO, CFO, President or Chair (or anyone with an "Unusual" buy) bought a stock
 //     on their watchlist, or
 //   - an insider they follow bought, or made a large sale, at any company. Reads the trades
 // that were new this run from $NEW_TRADES_OUT (written by build-insiders-today.mjs), so

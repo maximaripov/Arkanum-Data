@@ -341,3 +341,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Fix:** `form4Files()` in [scripts/lib/sec.mjs](../scripts/lib/sec.mjs) keeps one path per accession number (test in `tests/merge.test.mjs`). The 30-day file now carries `version: 2`; an older file is discarded and all 30 days are fetched again (about an hour once; the daily workflow's time limit went from 90 to 150 minutes for it).
 - **Not affected:** the hourly feed, stock and insider pages (they read SEC directly), Congress data, and the backtest (SEC's quarterly data sets).
 
+## Round 34: buy labels say "unusual", not "strong" (2026-11-05)
+
+- The backtest found the score does not pick better-performing buys, so the labels now describe what the score measures: **Unusual** (60+), **Somewhat unusual** (40–59), **Routine**. "Strongest buys" became "Most unusual buys", "Signal 88" became "Score 88", and the "Strong & notable buys only" filter became "Unusual buys only". Same in the Digest page, the daily notification ("Most unusual insider buy"), the insider RSS feed (now "unusual insider buys") and the About page, which now says higher-scoring buys did not do better in Form4's 2023–2025 test.
+- Removed three claims the test doesn't support: group buys as "the strongest insider signal" (Insiders, Digest) and "Buys by several insiders are the strongest signal" (stock pages).
+- Only display text changed: stored tiers are still `strong` / `notable` / `routine`, so no data or saved links (`?signal=1`) change. Scoring itself is unchanged.
+

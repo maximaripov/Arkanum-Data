@@ -20,12 +20,12 @@ const dayLabel = (d: string) => {
   return d === today ? "Today" : d === y ? "Yesterday" : new Date(d + "T12:00:00").toLocaleDateString(undefined, otherYear ? { month: "short", day: "numeric", year: "numeric" } : { weekday: "short", month: "short", day: "numeric" });
 };
 
-/** Signal label plus the reasons behind it ("CEO · Stake +40% · First buy in 3 years"). */
+/** Buy label plus the reasons behind it ("CEO · Stake +40% · First buy in 3 years"). */
 export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["conv"]>; compact?: boolean }) {
   const reasons = compact ? c.reasons.filter((r) => !r.neg).slice(0, 3) : c.reasons;
   return (
     <div className="signal">
-      <span className={`tier tier-${c.tier}`} title={`Signal strength ${c.score}/100: who bought, how much of their own stake, how unusual it is for them, and whether other insiders are buying too.`}>{TIER_LABEL[c.tier]}</span>
+      <span className={`tier tier-${c.tier}`} title={`Score ${c.score}/100: how unusual this buy is (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction of returns.`}>{TIER_LABEL[c.tier]}</span>
       {reasons.map((r) => <span key={r.text} className={`why${r.neg ? " neg" : ""}`}>{r.text}</span>)}
     </div>
   );
