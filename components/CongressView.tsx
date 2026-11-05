@@ -1,19 +1,24 @@
 "use client";
 // Stock trades by members of the House (STOCK Act reports): the latest disclosures, the
-// most-bought and most-sold stocks, and the most active members; pick a member to see
-// all of theirs. Data: public/data/congress-overview.json, /api/congress for lookups.
-import { useEffect, useMemo, useState } from "react";
+// most-bought and most-sold stocks, and the most active members; each member has a page
+// (/congress/<slug>). Data: public/data/congress-overview.json, public/data/congress/<slug>.json,
+// /api/congress for stock pages.
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { memberSlug } from "@/lib/congress.mjs";
 
 export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string };
-type Member = { m: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
-type Overview = {
+export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
+/** What the member dropdown needs. */
+export type PickerMember = Pick<Member, "m" | "s" | "p" | "sd" | "n">;
+export type Overview = {
   updated: string;
   stats: { trades30: number; members30: number; buys30: number; sells30: number; medianDelay: number | null; scannedSkipped: number; total: number };
   latest: CTrade[]; bought: { t: string; a: string; members: number; n: number }[]; sold: { t: string; a: string; members: number; n: number }[]; members: Member[];
 };
 
-const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
+const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
 const k = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(n % 1e6 ? 1 : 0)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${Math.round(n)}`);
 /** "$1K–15K": most reports give a range; a few give the exact amount. */
 export const range = (lo: number | null, hi: number | null) => (lo == null ? "—" : hi == null ? `over ${k(lo)}` : hi === lo ? k(lo) : `${k(lo)}–${k(hi)}`);
@@ -31,7 +36,7 @@ export function CongressTrades({ trades, showMember = true, showStock = true }: 
         <tbody>{trades.map((t, i) => (
           <tr key={t.u + t.t + t.d + i}>
             <td className="mono"><a href={t.u} target="_blank" rel="noreferrer" className="muted" title="The member's report (PDF)">{day(t.f)} ↗</a></td>
-            {showMember ? <td><button className="linkish" onClick={() => pickMember?.(t.m)}>{t.m}</button> <Party p={t.p} sd={t.sd} /></td> : null}
+            {showMember ? <td><Link className="linkish" href={`/congress/${memberSlug(t.m)}`}>{t.m}</Link> <Party p={t.p} sd={t.sd} /></td> : null}
             {showStock ? <td className="cstock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></Link></td> : null}
             <td><span className={`side ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span></td>
             <td className="mono r">{range(t.lo, t.hi)}{OWNER[t.o] ? <div className="muted small">{OWNER[t.o]}</div> : null}</td>
@@ -49,29 +54,55 @@ export function CongressTrades({ trades, showMember = true, showStock = true }: 
     </>
   );
 }
-// Set by CongressView so member names in the table switch the page to that member.
-let pickMember: ((m: string) => void) | null = null;
+/** The member dropdown: picking one opens their page. */
+export function MemberPicker({ members, current = "" }: { members: PickerMember[]; current?: string }) {
+  const router = useRouter();
+  return (
+    <section className="card span12 cpick">
+      <label className="picker">
+        <span className="muted small">Member of the House</span>
+        <select value={current} onChange={(e) => router.push(e.target.value ? `/congress/${e.target.value}` : "/congress")}>
+          <option value="">All members</option>
+          {[...members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => <option key={x.s} value={x.s}>{x.m} ({x.p ?? "former"}-{x.sd}) · {x.n} trades</option>)}
+        </select>
+      </label>
+    </section>
+  );
+}
+
+const Note = ({ skipped }: { skipped: number }) => <p className="muted small span12">From House members&apos; STOCK Act reports (U.S. House Clerk), checked daily. Amounts are the ranges members report; trades can be disclosed up to 45 days later. {skipped} paper filings are scanned images and can&apos;t be read. Senate not included yet.</p>;
+
+/** One member's page; rendered on the server so search engines can read it. */
+export function MemberView({ member: sel, trades: shown, members, skipped }: { member: Member; trades: CTrade[]; members: PickerMember[]; skipped: number }) {
+  return (
+    <div className="ov">
+      <h1 className="sr-only">{sel.m} stock trades</h1>
+      <MemberPicker members={members} current={sel.s} />
+      <section className="kpis">
+        <div className="kpi"><small>Member</small><span>{sel.m}</span><em><Party p={sel.p} sd={sel.sd} />{sel.current ? "" : " · former member"}</em></div>
+        <div className="kpi"><small>Stock trades · 2 yrs</small><span className="mono">{sel.n.toLocaleString("en-US")}</span><em>reported</em></div>
+        <div className="kpi"><small>Buys</small><span className="mono up">{sel.buys.toLocaleString("en-US")}</span><em>purchases</em></div>
+        <div className="kpi"><small>Sales</small><span className="mono down">{sel.sells.toLocaleString("en-US")}</span><em>full or partial</em></div>
+        <div className="kpi d-only"><small>Latest trade</small><span className="mono">{day(sel.last)}</span><em>trade date</em></div>
+      </section>
+      <section className="card flush">
+        <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
+        <CongressTrades trades={shown} showMember={false} />
+      </section>
+      <Note skipped={skipped} />
+    </div>
+  );
+}
 
 export function CongressView() {
+  const router = useRouter();
   const [o, setO] = useState<Overview | null | undefined>(undefined);
-  const [member, setMember] = useState("");
-  const [mine, setMine] = useState<CTrade[] | null>(null);
   useEffect(() => {
-    fetch("/data/congress-overview.json").then((r) => (r.ok ? r.json() : null)).then(setO).catch(() => setO(null));
+    // Old links (/congress?member=Name) go to the member's page.
     const m = new URLSearchParams(location.search).get("member");
-    if (m) setMember(m);
-  }, []);
-  useEffect(() => {
-    pickMember = (m: string) => { setMember(m); scrollTo({ top: 0 }); };
-    return () => { pickMember = null; };
-  }, []);
-  useEffect(() => {
-    history.replaceState(null, "", member ? `?member=${encodeURIComponent(member)}` : location.pathname);
-    if (!member) { setMine(null); return; }
-    setMine(null);
-    fetch(`/api/congress?member=${encodeURIComponent(member)}`).then((r) => r.json()).then((d) => setMine(d.trades ?? [])).catch(() => setMine([]));
-  }, [member]);
-  const sel = useMemo(() => o?.members.find((x) => x.m === member) ?? null, [o, member]);
+    if (m) { router.replace(`/congress/${memberSlug(m)}`); return; }
+    fetch("/data/congress-overview.json").then((r) => (r.ok ? r.json() : null)).then(setO).catch(() => setO(null));
+  }, [router]);
 
   if (o === undefined) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!o) return <section className="card"><p className="muted">Congress trades aren&apos;t available right now.</p></section>;
@@ -79,72 +110,45 @@ export function CongressView() {
   return (
     <div className="ov">
       <h1 className="sr-only">Congress stock trades</h1>
-      <section className="card span12 cpick">
-        <label className="picker">
-          <span className="muted small">Member of the House</span>
-          <select value={member} onChange={(e) => setMember(e.target.value)}>
-            <option value="">All members</option>
-            {[...o.members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => <option key={x.m} value={x.m}>{x.m} ({x.p ?? "former"}-{x.sd}) · {x.n} trades</option>)}
-          </select>
-        </label>
+      <MemberPicker members={o.members} />
+      <section className="kpis">
+        <div className="kpi"><small>Trades · 30d</small><span className="mono">{s.trades30}</span><em>disclosed</em></div>
+        <div className="kpi"><small>Members trading</small><span className="mono">{s.members30}</span><em>last 30 days</em></div>
+        <div className="kpi"><small>Buys</small><span className="mono up">{s.buys30}</span><em>last 30 days</em></div>
+        <div className="kpi"><small>Sales</small><span className="mono down">{s.sells30}</span><em>last 30 days</em></div>
+        <div className="kpi d-only"><small>Days to disclose</small><span className="mono">{s.medianDelay ?? "—"}</span><em>median; the law allows 45</em></div>
       </section>
 
-      {sel ? (
-        <>
-          <section className="kpis">
-            <div className="kpi"><small>Member</small><span>{sel.m}</span><em><Party p={sel.p} sd={sel.sd} />{sel.current ? "" : " · former member"}</em></div>
-            <div className="kpi"><small>Stock trades · 2 yrs</small><span className="mono">{sel.n.toLocaleString()}</span><em>reported</em></div>
-            <div className="kpi"><small>Buys</small><span className="mono up">{sel.buys.toLocaleString()}</span><em>purchases</em></div>
-            <div className="kpi"><small>Sales</small><span className="mono down">{sel.sells.toLocaleString()}</span><em>full or partial</em></div>
-            <div className="kpi d-only"><small>Latest trade</small><span className="mono">{day(sel.last)}</span><em>trade date</em></div>
-          </section>
-          <section className="card flush">
-            <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{mine && mine.length >= 200 ? " · latest 200" : ""}</span></h2><button className="linkbtn" onClick={() => setMember("")}>All members ›</button></div>
-            {mine === null ? <p className="muted pad">Loading…</p> : <CongressTrades trades={mine} showMember={false} />}
-          </section>
-        </>
-      ) : (
-        <>
-          <section className="kpis">
-            <div className="kpi"><small>Trades · 30d</small><span className="mono">{s.trades30}</span><em>disclosed</em></div>
-            <div className="kpi"><small>Members trading</small><span className="mono">{s.members30}</span><em>last 30 days</em></div>
-            <div className="kpi"><small>Buys</small><span className="mono up">{s.buys30}</span><em>last 30 days</em></div>
-            <div className="kpi"><small>Sales</small><span className="mono down">{s.sells30}</span><em>last 30 days</em></div>
-            <div className="kpi d-only"><small>Days to disclose</small><span className="mono">{s.medianDelay ?? "—"}</span><em>median; the law allows 45</em></div>
-          </section>
+      <section className="card flush span8">
+        <div className="card-title"><h2>Latest disclosed trades <span className="muted small">House members, stocks only</span></h2></div>
+        <CongressTrades trades={o.latest.slice(0, 25)} />
+      </section>
 
-          <section className="card flush span8">
-            <div className="card-title"><h2>Latest disclosed trades <span className="muted small">House members, stocks only</span></h2></div>
-            <CongressTrades trades={o.latest.slice(0, 25)} />
-          </section>
-
-          <div className="stack span4" style={{ alignContent: "start" }}>
-            {[["Most bought", o.bought, "up"], ["Most sold", o.sold, "down"]].map(([title, list, tone]) => (
-              <section key={title as string} className="card flush">
-                <div className="card-title"><h2>{title as string} <span className="muted small">last 90 days</span></h2></div>
-                <ul className="lrows">{(list as Overview["bought"]).slice(0, 6).map((x) => (
-                  <li key={x.t}><Link href={`/stock/${x.t}`}>
-                    <strong className="lrow-sym">{x.t}</strong>
-                    <span className="lrow-main"><span className="muted small">{x.a.replace(/\s*-?\s*(Common Stock|Ordinary Shares).*$/i, "")}</span></span>
-                    <span className="lrow-v"><span className={`mono ${tone}`}>{x.members} {x.members === 1 ? "member" : "members"}</span><span className="muted small">{x.n} trades</span></span>
-                  </Link></li>
-                ))}</ul>
-              </section>
-            ))}
-          </div>
-
-          <section className="card flush">
-            <div className="card-title"><h2>Most active members <span className="muted small">stock trades, last 2 years</span></h2></div>
-            <ul className="lrows">{o.members.slice(0, 12).map((x) => (
-              <li key={x.m}><button className="lrow-btn" onClick={() => { setMember(x.m); scrollTo({ top: 0 }); }}>
-                <span className="lrow-main"><span><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small">latest trade {day(x.last)}</span></span>
-                <span className="lrow-v"><span className="mono">{x.n.toLocaleString()} trades</span><span className="muted small"><span className="up">{x.buys} buys</span> · <span className="down">{x.sells} sales</span></span></span>
-              </button></li>
+      <div className="stack span4" style={{ alignContent: "start" }}>
+        {[["Most bought", o.bought, "up"], ["Most sold", o.sold, "down"]].map(([title, list, tone]) => (
+          <section key={title as string} className="card flush">
+            <div className="card-title"><h2>{title as string} <span className="muted small">last 90 days</span></h2></div>
+            <ul className="lrows">{(list as Overview["bought"]).slice(0, 6).map((x) => (
+              <li key={x.t}><Link href={`/stock/${x.t}`}>
+                <strong className="lrow-sym">{x.t}</strong>
+                <span className="lrow-main"><span className="muted small">{x.a.replace(/\s*-?\s*(Common Stock|Ordinary Shares).*$/i, "")}</span></span>
+                <span className="lrow-v"><span className={`mono ${tone}`}>{x.members} {x.members === 1 ? "member" : "members"}</span><span className="muted small">{x.n} trades</span></span>
+              </Link></li>
             ))}</ul>
           </section>
-        </>
-      )}
-      <p className="muted small span12">From House members&apos; STOCK Act reports (U.S. House Clerk), checked daily. Amounts are the ranges members report; trades can be disclosed up to 45 days later. {s.scannedSkipped} paper filings are scanned images and can&apos;t be read. Senate not included yet.</p>
+        ))}
+      </div>
+
+      <section className="card flush">
+        <div className="card-title"><h2>Most active members <span className="muted small">stock trades, last 2 years</span></h2></div>
+        <ul className="lrows">{o.members.slice(0, 12).map((x) => (
+          <li key={x.s}><Link href={`/congress/${x.s}`}>
+            <span className="lrow-main"><span><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small">latest trade {day(x.last)}</span></span>
+            <span className="lrow-v"><span className="mono">{x.n.toLocaleString()} trades</span><span className="muted small"><span className="up">{x.buys} buys</span> · <span className="down">{x.sells} sales</span></span></span>
+          </Link></li>
+        ))}</ul>
+      </section>
+      <Note skipped={s.scannedSkipped} />
     </div>
   );
 }
@@ -161,11 +165,11 @@ export function CongressFor({ symbol }: { symbol: string }) {
     </section>
   );
 }
-// On stock pages member names link to the Congress page filtered to that member.
+// On stock pages member names link to the member's page.
 function CongressTradesLinked({ trades }: { trades: CTrade[] }) {
   return (
     <ul className="lrows">{trades.map((t, i) => (
-      <li key={t.u + t.d + i}><Link href={`/congress?member=${encodeURIComponent(t.m)}`}>
+      <li key={t.u + t.d + i}><Link href={`/congress/${memberSlug(t.m)}`}>
         <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
         <span className="lrow-main"><span><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {day(t.d)} · disclosed {day(t.f)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
         <span className="lrow-v mono">{range(t.lo, t.hi)}</span>

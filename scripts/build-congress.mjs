@@ -9,6 +9,7 @@
 import { execFileSync } from "node:child_process";
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { parsePtr, stateDistrict } from "./lib/congress.mjs";
+import { writeSummaries } from "./lib/congress-summary.mjs";
 
 const UA = "Form4 (free, non-commercial insider-trading site; form4-insiders.vercel.app)";
 const BASE = "https://disclosures-clerk.house.gov/public_disc";
@@ -100,30 +101,6 @@ await writeFile("data/congress-seen.json", JSON.stringify(seen));
 await writeFile("public/data/congress.json", JSON.stringify({ updated: new Date().toISOString(), source: "U.S. House Clerk, Periodic Transaction Reports", scannedSkipped: Object.values(seen).filter((s) => s === "scanned").length, trades: keep }));
 await rm(TMP, { recursive: true, force: true });
 
-// 5. The Congress page's summary (the full file is only read by the server for lookups).
-const stocks = keep.filter((t) => t.ticker && (t.assetType === "ST" || !t.assetType) && t.type !== "E");
-const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
-const slim = (t) => ({ m: t.member, p: t.party?.[0] ?? null, sd: `${t.state}${t.district ? "-" + t.district : ""}`, f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, lo: t.min, hi: t.max, u: t.url });
-const rank = (list, type) => {
-  const by = new Map();
-  for (const t of list.filter((x) => x.type === type)) { const r = by.get(t.ticker) ?? { t: t.ticker, a: t.asset, members: new Set(), n: 0 }; r.members.add(t.member); r.n++; by.set(t.ticker, r); }
-  return [...by.values()].map((r) => ({ t: r.t, a: r.a, members: r.members.size, n: r.n })).sort((a, b) => b.members - a.members || b.n - a.n).slice(0, 10);
-};
-const recent90 = stocks.filter((t) => t.date >= daysAgo(90));
-const members = new Map();
-for (const t of stocks) {
-  const m = members.get(t.member) ?? { m: t.member, p: t.party?.[0] ?? null, sd: `${t.state}${t.district ? "-" + t.district : ""}`, current: t.current, n: 0, buys: 0, sells: 0, last: "" };
-  m.n++; if (t.type === "P") m.buys++; else m.sells++;
-  if (t.date > m.last) m.last = t.date;
-  members.set(t.member, m);
-}
-const lag = stocks.filter((t) => t.filed >= daysAgo(365)).map((t) => (Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000).sort((a, b) => a - b);
-const last30 = stocks.filter((t) => t.filed >= daysAgo(30));
-await writeFile("public/data/congress-overview.json", JSON.stringify({
-  updated: new Date().toISOString(),
-  stats: { trades30: last30.length, members30: new Set(last30.map((t) => t.member)).size, buys30: last30.filter((t) => t.type === "P").length, sells30: last30.filter((t) => t.type === "S").length, medianDelay: lag.length ? Math.round(lag[Math.floor(lag.length / 2)]) : null, scannedSkipped: Object.values(seen).filter((s) => s === "scanned").length, total: stocks.length },
-  latest: stocks.slice(0, 60).map(slim),
-  bought: rank(recent90, "P"), sold: rank(recent90, "S"),
-  members: [...members.values()].sort((a, b) => b.n - a.n),
-}));
+// 5. The Congress page's summary and one small file per member (the full file is only read by the server for lookups).
+await writeSummaries(keep, Object.values(seen).filter((s) => s === "scanned").length);
 console.log(`read ${fetched} new reports (${scanned} scanned skipped); congress.json: ${keep.length} trades, ${keep.filter((t) => t.ticker).length} with a ticker`);

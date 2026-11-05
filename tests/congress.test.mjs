@@ -44,3 +44,10 @@ test("state and district codes", () => {
   assert.deepEqual(stateDistrict("OH05"), { state: "OH", district: 5 });
   assert.deepEqual(stateDistrict("AKAL"), { state: "AK", district: 0 });
 });
+
+test("member page addresses", async () => {
+  const { memberSlug } = await import("../lib/congress.mjs");
+  assert.equal(memberSlug("Gilbert Ray Cisneros, Jr."), "gilbert-ray-cisneros-jr");
+  assert.equal(memberSlug("María Elvira Salazar"), "maria-elvira-salazar");
+  assert.equal(memberSlug("John J. McGuire III"), "john-j-mcguire-iii");
+});

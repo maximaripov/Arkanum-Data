@@ -28,7 +28,7 @@ jobs:
         run: |
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
-          git add public/data/congress.json public/data/congress-overview.json data/congress-seen.json
+          git add public/data/congress.json public/data/congress-overview.json public/data/congress data/congress-seen.json
           git diff --cached --quiet && { echo "Nothing to commit"; exit 0; }
           git commit -m "data: congress trades $(date -u +%F)"
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
