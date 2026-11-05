@@ -25,7 +25,9 @@ const QUERY = `SELECT ?cik ?personLabel ?article WHERE {
 const wd = await fetch(`https://query.wikidata.org/sparql?query=${encodeURIComponent(QUERY)}`, { headers: { Accept: "application/sparql-results+json", "User-Agent": UA }, signal: AbortSignal.timeout(120_000) })
   .then((r) => (r.ok ? r.json() : null)).catch(() => null);
 if (!wd) { console.warn("Wikidata didn't answer; keeping the previous list"); process.exit(0); }
-const rows = wd.results.bindings.map((b) => ({ cik: b.cik.value, label: b.personLabel.value, title: decodeURIComponent(b.article.value.split("/wiki/")[1] ?? "") }));
+// No English label comes back as the item's ID ("Q106028933"): use the article title instead.
+const titleOf = (b) => decodeURIComponent(b.article.value.split("/wiki/")[1] ?? "");
+const rows = wd.results.bindings.map((b) => ({ cik: b.cik.value, label: /^Q\d+$/.test(b.personLabel.value) ? titleOf(b).replace(/_/g, " ").replace(/ \(.*\)$/, "") : b.personLabel.value, title: titleOf(b) }));
 
 // 2. Company CIK → tickers (SEC), then match to the filers in the directory.
 const tickers = await getJson("https://www.sec.gov/files/company_tickers.json");
@@ -34,22 +36,27 @@ for (const t of Object.values(tickers ?? {})) { if (!tickersByCik.has(t.cik_str)
 const people = matchFamous(rows, (await read("data/people.json")) ?? {}, tickersByCik);
 console.log(`Wikidata: ${rows.length} CEO/chair entries → ${people.length} matched to Form 4 filers`);
 
-// 3. Wikipedia views over the last 30 full days.
+// 3. Wikipedia views over the last 30 full days. Wikimedia limits requests from shared
+// servers like GitHub's, so ask once a second, wait as long as it says when it refuses, and
+// fall back to yesterday's count for anyone still missing.
 const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
 const end = new Date(Date.now() - 86_400_000), start = new Date(end.getTime() - 29 * 86_400_000);
-let failed = 0;
+const before = new Map(((await read(OUT))?.people ?? []).map((p) => [p.cik, p.views]));
+const missing = [];
 for (const p of people) {
   const url = `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/${encodeURIComponent(p.title)}/daily/${ymd(start)}/${ymd(end)}`;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
     if (r?.ok) { p.views = (await r.json()).items.reduce((a, x) => a + x.views, 0); break; }
     if (r?.status === 404) { p.views = 0; break; }
-    await sleep(3000 * (i + 1));
+    const wait = Number(r?.headers.get("retry-after")) || 5 * (i + 1);
+    await sleep(Math.min(wait, 60) * 1000);
   }
-  if (p.views == null) failed++;
-  await sleep(150); // well under Wikimedia's rate limits
+  if (p.views == null) { p.views = before.get(p.cik) ?? null; missing.push(`${p.label}${p.views != null ? " (yesterday's count)" : ""}`); }
+  await sleep(1000);
 }
-if (failed > people.length / 4) { console.warn(`Wikipedia views failed for ${failed} of ${people.length}; keeping the previous list`); process.exit(0); }
+if (missing.length) console.warn(`Wikipedia views not fetched for ${missing.length}: ${missing.join(", ")}`);
+if (people.filter((p) => p.views == null).length > people.length / 4) { console.warn("Too many missing; keeping the previous list"); process.exit(0); }
 
 const list = people.filter((p) => p.views > 0).sort((a, b) => b.views - a.views).slice(0, 100);
 await writeFile(OUT, JSON.stringify({ updated: new Date().toISOString(), from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10), people: list }));

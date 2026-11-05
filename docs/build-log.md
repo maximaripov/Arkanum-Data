@@ -382,4 +382,5 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Search knows common names:** the directory carries the Wikipedia name as a fifth field when it differs ("Jensen Huang" for SEC's "Jen Hsun Huang"), and results show it. The daily job runs build-people again after build-famous.
 - **Sitemap** adds the well-known insiders' pages.
 - **Tabs wrap** on narrow phones instead of scrolling sideways (5 tabs didn't fit an iPhone SE; the fifth was off-screen). The unused `.scroll-tabs` style was removed.
+- **First run (2026-11-05):** 491 Wikidata CEO/chair entries → 109 matched → 86 listed. 23 were dropped because Wikipedia refused requests from GitHub's shared servers (Elon Musk and Andy Jassy among them). Now: one request a second, waits as long as Wikipedia asks (Retry-After), five tries, then yesterday's count, and logs anyone still missing by name. Wikidata's own gaps: Tim Cook's Apple CEO entry has an end date (August 2026) and Apple's chair entry is out of date, so he isn't matched; entries without an English name now use the article title.
 
