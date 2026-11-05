@@ -213,7 +213,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
           </section>
 
           <section className="card flush span8">
-            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days · <Link className="linkbtn" href="/research/insider-buys">does the score work?</Link></span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
+            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
             <table className="ttable d-only">
               <thead><tr><th>Stock</th><th>Insider</th><th>Score</th><th>Why</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
