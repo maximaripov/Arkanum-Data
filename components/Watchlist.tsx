@@ -51,7 +51,7 @@ export function Watchlist() {
       {!list.length ? (
         <div className="empty">
           <p><strong>Your watchlist is empty.</strong></p>
-          <p className="muted">Search for a company at the top, open it, and tap ☆ to follow it here. Your daily digest will then tell you when its insiders trade or big funds move.</p>
+          <p className="muted">Search for a company at the top, open it, and tap &quot;Add to watchlist&quot; to follow it here. Your daily digest will then tell you when its insiders trade or big funds move.</p>
         </div>
       ) : (
         <>

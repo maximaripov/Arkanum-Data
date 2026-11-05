@@ -9,7 +9,7 @@ export function FollowingCard() {
     <section className="card">
       <div className="card-head"><h2>People you follow</h2></div>
       {!list.length ? (
-        <p className="muted small">Open any insider (tap their name on a trade) and tap <strong>☆ Follow</strong> to get an alert whenever they buy, or make a large sale, at any company.</p>
+        <p className="muted small">Open any insider (tap their name on a trade) and tap <strong>Follow</strong> to get an alert whenever they buy, or make a large sale, at any company.</p>
       ) : (
         <ul className="rows">{list.map((p) => (
           <li key={p.cik} className="follow-item">

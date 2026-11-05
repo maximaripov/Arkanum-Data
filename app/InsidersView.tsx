@@ -169,8 +169,8 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
         {day ? <p className="daychip"><span className="chip on">Showing {shortDay(day)} <button className="icon" onClick={() => setDay(null)} aria-label="Show all days">×</button></span></p> : null}
         <div className="filterbar">
           <div className="seg">{(["buys", "sells", "all"] as Kind[]).map((k) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{k === "buys" ? "Buys" : k === "sells" ? "Sells" : "All"}</button>)}</div>
-          <button className={`toggle${execOnly ? " on" : ""}`} onClick={() => setExecOnly(!execOnly)} aria-pressed={execOnly}>{execOnly ? "✓ " : ""}Executives &amp; directors only</button>
-          <button className={`toggle${strongOnly ? " on" : ""}`} onClick={() => { setStrongOnly(!strongOnly); if (!strongOnly) setKind("buys"); }} aria-pressed={strongOnly}>{strongOnly ? "✓ " : ""}Strong &amp; notable buys only</button>
+          <button className={`toggle${execOnly ? " on" : ""}`} onClick={() => setExecOnly(!execOnly)} aria-pressed={execOnly}>Executives &amp; directors only</button>
+          <button className={`toggle${strongOnly ? " on" : ""}`} onClick={() => { setStrongOnly(!strongOnly); if (!strongOnly) setKind("buys"); }} aria-pressed={strongOnly}>Strong &amp; notable buys only</button>
           <div className="seg">{SIZES.map(([v, l]) => <button key={v} className={min === v ? "on" : ""} onClick={() => setMin(v)}>{l}</button>)}</div>
           <input className="filter-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by ticker, company or name" aria-label="Filter trades" />
         </div>
@@ -196,7 +196,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: Vie
         <div className="ov">
           {o.hero ? (
             <Link href={`/stock/${o.hero.t.symbol}`} className="hero m-only">
-              <span className="hero-tag">⚡ {o.hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
+              <span className="hero-tag">{o.hero.recent ? "Strongest buy this week" : "Strongest buy, last 30 days"}</span>
               <span className="hero-big mono">${fmtBig(o.hero.t.value ?? 0)}</span>
               <span className="hero-sym"><strong>{o.hero.t.symbol}</strong> · {titleCase(o.hero.t.issuer, o.hero.t.symbol)}</span>
               <span className="muted">{personName(o.hero.t.owner)}, {roleLabel(o.hero.t.role)} · {shortDay(o.hero.t.date)}{o.hero.t.price ? ` · $${o.hero.t.price.toFixed(2)}/share` : ""}</span>

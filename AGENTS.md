@@ -9,3 +9,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 <!-- END:nextjs-agent-rules -->
 
 Project notes for agents: read [docs/handoff.md](docs/handoff.md) first, then the latest rounds of [docs/build-log.md](docs/build-log.md).
+
+Owner rule: never add emoji to the site, its notifications or its copy (use words or line-drawn SVG icons). `tests/no-emoji.test.mjs` enforces it.

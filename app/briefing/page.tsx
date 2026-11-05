@@ -60,7 +60,7 @@ function YourWatchlist({ a }: { a: ReturnType<typeof useWatchlistActivity> }) {
   return (
     <section className="card">
       <div className="card-head"><h2>Your watchlist</h2><Link href="/" className="small">Edit ›</Link></div>
-      {!a.list.length ? <p className="muted">Follow stocks with ☆ on their pages to see their insider trades and fund moves here.</p> : a.loading ? <p className="muted">Loading…</p> : (
+      {!a.list.length ? <p className="muted">Add stocks to your watchlist from their pages to see their insider trades and fund moves here.</p> : a.loading ? <p className="muted">Loading…</p> : (
         <>
           <h3 className="dayhead">Insider trades this week</h3>
           {a.mine.length ? <TradeList trades={a.mine} pageSize={6} /> : <p className="muted small">No trades by executives or directors in {a.list.join(", ")} this week.</p>}
@@ -156,7 +156,7 @@ function Notifications() {
             setOwnerSaving(true); setOwnerMsg("");
             try {
               const r = await register({ ownerCode: owner.trim() });
-              setOwnerMsg(r.owner ? "✓ Saved. This phone will get alerts if the daily or hourly update fails." : "That code isn't right. Check capital letters and dashes.");
+              setOwnerMsg(r.owner ? "Saved. This phone will get alerts if the daily or hourly update fails." : "That code isn't right. Check capital letters and dashes.");
               if (r.owner) setOwner("");
             } catch (err: any) { setOwnerMsg(`Couldn't save: ${err.message ?? err}`); }
             setOwnerSaving(false);

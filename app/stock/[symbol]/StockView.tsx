@@ -64,7 +64,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
             <h1>{co?.name ? titleCase(co.name, symbol) : symbol}</h1>
             <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""} · insider trades, fund holdings and fundamentals</div>
           </div>
-          <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "★ On your watchlist" : "☆ Add to watchlist"}</button>
+          <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "On your watchlist" : "Add to watchlist"}</button>
         </div>
         <div className="chart-bar">
           <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => setRange(l)}>{l}</button>)}</div>

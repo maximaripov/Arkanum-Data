@@ -308,3 +308,7 @@ The owner asked to show market data in Foresight's own design rather than embedd
   - Page: member dropdown, headline numbers (trades, members, buys/sales in 30 days, median days to disclose), latest disclosed trades, most bought/sold in 90 days, most active members. Stock pages: "Congress trades in X". `/api/congress?symbol=|member=` serves lookups from the full file so pages load only the 27 KB summary.
   - **Senate not included:** its search site requires agreeing to terms (no commercial use, etc.); that's the owner's decision, not made yet.
   - **Senate (2026-11-04):** the owner agreed to the eFD site's terms, but its Akamai bot protection answers "Access Denied" to automated requests from both this dev machine and GitHub's runners (even a real headless browser), so Senate trades can't be read automatically. Not built.
+
+## Round 28: no emoji (2026-11-05)
+
+- Owner rule: no emoji anywhere. Removed the lightning bolt on the phone's lead buy, the chart and bell in the welcome popup (now line-drawn icons like the nav), the stars on Follow and watchlist buttons, check marks on filter buttons and in the owner box, and the share glyph in the iPhone tip. `tests/no-emoji.test.mjs` fails the tests if any comes back; the rule is in AGENTS.md and the handoff notes.
