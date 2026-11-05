@@ -360,4 +360,5 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **`/congress`** now arrives with its numbers and lists in the HTML (fetched on the server, refreshed hourly) instead of "Loading…"; the browser fetches only if the server couldn't.
 - Member links and the sitemap now build each member's address from their name (`memberSlug`) instead of the stored `s` field, so an old cached copy of the overview can't produce `/congress/undefined` links (it did in a local build).
 - **Findable:** the research page was linked only from one bullet on About, and the owner couldn't find it. Now also "Research findings" in the footer's link row on every page, next to About and Terms (owner's choice: footer only, no links inside cards).
+- **RSS links removed from the footer:** on phones they opened a raw XML file, which looks broken to anyone without a feed reader. The feeds stay, and feed readers still find them from the link in each page's head.
 

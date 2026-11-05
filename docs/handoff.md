@@ -31,7 +31,7 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 - `/research/insider-buys`: the backtest for readers (linked from About).
 - `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
 - Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years).
-- RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); linked in the footer. Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
+- RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); found by feed readers from the page head (not linked visibly: raw XML looks broken on phones). Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
 
 ## Data jobs (GitHub Actions; SEC work runs there)
 - `data.yml` weekdays 4:02 PM ET (two crons; a gate skips the wrong one for DST): fundamentals, 30-day insiders, overview, people directory, funds, events (BEA, Fed, BLS), private-deal catch-up (PR Newswire news sitemap, last ~2 days), health check, digest push.
