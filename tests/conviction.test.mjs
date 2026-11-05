@@ -80,14 +80,25 @@ test("a vice president is an officer, not a top executive", () => {
 });
 
 test("sales: unplanned CEO selling a big share is notable; planned, fund and small ones aren't", () => {
-  const base = { code: "S", role: "Chief Executive Officer, Director", owner: "DOE JANE", shares: 40_000, ownedAfter: 60_000, value: 2_000_000, planned: false };
+  const base = { code: "S", role: "Chief Executive Officer, Director", owner: "DOE JANE", shares: 40_000, ownedAfter: 60_000, ownedTotal: 60_000, value: 2_000_000, planned: false };
   const s = saleFlags(base);
   assert.equal(s.notable, true);
   assert.deepEqual(s.flags.map((f) => f.text), ["CEO", "Sold 40% of stake", "Not pre-planned"]);
   assert.equal(saleFlags({ ...base, planned: true }).notable, false);
   assert.equal(saleFlags({ ...base, role: "Director, 10% owner" }).notable, false);
   assert.equal(saleFlags({ ...base, owner: "SILVER LAKE PARTNERS LP", role: "Director" }).notable, false);
-  assert.equal(saleFlags({ ...base, role: "Director", shares: 1_000, ownedAfter: 99_000, value: 300_000 }).notable, false);
-  assert.equal(saleFlags({ ...base, role: "Director", shares: 70_000, ownedAfter: 30_000 }).notable, true);
+  assert.equal(saleFlags({ ...base, role: "Director", shares: 1_000, ownedAfter: 99_000, ownedTotal: 99_000, value: 300_000 }).notable, false);
+  assert.equal(saleFlags({ ...base, role: "Director", shares: 70_000, ownedAfter: 30_000, ownedTotal: 30_000 }).notable, true);
   assert.equal(saleFlags({ ...base, code: "P" }), null);
+});
+
+test("sales: emptying one account isn't 'sold entire stake' when others still hold shares", () => {
+  // Like a director selling all of a trust's shares while holding 1.1M directly.
+  const s = saleFlags({ code: "S", role: "Director", owner: "DOE JANE", shares: 20_951, ownedAfter: 0, ownedTotal: 1_108_972, value: 12_800_000, planned: false });
+  assert.equal(s.flags.some((f) => /entire|Sold \d+%/.test(f.text)), false); // under 2% of the total: no share-sold flag
+  assert.equal(s.notable, false);
+  // Without the all-accounts total (older rows), no share-sold claim at all.
+  assert.equal(saleFlags({ code: "S", role: "Director", owner: "DOE JANE", shares: 20_951, ownedAfter: 0, value: 12_800_000, planned: false }).flags.some((f) => /entire|Sold \d+%/.test(f.text)), false);
+  // Everything gone in every account is "entire stake".
+  assert.equal(saleFlags({ code: "S", role: "Director", owner: "DOE JANE", shares: 5_000, ownedAfter: 0, ownedTotal: 0, value: 400_000, planned: false }).flags.some((f) => f.text === "Sold entire stake"), true);
 });

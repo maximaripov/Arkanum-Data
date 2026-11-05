@@ -316,3 +316,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 ## Round 29: retail trading section removed (2026-11-05)
 
 - The owner asked to drop the FINRA retail-wholesaler table from stock pages. Removed the section, `/api/retail` and `lib/retail.ts`, and FINRA from About, Terms and the README. (Its terms were non-commercial only, so this also clears one item from the monetization checklist.)
+
+## Round 30: three factual fixes (2026-11-05)
+
+- **"Sold entire stake" was wrong for people with several accounts** (e.g. a director emptying a trust while holding 1.1M shares directly). Form 4s list each account separately and untouched accounts as plain holdings; the parser now adds them all into `ownedTotal` ([lib/form4.mjs](../lib/form4.mjs)). Sale share-sold flags use only that total and say nothing for older rows without it; buys' "Stake +X%" uses it when present. Notable sales went from 150 to 72 until new filings bring share figures back.
+- **Dates without a year:** trade lists now show the year for other years, so insider pages read in order.
+- **"Llc":** organizations filing as insiders keep LLC/LP/LTD in capitals (`personName` uses `companyName` for them); the search directory was rebuilt.

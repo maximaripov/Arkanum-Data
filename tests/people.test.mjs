@@ -33,3 +33,8 @@ test("See Remarks roles don't show as a title", () => {
   assert.equal(roleLabel("SEE REMARKS"), "insider");
   assert.equal(roleLabel("See Remarks, Director"), "director");
 });
+
+test("funds and companies filing as insiders keep LLC and LP in capitals", () => {
+  assert.equal(personName("ORBIMED ADVISORS LLC"), "Orbimed Advisors LLC");
+  assert.equal(personName("TAN LIP BU"), "Lip Bu Tan");
+});

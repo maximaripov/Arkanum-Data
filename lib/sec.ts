@@ -74,7 +74,8 @@ export type InsiderTrade = {
   price: number | null;
   value: number | null;
   acquired: boolean;
-  ownedAfter: number | null;
+  ownedAfter: number | null; // this account only
+  ownedTotal?: number | null; // all accounts in the filing (newer rows only)
   planned: boolean; // 10b5-1 pre-scheduled trade
   url: string;
   prevBuy?: string | null; // this insider's previous open-market buy of this stock (null: none found)

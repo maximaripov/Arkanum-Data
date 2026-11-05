@@ -15,7 +15,9 @@ const VERB: Record<string, string> = { P: "bought", S: "sold", A: "was awarded",
 const dayLabel = (d: string) => {
   const today = new Date().toISOString().slice(0, 10);
   const y = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-  return d === today ? "Today" : d === y ? "Yesterday" : new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  // The year only for other years, so long histories (insider pages) read in order.
+  const otherYear = d.slice(0, 4) !== today.slice(0, 4);
+  return d === today ? "Today" : d === y ? "Yesterday" : new Date(d + "T12:00:00").toLocaleDateString(undefined, otherYear ? { month: "short", day: "numeric", year: "numeric" } : { weekday: "short", month: "short", day: "numeric" });
 };
 
 /** Signal label plus the reasons behind it ("CEO · Stake +40% · First buy in 3 years"). */
