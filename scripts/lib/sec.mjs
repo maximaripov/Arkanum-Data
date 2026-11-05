@@ -38,6 +38,20 @@ export async function pool(items, n, fn) {
   }));
 }
 
+/** The Form 4 files in a daily form.idx, one per filing. The index lists a filing once per
+ * filer (the company and each insider), each path carrying that filer's CIK, so paths
+ * are compared by accession number; reading a filing twice would double its trades. */
+export function form4Files(idx) {
+  const byAccession = new Map();
+  for (const l of idx.split("\n")) {
+    if (!/^4\s{2,}/.test(l)) continue;
+    const f = l.match(/edgar\/data\/\S+\.txt/)?.[0];
+    const acc = f?.split("/").pop();
+    if (f && !byAccession.has(acc)) byAccession.set(acc, f);
+  }
+  return [...byAccession.values()];
+}
+
 /** One row per filing and direction: partial fills of a buy or sale become one trade. */
 export function mergeFills(rows) {
   const merged = new Map();

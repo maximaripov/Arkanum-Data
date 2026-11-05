@@ -6,7 +6,7 @@
 // ("first buy in N years"). Usage: node scripts/build-insiders.mjs [--days 30]
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { parseForm4 } from "../lib/form4.mjs";
-import { getText, pool, mergeFills, keepTrade } from "./lib/sec.mjs";
+import { getText, pool, mergeFills, keepTrade, form4Files } from "./lib/sec.mjs";
 import { addHistory } from "./lib/history.mjs";
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i > -1 ? Number(process.argv[i + 1]) : d; };
@@ -15,6 +15,9 @@ const OUT = "public/data/insiders.json";
 
 let data = { updated: null, days: [], trades: [] };
 try { data = JSON.parse(await readFile(OUT, "utf8")); } catch {}
+// Files saved before version 2 counted each filing once per filer listed in the daily
+// index (company and insider), doubling or more its shares and dollars: start over.
+if (data.version !== 2) data = { version: 2, updated: null, days: [], trades: [] };
 const save = async () => { data.updated = new Date().toISOString(); await mkdir("public/data", { recursive: true }); await writeFile(OUT, JSON.stringify(data)); };
 
 const ymd = (d) => d.toISOString().slice(0, 10);
@@ -30,7 +33,7 @@ for (const day of todo) {
   const [y, m] = day.split("-").map(Number);
   const idx = await getText(`https://www.sec.gov/Archives/edgar/daily-index/${y}/QTR${Math.ceil(m / 3)}/form.${day.replace(/-/g, "")}.idx`);
   if (idx === null) { data.days.push(day); console.log(`${day}: no index (holiday)`); continue; } // market holiday
-  const files = [...new Set(idx.split("\n").filter((l) => /^4\s{2,}/.test(l)).map((l) => l.match(/edgar\/data\/\S+\.txt/)?.[0]).filter(Boolean))];
+  const files = form4Files(idx);
   const found = [];
   await pool(files, 4, async (f) => {
     const txt = await getText(`https://www.sec.gov/Archives/${f}`);

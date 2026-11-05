@@ -1,7 +1,7 @@
 // Combining partial fills, which trades to keep, and merging today's file into the 30-day file.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeFills, keepTrade } from "../scripts/lib/sec.mjs";
+import { mergeFills, keepTrade, form4Files } from "../scripts/lib/sec.mjs";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 
 const fill = (over = {}) => ({ accession: "A1", code: "P", symbol: "ABC", role: "Director", owner: "X", shares: 100, price: 10, value: 1000, date: "2026-10-30", ownedAfter: 1100, filed: "2026-11-02", ...over });
@@ -49,3 +49,16 @@ test("works when today's file is missing", () => {
   const m = mergeInsiders({ days: [], trades: [] }, null);
   assert.deepEqual(m.trades, []);
 });
+
+test("a Form 4 listed under the company and each insider in the daily index is read once", () => {
+  // SEC's form.idx lists a filing once per filer, each with that filer's CIK in the path.
+  const idx = [
+    "Form Type   Company Name                                                  CIK         Date Filed  File Name",
+    "4           KKR Income Opportunities Fund                                 1515940     2026-10-14  edgar/data/1515940/0000945621-26-001261.txt",
+    "4           Pimentel Rudy                                                 2006251     2026-10-14  edgar/data/2006251/0000945621-26-001261.txt",
+    "4/A         Other Co                                                      111         2026-10-14  edgar/data/111/0000000001-26-000001.txt",
+    "4           Other Co                                                      111         2026-10-14  edgar/data/111/0000000002-26-000002.txt",
+  ].join("\n");
+  assert.deepEqual(form4Files(idx), ["edgar/data/1515940/0000945621-26-001261.txt", "edgar/data/111/0000000002-26-000002.txt"]);
+});
+

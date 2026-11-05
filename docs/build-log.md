@@ -335,3 +335,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Share pictures:** insider pages and Congress member pages now have their own picture when shared (name, role or party and seat, bought/sold or trade counts, latest three trades) instead of the site-wide one ([lib/og.tsx](../lib/og.tsx)). Stock pages already had one (last 30 days of executive and director buying and selling) and keep it.
 - `amountRange()` (Congress amount ranges) moved to [lib/congress.mjs](../lib/congress.mjs) so the server-side picture can use it.
 
+## Round 33: insider amounts were counted twice (2026-11-05)
+
+- **Bug:** the daily insider job read each Form 4 once for every filer SEC's daily index lists it under (the company and each insider, each with its own file path), and the partial-fill merge then added the copies together. Shares and dollar amounts in the 30-day file were doubled, or more for filings with several insiders: headline totals, buy sizes, scores (size), "Stake +X%" and share-sold figures were all inflated. Found because an insider's share picture (live SEC data, read once) showed half of what the feed (30-day file) did; 125 of 641 buys in the file had more shares bought than owned afterwards, against 1 of 49 in the hourly file, which was never affected.
+- **Fix:** `form4Files()` in [scripts/lib/sec.mjs](../scripts/lib/sec.mjs) keeps one path per accession number (test in `tests/merge.test.mjs`). The 30-day file now carries `version: 2`; an older file is discarded and all 30 days are fetched again (about an hour once; the daily workflow's time limit went from 90 to 150 minutes for it).
+- **Not affected:** the hourly feed, stock and insider pages (they read SEC directly), Congress data, and the backtest (SEC's quarterly data sets).
+
