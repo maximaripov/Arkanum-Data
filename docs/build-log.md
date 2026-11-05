@@ -359,4 +359,5 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **`/research/insider-buys`**: the backtest written up for readers (method, a six-month table, findings, what changed on the site, limits), linked from About and in the sitemap; numbers from [docs/backtest/results.md](backtest/results.md). Its table is the site's first one shown on phones too (`.ttable.fit`: names wrap, tighter cells under 400px).
 - **`/congress`** now arrives with its numbers and lists in the HTML (fetched on the server, refreshed hourly) instead of "Loading…"; the browser fetches only if the server couldn't.
 - Member links and the sitemap now build each member's address from their name (`memberSlug`) instead of the stored `s` field, so an old cached copy of the overview can't produce `/congress/undefined` links (it did in a local build).
+- **Findable:** the research page was linked only from one bullet on About, and the owner couldn't find it. Now also linked from the footer on every page ("Research: do insider buys beat the market?") and from the Insiders overview's "Most unusual buys" card ("does the score work?").
 

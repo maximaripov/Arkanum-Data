@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Ticker />
         <main>{children}</main>
         <footer className="muted small">
-          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/terms">Terms</Link> · RSS: <a href="/feeds/insider-buys.xml">unusual insider buys</a>, <a href="/feeds/congress.xml">Congress trades</a>
+          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Digest market figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/research/insider-buys">Research: do insider buys beat the market?</Link> · <Link href="/terms">Terms</Link> · RSS: <a href="/feeds/insider-buys.xml">unusual insider buys</a>, <a href="/feeds/congress.xml">Congress trades</a>
         </footer>
         <TabBar />
       </body>
