@@ -2,7 +2,7 @@
 // (from the site's insider directory, public/data/people.json).
 import { searchCompanies } from "@/lib/sec";
 
-type Person = [cik: string, name: string, symbol: string, role: string];
+type Person = [cik: string, name: string, symbol: string, role: string, common?: string];
 const words = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
 
 // The directory is kept in memory for an hour: at a few MB it is over the fetch cache's limit.
@@ -21,12 +21,12 @@ async function searchPeople(q: string, origin: string) {
   const people = await loadPeople(origin);
   const out: Person[] = [];
   for (const p of people) {
-    const name = words(p[1]);
+    const name = words(p[4] ? `${p[1]} ${p[4]}` : p[1]);
     // Every typed word must start one of the name's words ("jen hua" finds Jensen Huang).
     if (terms.every((t) => name.some((w) => w.startsWith(t)))) out.push(p);
     if (out.length >= 5) break;
   }
-  return out.map(([cik, name, symbol, role]) => ({ symbol, name, type: "Insider", exchange: `${symbol} · ${role}`, href: `/insider/${cik}` }));
+  return out.map(([cik, name, symbol, role, common]) => ({ symbol, name: common ?? name, type: "Insider", exchange: `${symbol} · ${role}`, href: `/insider/${cik}` }));
 }
 
 export async function GET(req: Request) {

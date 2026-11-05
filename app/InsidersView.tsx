@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FamousView } from "@/components/FamousView";
 import Link from "next/link";
 import { TradeList, Signal, personName, roleLabel } from "@/components/TradeList";
 import { loadInsiders } from "@/lib/insiderData";
@@ -25,8 +26,8 @@ const buildOv = buildOverview as unknown as (d: { trades: InsiderTrade[]; days: 
 import { companyName } from "@/lib/people.mjs";
 
 type Kind = "buys" | "sells" | "all";
-type View = "overview" | "groups" | "trades" | "funds";
-const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["funds", "Big funds"]];
+type View = "overview" | "groups" | "trades" | "funds" | "famous";
+const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["funds", "Big funds"], ["famous", "Well-known"]];
 const SIZES = [[0, "Any size"], [100_000, "$100K+"], [1_000_000, "$1M+"]] as const;
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const shortDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -62,7 +63,7 @@ function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; previe
   );
 }
 
-function InsiderTrades({ view, go }: { view: Exclude<View, "funds">; go: (v: View) => void }) {
+function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; go: (v: View) => void }) {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [err, setErr] = useState("");
   const [updated, setUpdated] = useState("");
@@ -311,10 +312,10 @@ export default function InsidersView() {
   const go = (v: View) => { setView(v); history.replaceState(null, "", v === "overview" ? location.pathname : `?view=${v}`); };
   return (
     <div className="stack">
-      <div className="tabs scroll-tabs" role="tablist">
+      <div className="tabs wrap-tabs" role="tablist">
         {VIEWS.map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
       </div>
-      {view === "funds" ? <FundsView /> : <InsiderTrades view={view} go={go} />}
+      {view === "funds" ? <FundsView /> : view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} />}
     </div>
   );
 }

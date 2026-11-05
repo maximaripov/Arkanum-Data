@@ -72,6 +72,11 @@ jobs:
       - name: Insider directory (search)
         continue-on-error: true
         run: node scripts/build-people.mjs
+      # Wikidata CEOs/chairs matched to Form 4 filers, ranked by Wikipedia views; then the
+      # directory again so search knows their common names ("Jensen Huang").
+      - name: Well-known insiders (Wikipedia views)
+        continue-on-error: true
+        run: node scripts/build-famous.mjs && node scripts/build-people.mjs
       - id: funds
         name: Update big-fund holdings (SEC 13F)
         run: node scripts/build-funds.mjs

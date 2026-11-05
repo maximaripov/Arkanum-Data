@@ -9,6 +9,7 @@ export const revalidate = 86400;
 // Main pages, every House member with stock trades, and every stock and insider with a
 // buy, or an executive or director sale of $250K+, in the last 30 days. (Not every insider:
 // each insider page reads their filings from SEC, so crawling thousands would hit its limits.)
+// Plus the well-known insiders list (up to 100).
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = ["", "/congress", "/research/insider-buys", "/markets", "/stakes", "/briefing", "/about", "/terms"].map((p) => ({ url: SITE + p, changeFrequency: (p === "/about" || p === "/terms" || p.startsWith("/research") ? "monthly" : "daily") as "monthly" | "daily" }));
   const d = await loadInsiders(SITE, { next: { revalidate: 86400 } }).catch(() => null);
@@ -17,5 +18,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const people = [...new Set(shown.map((t) => t.ownerCik).filter(Boolean))].map((c) => ({ url: `${SITE}/insider/${c}`, changeFrequency: "weekly" as const }));
   const c = await fetch(`${SITE}/data/congress-overview.json`, { next: { revalidate: 86400 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const members = ((c?.members ?? []) as { m: string }[]).map((m) => ({ url: `${SITE}/congress/${memberSlug(m.m)}`, changeFrequency: "weekly" as const }));
-  return [...pages, ...members, ...stocks, ...people];
+  const famous = await fetch(`${SITE}/data/famous.json`, { next: { revalidate: 86400 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const known = new Set(shown.map((t) => t.ownerCik));
+  const wellKnown = ((famous?.people ?? []) as { cik: string }[]).filter((p) => !known.has(p.cik)).map((p) => ({ url: `${SITE}/insider/${p.cik}`, changeFrequency: "weekly" as const }));
+  return [...pages, ...members, ...stocks, ...people, ...wellKnown];
 }

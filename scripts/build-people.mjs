@@ -25,7 +25,11 @@ const cutoff = new Date(Date.now() - 730 * 86_400_000).toISOString().slice(0, 10
 for (const [cik, p] of Object.entries(known)) if (p.last < cutoff) delete known[cik];
 
 await writeFile("data/people.json", JSON.stringify(known));
-// [cik, name, symbol, role] — most recent filers first, so they rank first among equal matches.
-const list = Object.entries(known).sort((a, b) => b[1].last.localeCompare(a[1].last)).map(([cik, p]) => [cik, p.n, p.s, p.r]);
+// Common names of well-known insiders (from build-famous.mjs: Wikipedia's "Jensen Huang" for
+// SEC's "Jen Hsun Huang"), so searching either finds them.
+const alias = new Map(((await read("public/data/famous.json"))?.people ?? []).map((p) => [p.cik, p.label]));
+// [cik, name, symbol, role, common name?] — most recent filers first, so they rank first among equal matches.
+const list = Object.entries(known).sort((a, b) => b[1].last.localeCompare(a[1].last))
+  .map(([cik, p]) => (alias.has(cik) && alias.get(cik) !== p.n ? [cik, p.n, p.s, p.r, alias.get(cik)] : [cik, p.n, p.s, p.r]));
 await writeFile("public/data/people.json", JSON.stringify(list));
 console.log(`people.json: ${list.length} insiders (${added} new)`);

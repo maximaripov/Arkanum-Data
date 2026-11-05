@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–38); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–39); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -22,7 +22,7 @@ Paste this into a new chat to continue. History of every change is in [build-log
 Dark by default; sun/moon button switches to light (per device, `form4.theme` in localStorage, applied before first paint by a script in `app/layout.tsx`; constants in `lib/theme.ts`). Inter + JetBrains Mono via `next/font`. Desktop: top bar, ticker band of today's insider trades, dense tables with 10-bar signal meters. Phone: compact header with search button, hero card, 2x2 stat cards, score rings, bottom tab bar (Insiders / Congress / Markets / Stakes / Digest).
 
 ## Pages
-- `/` Insiders. Tabs Overview, Group buys, All trades, Big funds. Overview reads `public/data/overview.json` (15 KB; the 850 KB 30-day file loads only for the trade lists): headline numbers, Strongest buys, Buying together, buying by day, Latest filings, Notable sales. Phone leads with the week's strongest buy.
+- `/` Insiders. Tabs Overview, Group buys, All trades, Big funds, Well-known (CEOs/chairs ranked by Wikipedia views, `famous.json`, daily). Overview reads `public/data/overview.json` (15 KB; the 850 KB 30-day file loads only for the trade lists): headline numbers, Strongest buys, Buying together, buying by day, Latest filings, Notable sales. Phone leads with the week's strongest buy.
 - `/congress` House members' stock trades: member dropdown, 30-day numbers, latest disclosures (linked to the PDF), most bought/sold (90 days), most active members.
 - `/congress/[member]` one server-rendered page per member (slug from `memberSlug()` in `lib/congress.mjs`; data `public/data/congress/<slug>.json`), all in the sitemap. Old `?member=` links redirect.
 - `/markets` TradingView overview, watchlist, people you follow, Coming up (Fed, jobs, CPI, GDP, PCE).
