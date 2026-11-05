@@ -11,7 +11,7 @@ import { memberSlug, amountRange } from "@/lib/congress.mjs";
 export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string };
 export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
 /** What the member dropdown needs. */
-export type PickerMember = Pick<Member, "m" | "s" | "p" | "sd" | "n">;
+export type PickerMember = Pick<Member, "m" | "p" | "sd" | "n">;
 export type Overview = {
   updated: string;
   stats: { trades30: number; members30: number; buys30: number; sells30: number; medianDelay: number | null; scannedSkipped: number; total: number };
@@ -61,7 +61,7 @@ export function MemberPicker({ members, current = "" }: { members: PickerMember[
         <span className="muted small">Member of the House</span>
         <select value={current} onChange={(e) => router.push(e.target.value ? `/congress/${e.target.value}` : "/congress")}>
           <option value="">All members</option>
-          {[...members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => <option key={x.s} value={x.s}>{x.m} ({x.p ?? "former"}-{x.sd}) · {x.n} trades</option>)}
+          {[...members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => <option key={x.m} value={memberSlug(x.m)}>{x.m} ({x.p ?? "former"}-{x.sd}) · {x.n} trades</option>)}
         </select>
       </label>
     </section>
@@ -75,7 +75,7 @@ export function MemberView({ member: sel, trades: shown, members, skipped }: { m
   return (
     <div className="ov">
       <h1 className="sr-only">{sel.m} stock trades</h1>
-      <MemberPicker members={members} current={sel.s} />
+      <MemberPicker members={members} current={memberSlug(sel.m)} />
       <section className="kpis">
         <div className="kpi"><small>Member</small><span>{sel.m}</span><em><Party p={sel.p} sd={sel.sd} />{sel.current ? "" : " · former member"}</em></div>
         <div className="kpi"><small>Stock trades · 2 yrs</small><span className="mono">{sel.n.toLocaleString("en-US")}</span><em>reported</em></div>
@@ -92,15 +92,16 @@ export function MemberView({ member: sel, trades: shown, members, skipped }: { m
   );
 }
 
-export function CongressView() {
+/** The overview arrives from the server (so search engines read it); the browser fetches it only if that failed. */
+export function CongressView({ initial }: { initial?: Overview | null }) {
   const router = useRouter();
-  const [o, setO] = useState<Overview | null | undefined>(undefined);
+  const [o, setO] = useState<Overview | null | undefined>(initial ?? undefined);
   useEffect(() => {
     // Old links (/congress?member=Name) go to the member's page.
     const m = new URLSearchParams(location.search).get("member");
     if (m) { router.replace(`/congress/${memberSlug(m)}`); return; }
-    fetch("/data/congress-overview.json").then((r) => (r.ok ? r.json() : null)).then(setO).catch(() => setO(null));
-  }, [router]);
+    if (!initial) fetch("/data/congress-overview.json").then((r) => (r.ok ? r.json() : null)).then(setO).catch(() => setO(null));
+  }, [router, initial]);
 
   if (o === undefined) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!o) return <section className="card"><p className="muted">Congress trades aren&apos;t available right now.</p></section>;
@@ -140,9 +141,9 @@ export function CongressView() {
       <section className="card flush">
         <div className="card-title"><h2>Most active members <span className="muted small">stock trades, last 2 years</span></h2></div>
         <ul className="lrows">{o.members.slice(0, 12).map((x) => (
-          <li key={x.s}><Link href={`/congress/${x.s}`}>
+          <li key={x.m}><Link href={`/congress/${memberSlug(x.m)}`}>
             <span className="lrow-main"><span><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small">latest trade {day(x.last)}</span></span>
-            <span className="lrow-v"><span className="mono">{x.n.toLocaleString()} trades</span><span className="muted small"><span className="up">{x.buys} buys</span> · <span className="down">{x.sells} sales</span></span></span>
+            <span className="lrow-v"><span className="mono">{x.n.toLocaleString("en-US")} trades</span><span className="muted small"><span className="up">{x.buys} buys</span> · <span className="down">{x.sells} sales</span></span></span>
           </Link></li>
         ))}</ul>
       </section>

@@ -354,3 +354,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - Kept on purpose: browser storage keys (`foresight.watchlist`, `.following`, `.welcomed`, `.instant`, `.deviceId`, `.notificationsOn`, `.synced`): renaming them needs a migration on every visitor's device and nobody sees them. The foresightscreener.vercel.app redirect (phones subscribed through it still use its `/api` and `/sw.js`). Old build-log rounds, which record history. The Vercel Blob store `foresight-alerts` (named in Vercel; the code reaches it by token, not name).
 - Owner to do: rename the GitHub repo (Settings → Repository name → Form4) and the Vercel project (Settings → General → Project Name), only after this round is live.
 
+## Round 36: backtest research page, Congress overview rendered on the server (2026-11-05)
+
+- **`/research/insider-buys`**: the backtest written up for readers (method, a six-month table, findings, what changed on the site, limits), linked from About and in the sitemap; numbers from [docs/backtest/results.md](backtest/results.md). Its table is the site's first one shown on phones too (`.ttable.fit`: names wrap, tighter cells under 400px).
+- **`/congress`** now arrives with its numbers and lists in the HTML (fetched on the server, refreshed hourly) instead of "Loading…"; the browser fetches only if the server couldn't.
+- Member links and the sitemap now build each member's address from their name (`memberSlug`) instead of the stored `s` field, so an old cached copy of the overview can't produce `/congress/undefined` links (it did in a local build).
+

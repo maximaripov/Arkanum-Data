@@ -395,6 +395,9 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 .ttable th { text-align: left; font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--card2); padding: .55rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .ttable th.r { text-align: right; }
 .ttable td { padding: .6rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+/* A table shown on phones too (research pages): names wrap, tighter cells on small screens. */
+.ttable.fit td:first-child { white-space: normal; }
+@media (max-width: 400px) { .ttable.fit th, .ttable.fit td { padding-left: .6rem; padding-right: .6rem; } }
 .ttable tr:last-child td { border-bottom: 0; }
 .ttable tbody tr:hover { background: var(--card2); }
 .ttable .why { margin-right: .3rem; border-radius: 999px; border: 1px solid var(--line); padding: .12rem .5rem; color: var(--muted); }

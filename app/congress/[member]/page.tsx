@@ -29,5 +29,5 @@ export default async function Page({ params }: { params: Promise<{ member: strin
   const slug = (await params).member;
   const [d, o] = await Promise.all([load(slug), get<Overview>("/data/congress-overview.json")]);
   if (!d) notFound();
-  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, s, p, sd, n }) => ({ m, s, p, sd, n }))} skipped={o?.stats.scannedSkipped ?? 0} />;
+  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n }) => ({ m, p, sd, n }))} skipped={o?.stats.scannedSkipped ?? 0} />;
 }

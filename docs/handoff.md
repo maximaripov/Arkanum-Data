@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–35); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–36); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -28,6 +28,7 @@ Dark by default; sun/moon button switches to light (per device, `form4.theme` in
 - `/markets` TradingView overview, watchlist, people you follow, Coming up (Fed, jobs, CPI, GDP, PCE).
 - `/stakes` what listed companies own: company dropdown, holdings, 5%+ stakes, private investments ("not verified"), cross-company lists.
 - `/stock/[symbol]`: chart + insider strip under it (buys/sales marks over the chart's range), SEC fundamentals, 8-Ks, Congress trades, companies that own it, big funds, insider trades. (FINRA retail table removed 2026-11-05.)
+- `/research/insider-buys`: the backtest for readers (linked from About).
 - `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
 - Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years).
 - RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); linked in the footer. Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
