@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { Picker } from "@/components/Picker";
 import Link from "next/link";
 import { fmtBig, fmtPct } from "@/lib/format";
 import { companyName } from "@/lib/people.mjs";
@@ -102,12 +103,8 @@ export function FundsView() {
 
       {part === "fund" ? <>
       <section className="card">
-        <label className="picker">
-          <span className="muted small">Fund</span>
-          <select value={sel} onChange={(e) => setSel(Number(e.target.value))}>
-            {funds.map((x, i) => <option key={x.cik} value={i}>{x.name}</option>)}
-          </select>
-        </label>
+        <Picker label="Fund" items={funds.map((x, i) => ({ value: String(i), label: x.name, sub: x.who }))} value={String(sel)}
+          onChange={(v) => setSel(Number(v))} placeholder="Search fund or manager" />
         <div className="fund-head">
           <div><h2 className="fund-name">{f.name}</h2><div className="muted small">{f.who}</div></div>
           <dl className="stats compact">

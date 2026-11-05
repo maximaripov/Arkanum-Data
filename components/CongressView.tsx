@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memberSlug, amountRange } from "@/lib/congress.mjs";
+import { Picker, type PickerItem } from "@/components/Picker";
 
 export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string };
 export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
@@ -55,15 +56,16 @@ export function CongressTrades({ trades, showMember = true, showStock = true }: 
 /** The member dropdown: picking one opens their page. */
 export function MemberPicker({ members, current = "" }: { members: PickerMember[]; current?: string }) {
   const router = useRouter();
+  const PARTY: Record<string, string> = { D: "democrat", R: "republican" };
+  const items: PickerItem[] = [
+    { value: "", label: "All members", sub: `${members.length} with stock trades` },
+    ...[...members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => ({ value: memberSlug(x.m), label: x.m, sub: `${x.p ? `${x.p}-` : "former · "}${x.sd} · ${x.n.toLocaleString("en-US")} ${x.n === 1 ? "trade" : "trades"}`, keywords: x.p ? PARTY[x.p] : "former" })),
+  ];
+  const featured = [...members].sort((a, b) => b.n - a.n).slice(0, 8).map((x) => memberSlug(x.m));
   return (
     <section className="card span12 cpick">
-      <label className="picker">
-        <span className="muted small">Member of the House</span>
-        <select value={current} onChange={(e) => router.push(e.target.value ? `/congress/${e.target.value}` : "/congress")}>
-          <option value="">All members</option>
-          {[...members].sort((a, b) => a.m.localeCompare(b.m)).map((x) => <option key={x.m} value={memberSlug(x.m)}>{x.m} ({x.p ?? "former"}-{x.sd}) · {x.n} trades</option>)}
-        </select>
-      </label>
+      <Picker label="Member of the House" items={items} value={current} featured={featured} placeholder="Search name, party or state (e.g. TX)"
+        onChange={(v) => router.push(v ? `/congress/${v}` : "/congress")} />
     </section>
   );
 }
@@ -131,7 +133,7 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
               <li key={x.t}><Link href={`/stock/${x.t}`}>
                 <strong className="lrow-sym">{x.t}</strong>
                 <span className="lrow-main"><span className="muted small">{x.a.replace(/\s*-?\s*(Common Stock|Ordinary Shares).*$/i, "")}</span></span>
-                <span className="lrow-v"><span className={`mono ${tone}`}>{x.members} {x.members === 1 ? "member" : "members"}</span><span className="muted small">{x.n} trades</span></span>
+                <span className="lrow-v"><span className={`mono ${tone}`}>{x.members} {x.members === 1 ? "member" : "members"}</span><span className="muted small">{x.n} {x.n === 1 ? "trade" : "trades"}</span></span>
               </Link></li>
             ))}</ul>
           </section>

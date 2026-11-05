@@ -368,4 +368,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Search directory backfill:** [scripts/backfill-people.mjs](../scripts/backfill-people.mjs) adds everyone with a trade the site would show (any open-market purchase, or $250K+ of sales in one filing) over the last two years from SEC's quarterly data sets; manual workflow `people-backfill.yml`, then `build-people.mjs` as usual (newer records win). Test in `tests/backfill-people.test.mjs`.
 - The quarterly data-set reader moved from the backtest into [scripts/lib/form345.mjs](../scripts/lib/form345.mjs) (shared; a local test folder no longer tries to download missing quarters).
 - `/api/search` keeps the directory in memory for an hour, since a backfilled file can exceed the 2 MB fetch-cache limit.
+- **Backfill result (2026-11-05):** 19,381 insiders in the search (was 1,504), 1.1 MB. SEC's quarterly data sets were found for 2024q4–2026q1; **2026q2 and 2026q3 returned "not published"** (unexpected: they usually appear about a month after the quarter), so people whose only trades fell in April–early October 2026 are missing until `people-backfill.yml` is rerun after SEC publishes them. SEC's name for Nvidia's CEO is "Jen Hsun Huang": "jen huang" finds him, "jensen" doesn't.
+
+## Round 38: searchable pickers (2026-11-05)
+
+- The member, company and fund dropdowns are now one searchable picker ([components/Picker.tsx](../components/Picker.tsx)): a select-like button opens a panel (desktop) or a sheet from the bottom (phone) with a search box. Typing matches the start of any word in the name or details (party, state, ticker, manager): "tx" finds the 11 Texas members. With nothing typed it shows a short group first ("Most active" members by trades, "Largest holdings" for company stakes), then everything A–Z. Arrow keys, Enter and Escape work; the current choice is marked in lime. Keeps the owner's "dropdown, not chip slider" rule.
+- Fixed "1 trades" in Congress lists.
 

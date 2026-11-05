@@ -3,6 +3,7 @@
 // Public companies from their SEC filings (public/data/stakes.json, scripts/build-stakes.mjs);
 // private startups from press releases (public/data/private.json, scripts/build-private.mjs).
 import { useEffect, useMemo, useState } from "react";
+import { Picker } from "@/components/Picker";
 import Link from "next/link";
 import { HoldingRows, Badge, ChangeLines, type Holding } from "./FundsView";
 import { fmtBig } from "@/lib/format";
@@ -60,7 +61,9 @@ export function StakesView() {
   const choose = (cik: string) => { const c = data?.find((x) => x.cik === cik); if (!c) return; setSel(cik); history.replaceState(null, "", `?c=${c.ticker ?? c.cik}`); };
 
   const recentStakes = useMemo(() => (data ?? []).flatMap((c) => c.stakes.map((s) => ({ ...s, owner: c }))).sort((a, b) => b.filed.localeCompare(a.filed)).slice(0, 12), [data]);
-  const sorted = useMemo(() => [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [data]);
+  const pickerItems = useMemo(() => [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name))
+    .map((x) => ({ value: x.cik, label: x.name, sub: [x.ticker, x.industry ? x.industry.toLowerCase().replace(/^./, (m) => m.toUpperCase()) : ""].filter(Boolean).join(" · ") })), [data]);
+  const largest = useMemo(() => [...(data ?? [])].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 8).map((x) => x.cik), [data]);
 
   if (data === null) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!data.length) return <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running.</p></section>;
@@ -71,12 +74,7 @@ export function StakesView() {
     <div className="ov">
       <section className="card">
         <h1>Company stakes</h1>
-        <label className="picker">
-          <span className="muted small">Company</span>
-          <select value={c.cik} onChange={(e) => choose(e.target.value)}>
-            {sorted.map((x) => <option key={x.cik} value={x.cik}>{x.name}{x.ticker ? ` (${x.ticker})` : ""}</option>)}
-          </select>
-        </label>
+        <Picker label="Company" items={pickerItems} value={c.cik} onChange={choose} featured={largest} featuredTitle="Largest holdings" placeholder="Search company or ticker" />
         <div className="fund-head">
           <div>
             <h2 className="fund-name">{c.name}</h2>

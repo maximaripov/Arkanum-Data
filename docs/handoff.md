@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–37); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–38); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -14,7 +14,7 @@ Paste this into a new chat to continue. History of every change is in [build-log
 ## Owner's style rules
 - **No emoji anywhere** (site, notifications, copy). Words or line-drawn SVG icons; plain marks ▲ ▼ › ↗ × are fine. `tests/no-emoji.test.mjs` enforces it.
 - No intro blurbs or "How to read this" sections. Exception: the first-visit welcome popup stays.
-- Consistent layouts: dropdown pickers (no sideways chip sliders); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
+- Consistent layouts: dropdown pickers (no sideways chip sliders; long lists use the searchable `Picker`); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
 - Logo: sharp `[4]` in lime `#a3e635`. Market quotes (S&P 500, Nasdaq 100, BTC, gold, 10-year) only through TradingView embeds (index levels are licensed; FRED's S&P series is copyrighted).
 - How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language, no jargon.
 
