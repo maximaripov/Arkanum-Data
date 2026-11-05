@@ -88,7 +88,8 @@ function same(a: string | null | undefined, b: string | undefined) {
 // secret is stored in GitHub. ALERTS_SECRET still works for manual runs.
 const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const OWNER_ID = process.env.GITHUB_OWNER_ID ?? "351230404";
-const REPO = (process.env.GITHUB_REPO ?? "maximaripov/foresight").toLowerCase();
+// The repo was renamed from Foresight to Form4; accept either name (and any GITHUB_REPO set on Vercel).
+const REPOS = new Set([process.env.GITHUB_REPO, "maximaripov/form4", "maximaripov/foresight"].filter(Boolean).map((r) => r!.toLowerCase()));
 
 /** The owner code (ALERTS_PASSCODE) marks a device as the site owner's. */
 export const ownerCodeOk = (code: unknown) => typeof code === "string" && same(code, process.env.ALERTS_PASSCODE);
@@ -98,8 +99,8 @@ export async function secretOk(req: Request) {
   if (!token) return false;
   if (same(token, process.env.ALERTS_SECRET)) return true;
   try {
-    const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: "https://token.actions.githubusercontent.com", audience: "foresight-alerts" });
-    return payload.repository_owner_id === OWNER_ID && String(payload.repository).toLowerCase() === REPO && payload.ref === "refs/heads/main";
+    const { payload } = await jwtVerify(token, GITHUB_JWKS, { issuer: "https://token.actions.githubusercontent.com", audience: ["form4-alerts", "foresight-alerts"] });
+    return payload.repository_owner_id === OWNER_ID && REPOS.has(String(payload.repository).toLowerCase()) && payload.ref === "refs/heads/main";
   } catch {
     return false;
   }

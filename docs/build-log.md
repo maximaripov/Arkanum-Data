@@ -1,4 +1,4 @@
-# Foresight: build log and summary
+# Form4: build log and summary (formerly Foresight)
 
 Built on 2026-11-02 in one Claude Code session. Personal use only.
 
@@ -6,7 +6,7 @@ Built on 2026-11-02 in one Claude Code session. Personal use only.
 
 | What | Link |
 |---|---|
-| Live app | https://foresightscreener.vercel.app |
+| Live app | https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects) |
 | GitHub repo (private) | https://github.com/maximaripov/Foresight |
 | Vercel project | https://vercel.com/maximaripov/foresight |
 | Nightly data job | https://github.com/maximaripov/Foresight/actions/workflows/data.yml |
@@ -346,4 +346,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - The backtest found the score does not pick better-performing buys, so the labels now describe what the score measures: **Unusual** (60+), **Somewhat unusual** (40–59), **Routine**. "Strongest buys" became "Most unusual buys", "Signal 88" became "Score 88", and the "Strong & notable buys only" filter became "Unusual buys only". Same in the Digest page, the daily notification ("Most unusual insider buy"), the insider RSS feed (now "unusual insider buys") and the About page, which now says higher-scoring buys did not do better in Form4's 2023–2025 test.
 - Removed three claims the test doesn't support: group buys as "the strongest insider signal" (Insiders, Digest) and "Buys by several insiders are the strongest signal" (stock pages).
 - Only display text changed: stored tiers are still `strong` / `notable` / `routine`, so no data or saved links (`?signal=1`) change. Scoring itself is unchanged.
+
+## Round 35: the remaining "Foresight" names (2026-11-05)
+
+- Renamed: package name (`form4`), the service worker's default notification tag, in-page event names, `.env.example`. The site's alert check (`lib/alerts.ts`) now accepts GitHub jobs from either `maximaripov/Form4` or `maximaripov/Foresight` and either token audience (`form4-alerts`, `foresight-alerts`), so the repo can be renamed without breaking the digest or alerts; the jobs switch to `form4-alerts` in a second push once the site accepts it.
+- Kept on purpose: browser storage keys (`foresight.watchlist`, `.following`, `.welcomed`, `.instant`, `.deviceId`, `.notificationsOn`, `.synced`): renaming them needs a migration on every visitor's device and nobody sees them. The foresightscreener.vercel.app redirect (phones subscribed through it still use its `/api` and `/sw.js`). Old build-log rounds, which record history. The Vercel Blob store `foresight-alerts` (named in Vercel; the code reaches it by token, not name).
+- Owner to do: rename the GitHub repo (Settings → Repository name → Form4) and the Vercel project (Settings → General → Project Name), only after this round is live.
 

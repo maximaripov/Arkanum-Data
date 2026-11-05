@@ -1,14 +1,15 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–34); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–35); add new rounds there.
 
 ## Basics
-- Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Foresight (private, `main`). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
+- Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
 - Free hobby site: no income, no accounts, no contact address. Must stay free (no paid APIs or hosting).
 - Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; commits and workflows use that identity.
 - **Working rules:** fix bugs and glitches without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions develop on a `claude/...` branch; push to both). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes.
 - Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (never store its value anywhere). Two owner devices are registered. GitHub secrets: `SEC_USER_AGENT` (contact string SEC requires); no `FRED_API_KEY` (not needed: BLS works).
 - Never put the owner's email in request headers or code.
+- Browser storage keys keep the old `foresight.` prefix on purpose (renaming would need a migration on every device). The site's alert check accepts jobs from either repo name.
 
 ## Owner's style rules
 - **No emoji anywhere** (site, notifications, copy). Words or line-drawn SVG icons; plain marks ▲ ▼ › ↗ × are fine. `tests/no-emoji.test.mjs` enforces it.

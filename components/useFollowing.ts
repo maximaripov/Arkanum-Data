@@ -17,16 +17,16 @@ export function useFollowing() {
   useEffect(() => {
     setList(read());
     const on = () => setList(read());
-    window.addEventListener("foresight-following", on);
+    window.addEventListener("form4-following", on);
     window.addEventListener("storage", on);
-    return () => { window.removeEventListener("foresight-following", on); window.removeEventListener("storage", on); };
+    return () => { window.removeEventListener("form4-following", on); window.removeEventListener("storage", on); };
   }, []);
   const toggle = useCallback((p: Followed) => {
     const cur = read();
     const next = cur.some((x) => x.cik === p.cik) ? cur.filter((x) => x.cik !== p.cik) : [...cur, p].slice(-100);
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     setList(next);
-    window.dispatchEvent(new Event("foresight-following"));
+    window.dispatchEvent(new Event("form4-following"));
     syncSoon();
   }, []);
   return { list, toggle, has: (cik: string) => list.some((x) => x.cik === cik) };

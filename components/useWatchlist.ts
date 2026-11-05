@@ -14,14 +14,14 @@ export function useWatchlist() {
   useEffect(() => {
     setList(read());
     const on = () => setList(read());
-    window.addEventListener("foresight-watchlist", on);
+    window.addEventListener("form4-watchlist", on);
     window.addEventListener("storage", on);
-    return () => { window.removeEventListener("foresight-watchlist", on); window.removeEventListener("storage", on); };
+    return () => { window.removeEventListener("form4-watchlist", on); window.removeEventListener("storage", on); };
   }, []);
   const save = useCallback((next: string[]) => {
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     setList(next);
-    window.dispatchEvent(new Event("foresight-watchlist"));
+    window.dispatchEvent(new Event("form4-watchlist"));
     syncSoon();
   }, []);
   const toggle = useCallback((s: string) => { const cur = read(); save(cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]); }, [save]);

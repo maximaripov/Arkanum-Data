@@ -9,7 +9,7 @@ self.addEventListener("push", (event) => {
     body: msg.body,
     icon: "/icon-192.png",
     badge: "/icon-192.png",
-    tag: msg.tag || "foresight",
+    tag: msg.tag || "form4",
     data: { url: msg.url || "/briefing" },
   }));
 });
