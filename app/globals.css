@@ -525,25 +525,24 @@ html[data-theme="light"] .party.r { color: #b91c1c; } html[data-theme="light"] .
 @media (min-width: 761px) and (max-width: 1299px) { .ttable td.cstock .muted { display: none; } }
 
 /* ---- Retro terminal (round 42) -------------------------------------------------------
-   Black and white with green/red for buys and sales; monospace text, a pixel font for
-   headings, square corners, inverse-video selection, faint scanlines and glow (dark only),
-   a blinking cursor after the wordmark (still when the visitor asks for less motion). */
+   Black and white with green/red for buys and sales; monospace text, headings as prompts,
+   square corners, inverse-video selection, a soft glow (dark only), a blinking cursor after
+   the wordmark (still when the visitor asks for less motion). The owner turned down
+   scanlines and a pixel font. */
 html, body, button, input, select, textarea { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 *, *::before, *::after { border-radius: 0 !important; }
 :root { --shadow: none; }
 ::selection { background: var(--text); color: var(--bg); }
 
-/* Screen: faint scanlines over everything, glow on headings and big numbers. */
-html:not([data-theme="light"]) body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .028) 0 1px, transparent 1px 3px); }
+/* Screen: a soft glow on headings and big numbers (dark only). */
 h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
 
-/* Pixel font for the wordmark and section headings, which read as prompts. */
-.wordmark { font-family: var(--font-retro), var(--font-mono), monospace; font-size: 1.75rem; font-weight: 400; letter-spacing: .02em; line-height: 1; }
+/* The wordmark and section headings read as prompts. */
+.wordmark { font-family: var(--font-mono), monospace; font-size: 1.2rem; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
 .cursor { display: inline-block; width: .5em; height: .78em; margin-left: .12em; vertical-align: -.04em; background: currentColor; box-shadow: var(--glow); animation: blink 1.05s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
-.card-title h2, .card > h2, .card-head h2, .ov h1:not(.sr-only), .prose h1 { font-family: var(--font-retro), var(--font-mono), monospace; font-weight: 400; font-size: 1.35rem; letter-spacing: .03em; text-transform: uppercase; }
+.card-title h2, .card > h2, .card-head h2, .ov h1:not(.sr-only), .prose h1 { font-family: var(--font-mono), monospace; font-weight: 700; font-size: .9rem; letter-spacing: .04em; text-transform: uppercase; }
 .card-title h2 .small, .card > h2 .small, .card-head h2 .small { font-family: var(--font-mono), monospace; font-size: .72rem; text-transform: none; letter-spacing: 0; }
 .card-title h2::before, .card > h2::before, .card-head h2::before { content: "> "; color: var(--up); }
 

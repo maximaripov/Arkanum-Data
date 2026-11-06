@@ -1,6 +1,6 @@
 # Form4 handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–41); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–42); add new rounds there.
 
 ## Basics
 - Live: https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
@@ -15,11 +15,11 @@ Paste this into a new chat to continue. History of every change is in [build-log
 - **No emoji anywhere** (site, notifications, copy). Words or line-drawn SVG icons; plain marks ▲ ▼ › ↗ × are fine. `tests/no-emoji.test.mjs` enforces it.
 - No intro blurbs or "How to read this" sections. Exception: the first-visit welcome popup stays.
 - Consistent layouts: dropdown pickers (no sideways chip sliders; long lists use the searchable `Picker`); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
-- Logo: sharp `[4]` in lime `#a3e635`. Market quotes (S&P 500, Nasdaq 100, BTC, gold, 10-year) only through TradingView embeds (index levels are licensed; FRED's S&P series is copyrighted).
+- Logo: a ring with a gap where a drop broke free (`components/Logo.tsx`, in the text colour) next to a lowercase `form4` wordmark with a blinking block cursor. Colours: black and white, green `#3ddc84` for buys/up and red `#ff5f56` for sales/down (light mode: black on white, `#0a8a3e` / `#c6282d`). Market quotes (S&P 500, Nasdaq 100, BTC, gold, 10-year) only through TradingView embeds (index levels are licensed; FRED's S&P series is copyrighted).
 - How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language, no jargon.
 
-## Design (round 25)
-Dark by default; sun/moon button switches to light (per device, `form4.theme` in localStorage, applied before first paint by a script in `app/layout.tsx`; constants in `lib/theme.ts`). Inter + JetBrains Mono via `next/font`. Desktop: top bar, ticker band of today's insider trades, dense tables with 10-bar signal meters. Phone: compact header with search button, hero card, 2x2 stat cards, score rings, bottom tab bar (Insiders / Congress / Markets / Stakes / Digest).
+## Design (round 42: retro terminal)
+Black by default; sun/moon button switches to a black-on-white "printout" (per device, `form4.theme` in localStorage, applied before first paint by a script in `app/layout.tsx`; constants in `lib/theme.ts`). Monospace (JetBrains Mono via `next/font`) everywhere; section headings are bold capitals with a green `>` prompt; square corners; the active nav item and tab in inverse video (`[overview]`); double-line borders on the headline numbers and the week's top buy; a soft glow on headings and big numbers in dark mode. The owner turned down scanlines and a pixel font. All of it is one section at the end of `app/globals.css` plus the colour tokens at its top. Desktop: top bar, ticker band, dense tables with 10-bar meters. Phone: compact header with search button, hero card, 2x2 stat cards, score rings, bottom tab bar (Insiders / Congress / Markets / Stakes / Digest).
 
 ## Pages
 - `/` Insiders. Tabs Overview, Group buys, All trades, Big funds, Well-known (CEOs/chairs ranked by Wikipedia views, `famous.json`, daily). Overview reads `public/data/overview.json` (15 KB; the 850 KB 30-day file loads only for the trade lists): headline numbers, Strongest buys, Buying together, buying by day, Latest filings, Notable sales. Phone leads with the week's strongest buy.
