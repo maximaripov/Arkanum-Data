@@ -10,7 +10,7 @@ import { gunzipSync } from "node:zlib";
 import { extractDeals, dealKey, SLUG_ALIASES } from "./lib/deals.mjs";
 
 const OUT = "public/data/private.json";
-const UA = { "User-Agent": "Arkanum (form4-insiders.vercel.app)" };
+const UA = { "User-Agent": "Arkanum (arkanumdata.vercel.app)" };
 // --wide: every funding release, not just ones naming an investor in the headline (most
 // name their investors in the first paragraphs). Many more pages to read (about an hour).
 const WIDE = process.argv.includes("--wide");

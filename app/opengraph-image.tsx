@@ -20,7 +20,7 @@ export default function Image() {
             <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, maxWidth: 640 }}>What insiders are buying</div>
             <div style={{ fontSize: 30, color: "#8c8c8c", maxWidth: 620, lineHeight: 1.35 }}>Executives, directors and big funds, from official SEC filings, in plain English.</div>
           </div>
-          <div style={{ fontSize: 24, color: "#8c8c8c" }}>Free · no account · form4-insiders.vercel.app</div>
+          <div style={{ fontSize: 24, color: "#8c8c8c" }}>Free · no account · arkanumdata.vercel.app</div>
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: "100%", paddingBottom: 10 }}>
           {BARS.map((h, i) => <div key={i} style={{ width: 22, height: h * 2.6, background: "#3ddc84", opacity: 0.55 + (i / BARS.length) * 0.45 }} />)}

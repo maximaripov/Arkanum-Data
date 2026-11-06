@@ -9,7 +9,7 @@ import { companyName } from "@/lib/people.mjs";
 // Rebuilt at most every 30 minutes: the page arrives with its insider trades, fundamentals
 // and announcements already in it, so visitors see them at once and search engines can read them.
 export const revalidate = 1800;
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const clean = (raw: string) => decodeURIComponent(raw).toUpperCase();

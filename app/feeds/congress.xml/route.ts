@@ -4,7 +4,7 @@ import { memberSlug, amountRange } from "@/lib/congress.mjs";
 import { rss, esc, type FeedItem } from "@/lib/rss";
 
 export const revalidate = 3600;
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 type Trade = { member: string; party: string | null; state: string; district: number; filed: string; date: string; owner: string; ticker: string | null; asset: string; assetType: string | null; type: string; min: number | null; max: number | null; url: string };
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });

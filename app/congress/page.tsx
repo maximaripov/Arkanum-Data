@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 // Rendered on the server and refreshed at most hourly (the data changes once a day).
 export const revalidate = 3600;
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 
 export default async function Congress() {
   const r = await fetch(`${SITE}/data/congress-overview.json`, { next: { revalidate: 3600 } }).catch(() => null);

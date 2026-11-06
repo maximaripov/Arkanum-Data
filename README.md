@@ -2,7 +2,7 @@
 
 A free, public market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English — with prices, charts and news from TradingView. No account, no ads. Works on any phone via **Add to Home Screen**, with an optional daily notification.
 
-Live: https://form4-insiders.vercel.app
+Live: https://arkanumdata.vercel.app
 
 ## What's in it
 

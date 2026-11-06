@@ -6,7 +6,7 @@ import { MemberView, type CTrade, type Member, type Overview } from "@/component
 // changes once a day), so the trades are in the HTML for visitors and search engines.
 export const revalidate = 3600;
 export async function generateStaticParams() { return []; }
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 
 const get = async <T,>(path: string): Promise<T | null> => {
   const r = await fetch(SITE + path, { next: { revalidate: 3600 } }).catch(() => null);

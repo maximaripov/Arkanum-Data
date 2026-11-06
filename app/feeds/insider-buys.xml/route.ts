@@ -7,7 +7,7 @@ import { rss, esc, type FeedItem } from "@/lib/rss";
 import type { InsiderTrade } from "@/lib/sec";
 
 export const revalidate = 3600;
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 type Scored = InsiderTrade & { conv?: { score: number; tier: string; reasons: { text: string }[] } | null };
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 

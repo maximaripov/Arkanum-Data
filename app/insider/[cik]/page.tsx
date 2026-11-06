@@ -20,7 +20,7 @@ const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US",
 async function load(cik: string) {
   const [r, site] = await Promise.all([
     insiderTradesByOwner(cik).catch(() => null),
-    loadInsiders("https://form4-insiders.vercel.app", { next: { revalidate: 1800 } }).catch(() => null),
+    loadInsiders("https://arkanumdata.vercel.app", { next: { revalidate: 1800 } }).catch(() => null),
   ]);
   if (!r) return null;
   return { name: personName(r.name || r.trades[0]?.owner || "Insider"), trades: withConviction(withHistory(r.trades, site)) as InsiderTrade[] };

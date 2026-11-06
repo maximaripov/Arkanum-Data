@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export const alt = "This House member's stock trades on Arkanum";
 export const size = OG_SIZE;
 export const contentType = "image/png";
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 
 export default async function Image({ params }: { params: Promise<{ member: string }> }) {
   const slug = (await params).member;

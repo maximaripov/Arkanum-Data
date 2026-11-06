@@ -18,7 +18,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
   const symbol = decodeURIComponent((await params).symbol).toUpperCase();
   const [co, ins] = await Promise.all([
     cikForTicker(symbol).catch(() => null),
-    loadInsiders("https://form4-insiders.vercel.app", { next: { revalidate: 1800 } }),
+    loadInsiders("https://arkanumdata.vercel.app", { next: { revalidate: 1800 } }),
   ]);
   const mine = ((ins?.trades ?? []) as InsiderTrade[]).filter((t) => t.symbol === symbol && isExecOrDirector(t));
   const sum = (code: string) => mine.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);

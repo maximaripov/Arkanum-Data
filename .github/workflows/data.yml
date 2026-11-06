@@ -48,7 +48,7 @@ jobs:
     timeout-minutes: 150 # a full 30-day insider rebuild takes about an hour; normal runs ~2 min
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-      SITE_URL: https://form4-insiders.vercel.app
+      SITE_URL: https://arkanumdata.vercel.app
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

@@ -14,7 +14,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--
 
 const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://form4-insiders.vercel.app"),
+  metadataBase: new URL("https://arkanumdata.vercel.app"),
   title: { default: "Arkanum Data: what insiders are buying", template: "%s · Arkanum Data" },
   description: DESCRIPTION,
   openGraph: { type: "website", siteName: "Arkanum Data", title: "Arkanum Data: what insiders are buying", description: DESCRIPTION, url: "/" },

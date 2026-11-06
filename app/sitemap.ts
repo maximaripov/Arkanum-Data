@@ -3,7 +3,7 @@ import { loadInsiders } from "@/lib/insiderData";
 import { memberSlug } from "@/lib/congress.mjs";
 import { isExecOrDirector } from "@/lib/people.mjs";
 
-const SITE = "https://form4-insiders.vercel.app";
+const SITE = "https://arkanumdata.vercel.app";
 export const revalidate = 86400;
 
 // Main pages, every House member with stock trades, and every stock and insider with a

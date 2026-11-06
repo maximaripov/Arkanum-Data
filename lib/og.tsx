@@ -54,7 +54,7 @@ export function ogImage({ section, title, subtitle, tag, stats = [], rows = [], 
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, color: C.muted }}>
           <span>From official filings · free, no account</span>
-          <span>form4-insiders.vercel.app</span>
+          <span>arkanumdata.vercel.app</span>
         </div>
       </div>
     ),
