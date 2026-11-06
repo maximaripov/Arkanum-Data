@@ -422,3 +422,8 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - That day's 4 PM run started 23 seconds before the push, still on the old `SITE_URL`.
 - Search Console and Bing Webmaster dropped: the owner won't do them.
 - The owner decided not to re-add the old addresses, so `vercel.json` (redirects only) was deleted. Old links, RSS subscriptions and home-screen installs from the old addresses stay dead; re-add the app from the new address.
+
+## Round 46: rolling ticker; deployment retention (2026-11-06)
+
+- **Vercel usage (owner's screenshot, last 30 days):** Functions Storage 8.04 / 10 GB was the only limit near its cap (Active CPU 22 min / 4 h, invocations 17K / 1M, CDN requests 41K / 1M, origin transfer 66 MB / 10 GB). Likely cause: every deploy (about 25 a day, one per data commit) keeps its own copy of the functions. The owner set Deployment Retention to 1 day for all four types. If Functions Storage doesn't fall, cut deploys (e.g. hourly job every 2 h off-peak) or move data out of the deployment.
+- **Ticker:** the band under the header now rolls right to left like an exchange tape (`components/Ticker.tsx`): the list is drawn twice and slides by one copy's width (no seam); short lists are repeated first; 3.5 s per trade (~33 px/s); fades at the edges; pauses on hover or keyboard focus; the duplicate copy is hidden from screen readers and tabbing. With reduced motion it stays still and swipeable. "Live · N min ago" stays fixed on the left.

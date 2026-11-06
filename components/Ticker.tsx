@@ -23,14 +23,24 @@ export function Ticker() {
     .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
     .slice(0, 24);
   if (!d || !items.length) return null;
+  // Rolls right to left like an exchange tape: the list is drawn twice and slides by one
+  // copy's width, so the loop has no seam. A short list is repeated first so a copy is
+  // wider than the screen. Speed stays the same whatever the length (~3.5 s per trade).
+  const run = Array.from({ length: Math.ceil(8 / items.length) }, () => items).flat();
+  const chip = (t: InsiderTrade, i: number, copy: number) => (
+    <Link key={copy + t.accession + t.code + i} href={`/stock/${t.symbol}`} className={t.code === "P" ? "up" : "down"} tabIndex={copy ? -1 : undefined}>
+      <span aria-hidden>{t.code === "P" ? "▲" : "▼"}</span> <strong>{t.symbol}</strong> <span className="ticker-v">${fmtBig(t.value ?? 0)}</span>
+    </Link>
+  );
   return (
     <div className="ticker" aria-label="Today's insider trades">
       <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>
-      {items.map((t, i) => (
-        <Link key={t.accession + t.code + i} href={`/stock/${t.symbol}`} className={t.code === "P" ? "up" : "down"}>
-          <span aria-hidden>{t.code === "P" ? "▲" : "▼"}</span> <strong>{t.symbol}</strong> <span className="ticker-v">${fmtBig(t.value ?? 0)}</span>
-        </Link>
-      ))}
+      <div className="ticker-tape">
+        <div className="ticker-run" style={{ animationDuration: `${run.length * 3.5}s` }}>
+          <div className="ticker-copy">{run.map((t, i) => chip(t, i, 0))}</div>
+          <div className="ticker-copy" aria-hidden>{run.map((t, i) => chip(t, i, 1))}</div>
+        </div>
+      </div>
     </div>
   );
 }
