@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { loadInsiders } from "@/lib/insiderData";
 import { memberSlug } from "@/lib/congress.mjs";
 import { isExecOrDirector } from "@/lib/people.mjs";
+import { digestIndex } from "@/lib/digestArchive";
 
 const SITE = "https://arkanumdata.vercel.app";
 export const revalidate = 86400;
@@ -9,9 +10,9 @@ export const revalidate = 86400;
 // Main pages, every House member with stock trades, and every stock and insider with a
 // buy, or an executive or director sale of $250K+, in the last 30 days. (Not every insider:
 // each insider page reads their filings from SEC, so crawling thousands would hit its limits.)
-// Plus the well-known insiders list (up to 100).
+// Plus the well-known insiders list (up to 100) and every past digest.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = ["", "/congress", "/research/insider-buys", "/markets", "/stakes", "/briefing", "/about", "/terms"].map((p) => ({ url: SITE + p, changeFrequency: (p === "/about" || p === "/terms" || p.startsWith("/research") ? "monthly" : "daily") as "monthly" | "daily" }));
+  const pages = ["", "/congress", "/research/insider-buys", "/markets", "/stakes", "/briefing", "/briefing/archive", "/about", "/terms"].map((p) => ({ url: SITE + p, changeFrequency: (p === "/about" || p === "/terms" || p.startsWith("/research") ? "monthly" : "daily") as "monthly" | "daily" }));
   const d = await loadInsiders(SITE, { next: { revalidate: 86400 } }).catch(() => null);
   const shown = (d?.trades ?? []).filter((t) => t.code === "P" || (t.code === "S" && isExecOrDirector(t)));
   const stocks = [...new Set(shown.map((t) => t.symbol))].map((s) => ({ url: `${SITE}/stock/${encodeURIComponent(s)}`, changeFrequency: "weekly" as const }));
@@ -21,5 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const famous = await fetch(`${SITE}/data/famous.json`, { next: { revalidate: 86400 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const known = new Set(shown.map((t) => t.ownerCik));
   const wellKnown = ((famous?.people ?? []) as { cik: string }[]).filter((p) => !known.has(p.cik)).map((p) => ({ url: `${SITE}/insider/${p.cik}`, changeFrequency: "weekly" as const }));
-  return [...pages, ...members, ...stocks, ...people, ...wellKnown];
+  // Past digests never change once published.
+  const digests = (await digestIndex()).map((x) => ({ url: `${SITE}/briefing/${x.date}`, lastModified: x.date, changeFrequency: "never" as const }));
+  return [...pages, ...digests, ...members, ...stocks, ...people, ...wellKnown];
 }

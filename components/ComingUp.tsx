@@ -2,14 +2,15 @@
 // The next few big US economic releases and Fed decisions (BEA, Federal Reserve).
 import { useEffect, useState } from "react";
 import { EVENT_INFO, eventDay } from "@/lib/events";
+import { isUpcoming } from "@/lib/digest.mjs";
 
 type Ev = { date: string; time: string | null; kind: string; title: string };
 
 export function ComingUp({ limit = 4 }: { limit?: number }) {
   const [ev, setEv] = useState<Ev[] | null>(null);
   useEffect(() => {
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-    fetch("/data/events.json").then((r) => r.json()).then((d) => setEv(d.events.filter((e: Ev) => e.date >= today).slice(0, limit))).catch(() => setEv([]));
+    // Releases already out today (an 8:30 AM report, by the afternoon) are no longer "coming up".
+    fetch("/data/events.json").then((r) => r.json()).then((d) => setEv(d.events.filter((e: Ev) => isUpcoming(e)).slice(0, limit))).catch(() => setEv([]));
   }, [limit]);
   return (
     <section className="card">

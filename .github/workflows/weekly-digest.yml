@@ -1,0 +1,59 @@
+name: Saturday week in review
+# Saturday morning: builds the week in review from the data already committed (no SEC
+# reads), saves its archive page and holds the notification until 5:00 PM New York time,
+# when the cron-job.org timer releases it. Saturday evening: a backstop release in case
+# the timer missed (the hourly job, which backs up weekdays, doesn't run on Saturday).
+on:
+  schedule:
+    - cron: "7 14 * * 6" # about 9-10 AM New York time
+    - cron: "7 23 * * 6" # about 6-7 PM New York time: backstop release
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write # alerts fall back to a GitHub issue when the site can't send them
+  id-token: write # lets the job prove to the site that it is this repo's job
+jobs:
+  build:
+    if: github.event.schedule != '7 23 * * 6'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: https://arkanumdata.vercel.app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - id: digest
+        name: Week in review
+        run: node scripts/daily-digest.mjs --weekly --hold
+      - name: Commit the archive page
+        run: |
+          git config user.name "maximaripov"
+          git config user.email "351230404+maximaripov@users.noreply.github.com"
+          git add public/data/digests
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "data: week in review $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          exit 1
+      - name: Notify on failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/notify.mjs "Arkanum: week in review failed" "The Saturday digest wasn't built or sent. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  backstop:
+    if: github.event.schedule == '7 23 * * 6'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: https://arkanumdata.vercel.app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Release held digest (backstop)
+        run: node scripts/release-digest.mjs

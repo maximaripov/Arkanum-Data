@@ -1,140 +1,109 @@
 #!/usr/bin/env node
-// Builds the daily digest after the 4 PM close and sends each device its own notification.
-// Everything comes from public-domain or freely shareable data: SEC filings (insider
-// trades, 13F fund holdings, 8-K announcements, fundamentals) and government calendars.
+// Builds the daily digest after the 4 PM close (or, with --weekly, Saturday's week in review)
+// and sends every device the same short notification. Everything comes from public-domain
+// SEC filings and government calendars. Each digest is also saved as a dated archive page
+// (public/data/digests/<date>.json, listed in index.json) that the job commits.
 //
 //   node scripts/daily-digest.mjs             build + send (GitHub job identity or ALERTS_SECRET)
 //   node scripts/daily-digest.mjs --dry-run   build and print, send nothing
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 //   node scripts/daily-digest.mjs --hold      notify at 5:00 PM New York time (now, if it's later)
-import { readFile } from "node:fs/promises";
+//   node scripts/daily-digest.mjs --weekly    the week in review (run on Saturday)
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
+import { companyName, personName, roleLabel, isExecOrDirector } from "../lib/people.mjs";
+import { isLateFiling, isUpcoming, notification, summarize } from "../lib/digest.mjs";
+import { nyNow } from "../lib/sendTime.mjs";
 import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push");
 const HOLD = process.argv.includes("--hold");
-const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const WEEKLY = process.argv.includes("--weekly");
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
-const money = (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`);
 
-async function sec(url) {
-  try { const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) }); return r.ok ? r.json() : null; } catch { return null; }
-}
-
-const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+const today = nyNow().date;
 const addDays = (ymd, n) => new Date(Date.parse(ymd + "T12:00:00Z") + n * 86_400_000).toISOString().slice(0, 10);
 const pretty = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
-const weekday = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+const short = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+// Daily: filings made today. Weekly (run on Saturday): filings Monday to Friday.
+const from = WEEKLY ? addDays(today, -5) : today;
+const inWindow = (ymd) => ymd >= from && ymd <= today;
+// "Buying together" always looks back a week.
+const weekAgo = addDays(today, -6);
 
 // ---- Shared data built earlier in the job ---------------------------------------------
-// The 30-day file plus today's hourly file, with every buy scored for conviction.
 const ins = mergeInsiders(await load("public/data/insiders.json", { trades: [] }), await load("public/data/insiders-today.json", null));
 const funds = await load("public/data/funds.json", { funds: [] });
-const events = (await load("public/data/events.json", { events: [] })).events.filter((e) => e.date >= today && e.date <= addDays(today, 7));
+const allEvents = (await load("public/data/events.json", { events: [] })).events;
 
-const isExec = (role) => String(role).split(",").map((s) => s.trim()).some((p) => p && p !== "10% owner" && p !== "Other");
-const filed = ins.trades.map((t) => t.filed).sort().at(-1) ?? null; // latest filing day in the data
-const latest = ins.trades.filter((t) => t.filed === filed);
-// Strongest first (conviction score), then size.
-const execBuys = latest.filter((t) => t.code === "P" && isExec(t.role)).sort((a, b) => (b.conv?.score ?? 0) - (a.conv?.score ?? 0) || (b.value ?? 0) - (a.value ?? 0));
-const weekAgo = addDays(today, -7);
+// Buys by executives and directors, filed on time (late filings are left out entirely).
+const buys = ins.trades.filter((t) => t.code === "P" && (t.value ?? 0) > 0 && isExecOrDirector(t) && !isLateFiling(t));
+const windowBuys = buys.filter((t) => inWindow(t.filed)).sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+
 const clusters = (() => {
   const by = new Map();
-  for (const t of ins.trades) {
-    if (t.code !== "P" || !isExec(t.role) || t.filed < weekAgo) continue;
-    const x = by.get(t.symbol) ?? { symbol: t.symbol, issuer: t.issuer, owners: new Set(), value: 0 };
+  for (const t of buys) {
+    if (t.filed < weekAgo) continue;
+    const x = by.get(t.symbol) ?? { symbol: t.symbol, company: companyName(t.issuer, t.symbol), owners: new Set(), value: 0 };
     x.owners.add(t.owner); x.value += t.value ?? 0; by.set(t.symbol, x);
   }
   // Several insiders averaging under ~$25K each is usually an employee share-purchase plan.
-  return [...by.values()].filter((x) => x.owners.size > 1 && x.value / x.owners.size >= 25_000).sort((a, b) => b.owners.size - a.owners.size || b.value - a.value).slice(0, 5).map((x) => ({ symbol: x.symbol, issuer: x.issuer, insiders: x.owners.size, value: x.value }));
+  return [...by.values()].filter((x) => x.owners.size > 1 && x.value / x.owners.size >= 25_000)
+    .sort((a, b) => b.owners.size - a.owners.size || b.value - a.value).slice(0, 5)
+    .map((x) => ({ symbol: x.symbol, company: x.company, insiders: x.owners.size, value: Math.round(x.value) }));
 })();
-const newFilings = funds.funds.filter((f) => f.filed >= weekAgo).map((f) => ({
-  fund: f.name, period: f.period, filed: f.filed,
+
+// Big funds' quarterly 13F filings in the window, one line each.
+const fundLines = funds.funds.filter((f) => inWindow(f.filed)).map((f) => ({
+  fund: f.name, filed: f.filed,
   newPositions: f.new.slice(0, 3).map((h) => h.t ?? h.name), soldOut: f.sold.slice(0, 3).map((h) => h.t ?? h.name),
+  counts: { new: f.new.length, added: f.added.length, cut: f.reduced.length, sold: f.sold.length },
 }));
-const slim = (t) => ({ symbol: t.symbol, issuer: t.issuer, owner: t.owner, ownerCik: t.ownerCik, role: t.role, value: t.value, date: t.date, conv: t.conv ?? null });
+
+// Releases still ahead (an 8:30 AM report is old news at 5 PM), over the next week.
+const events = allEvents.filter((e) => isUpcoming(e) && e.date <= addDays(today, WEEKLY ? 9 : 7)).slice(0, 4)
+  .map((e) => ({ date: e.date, time: e.time, kind: e.kind, title: e.title, day: pretty(e.date) }));
 
 const digest = {
-  generated: new Date().toISOString(), date: today, filed,
-  title: `Daily digest · ${pretty(today)}`,
-  topBuys: execBuys.slice(0, 5).map(slim),
-  clusters, fundFilings: newFilings, events,
+  kind: WEEKLY ? "weekly" : "daily",
+  generated: new Date().toISOString(), date: today, from,
+  title: WEEKLY ? `Week in review · ${short(from)}–${short(addDays(today, -1)).replace(short(from).split(" ")[0] + " ", "")}` : `Daily digest · ${pretty(today)}`,
+  totals: { buys: windowBuys.length, value: Math.round(windowBuys.reduce((s, t) => s + (t.value ?? 0), 0)), insiders: new Set(windowBuys.map((t) => t.owner)).size },
+  buys: windowBuys.slice(0, 5).map((t) => ({
+    symbol: t.symbol, company: companyName(t.issuer, t.symbol), name: personName(t.owner), ownerCik: t.ownerCik,
+    role: roleLabel(t.role), value: Math.round(t.value), date: t.date, filed: t.filed,
+    // Facts worth a chip; not ones the role already says ("CEO" next to "CEO & director").
+    facts: (t.conv?.reasons ?? []).map((r) => r.text).filter((s) => !/insiders buying/.test(s) && !roleLabel(t.role).toLowerCase().includes(s.replace(/^also an? /i, "").toLowerCase())).slice(0, 2),
+  })),
+  clusters, funds: fundLines, events,
 };
+digest.summary = summarize(digest);
+const note = notification(digest);
 
-// ---- One line on markets: bitcoin, gold and the 10-year yield, each vs the day before ------------
-const marketLine = await (async () => {
-  try {
-    const r = await fetch(`${SITE}/api/markets`, { signal: AbortSignal.timeout(30_000) });
-    const all = new Map((await r.json()).groups.flatMap((g) => g.series.map((x) => [x.id, x])));
-    const part = (id, name, pct) => {
-      const x = all.get(id);
-      if (!x) return null;
-      const v = x.unit === "pct" ? `${x.value.toFixed(2)}%` : x.value >= 1000 ? `$${(x.value / 1000).toFixed(1)}K` : `$${x.value.toFixed(2)}`;
-      if (x.prev == null) return `${name} ${v}`;
-      const d = pct ? (x.value / x.prev - 1) * 100 : x.value - x.prev;
-      return `${name} ${v} (${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(pct ? 1 : 2)}${pct ? "%" : ""})`;
-    };
-    return [part("bitcoin", "BTC", true), part("pax-gold", "Gold", true), part("t10y", "10Y", false)].filter(Boolean).join(" · ") || null;
-  } catch { return null; }
-})();
+// ---- Archive: one file per digest, plus the list ---------------------------------------
+if (!process.argv.includes("--no-archive")) {
+  await mkdir("public/data/digests", { recursive: true });
+  await writeFile(`public/data/digests/${today}.json`, JSON.stringify(digest));
+  const index = (await load("public/data/digests/index.json", { digests: [] })).digests.filter((x) => x.date !== today);
+  index.unshift({ date: today, kind: digest.kind, title: digest.title, lead: digest.summary[0] });
+  index.sort((a, b) => b.date.localeCompare(a.date));
+  await writeFile("public/data/digests/index.json", JSON.stringify({ digests: index }));
+}
 
-// ---- Each device's own message ----------------------------------------------------------
+// ---- Everyone gets the same message (the site addresses it per device) ------------------
 const auth = await token();
 let devices = [];
 if (auth) {
   const r = await siteFetch(`${SITE}/api/alerts/devices`, { headers: { Authorization: `Bearer ${auth}` } });
   if (r.ok) devices = await r.json(); else console.log(`Couldn't read devices: HTTP ${r.status}`);
 }
-
-// Today's 8-K announcements for every symbol any device follows (one SEC request each).
-const ITEMS = { "1.01": "material agreement", "1.03": "bankruptcy", "2.01": "acquisition or sale completed", "2.02": "quarterly results", "2.05": "restructuring or layoffs", "2.06": "write-down", "3.01": "delisting notice", "4.02": "restated financials", "5.01": "change in control", "5.02": "executive or board change", "5.07": "shareholder vote", "7.01": "investor update", "8.01": "announcement" };
-const followed = [...new Set(devices.flatMap((d) => d.watchlist))].slice(0, 400);
-const tickers = followed.length ? await sec("https://www.sec.gov/files/company_tickers.json") : null;
-const cikOf = new Map(Object.values(tickers ?? {}).map((c) => [String(c.ticker).toUpperCase(), c.cik_str]));
-const filingsToday = new Map();
-for (const s of followed) {
-  const cik = cikOf.get(s.replace(".", "-"));
-  if (!cik) continue;
-  const sub = await sec(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`);
-  await sleep(130);
-  const r = sub?.filings?.recent;
-  if (!r) continue;
-  const items = [];
-  for (let i = 0; i < r.form.length && r.filingDate[i] >= today; i++) {
-    if (r.form[i] !== "8-K") continue;
-    for (const it of String(r.items[i] ?? "").split(",").map((x) => x.trim())) if (ITEMS[it]) items.push(ITEMS[it]);
-  }
-  if (items.length) filingsToday.set(s, [...new Set(items)]);
-}
-
-
-const messages = [];
-for (const d of devices) {
-  const w = new Set(d.watchlist);
-  const lines = [];
-  // Insider trades in your watchlist (latest filing day): buys and sizable sales.
-  const mine = latest.filter((t) => w.has(t.symbol) && isExec(t.role) && (t.code === "P" || (t.code === "S" && (t.value ?? 0) >= 1e6)));
-  for (const t of mine.slice(0, 2)) lines.push(`${t.symbol}: ${t.owner.split(",")[0]} ${t.code === "P" ? "bought" : "sold"} ${t.value ? money(t.value) : "shares"}`);
-  // Company announcements filed today.
-  for (const [s, items] of [...filingsToday].filter(([s]) => w.has(s)).slice(0, 2)) lines.push(`${s} filed: ${items.slice(0, 2).join(", ")}`);
-  // New 13F filings touching your stocks.
-  for (const f of funds.funds.filter((f) => f.filed >= addDays(today, -1))) {
-    const hit = [...f.new, ...f.sold].find((h) => w.has(h.t));
-    if (hit) lines.push(`${f.name} ${hit.change === "sold" ? "sold all of" : "bought"} ${hit.t}`);
-  }
-  // Fill with market-wide highlights if nothing personal happened.
-  if (!lines.length && clusters[0]) lines.push(`${clusters[0].insiders} insiders bought ${clusters[0].symbol} this week (${money(clusters[0].value)})`);
-  if (lines.length < 3 && execBuys[0] && !lines.some((l) => l.startsWith(execBuys[0].symbol))) lines.push(`Most unusual insider buy: ${execBuys[0].symbol} ${money(execBuys[0].value ?? 0)}`);
-  if (lines.length < 4 && events[0]) lines.push(`Next: ${events[0].title} ${weekday(events[0].date)}`);
-  const body = marketLine ? [...lines.slice(0, 3), marketLine] : lines.slice(0, 4);
-  messages.push({ id: d.id, title: digest.title, body: body.join("\n") });
-}
+const messages = devices.map((d) => ({ id: d.id, ...note }));
 
 if (DRY || !auth) {
   if (!auth && !DRY) console.log("No identity token or ALERTS_SECRET: printing instead of sending.");
-  console.log(JSON.stringify({ digest: { ...digest, events: digest.events.length }, devices: devices.length, followed: followed.length, sample: messages.slice(0, 2) }, null, 2));
+  console.log(JSON.stringify({ title: digest.title, summary: digest.summary, notification: note, totals: digest.totals, buys: digest.buys.length, clusters: clusters.length, funds: fundLines.length, events: events.length, devices: devices.length }, null, 2));
   process.exit(0);
 }
 const res = await siteFetch(`${SITE}/api/alerts/send`, {
