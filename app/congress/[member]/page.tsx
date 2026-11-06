@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ member: s
   const who = `${m.m} (${m.p ? m.p + "-" : ""}${m.sd})`;
   const title = `${m.m} stock trades`;
   const description = `${who}${m.current ? "" : ", a former member,"} reported ${m.n.toLocaleString("en-US")} stock trades in the last two years: ${m.buys.toLocaleString("en-US")} buys and ${m.sells.toLocaleString("en-US")} sales. Their latest trades from STOCK Act reports, each linked to the filing.`;
-  return { title, description, alternates: { canonical: `/congress/${slug}` }, openGraph: { title: `${title} · Arkanum`, description, url: `/congress/${slug}` } };
+  return { title, description, alternates: { canonical: `/congress/${slug}` }, openGraph: { title: `${title} · Arkanum Data`, description, url: `/congress/${slug}` } };
 }
 
 export default async function Page({ params }: { params: Promise<{ member: string }> }) {

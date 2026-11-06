@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Arkanum",
+    name: "Arkanum Data",
     short_name: "Arkanum",
     description: "What company insiders and big funds are buying, in plain English",
     start_url: "/",

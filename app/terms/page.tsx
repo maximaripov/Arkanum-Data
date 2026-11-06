@@ -8,7 +8,7 @@ export default function Terms() {
       <section className="card">
         <h1>Terms of use</h1>
         <p className="muted small">Last updated November 5, 2026</p>
-        <p>Arkanum is a free website that shows public market information in plain English. By using it, you agree to these terms. If you don&apos;t agree, please don&apos;t use the site.</p>
+        <p>Arkanum Data is a free website that shows public market information in plain English. By using it, you agree to these terms. If you don&apos;t agree, please don&apos;t use the site.</p>
       </section>
 
       <section className="card">

@@ -4,7 +4,7 @@ import { MarketsView } from "../MarketsView";
 export const metadata: Metadata = {
   title: "Markets and your watchlist",
   description: "S&P 500, Nasdaq 100, bitcoin, gold and the 10-year yield, plus insider and fund activity for the stocks you follow.",
-  openGraph: { title: "Markets and your watchlist · Arkanum", url: "/markets" },
+  openGraph: { title: "Markets and your watchlist · Arkanum Data", url: "/markets" },
 };
 
 export default function Markets() { return <MarketsView />; }

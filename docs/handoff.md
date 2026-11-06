@@ -1,9 +1,9 @@
 # Arkanum handoff (formerly Form4) (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–43); add new rounds there.
+Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–44); add new rounds there.
 
 ## Basics
-- **Name: Arkanum** (round 43; was Form4, before that Foresight). Live: https://form4-insiders.vercel.app until the owner adds the new address in Vercel (planned `arkanumhq.vercel.app`; then the site constants move and the old address redirects). foresightscreener.vercel.app redirects. Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
+- **Name: Arkanum Data** (rounds 43–44; was Form4, before that Foresight). The full name is used in page titles, link previews, feeds, the app name and formal mentions (About, Terms); everything shown on the page (header wordmark, welcome screen, home-screen label) says just `arkanum`. Live: https://form4-insiders.vercel.app until the owner adds the new address in Vercel (planned `arkanumdata.vercel.app`; then the site constants move and the old address redirects). foresightscreener.vercel.app redirects. Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
 - Free hobby site: no income, no accounts, no contact address. Must stay free (no paid APIs or hosting).
 - Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; commits and workflows use that identity.
 - **Working rules:** fix bugs and glitches without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions develop on a `claude/...` branch; push to both). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes.

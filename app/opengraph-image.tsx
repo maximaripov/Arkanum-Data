@@ -1,7 +1,7 @@
 // The picture shown when an Arkanum link is shared (messages, X, Reddit, Slack…).
 import { ImageResponse } from "next/og";
 
-export const alt = "Arkanum: what insiders are buying";
+export const alt = "Arkanum Data: what insiders are buying";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

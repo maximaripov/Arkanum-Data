@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ cik: stri
   const cos = [...new Set(d.trades.map((t) => t.symbol))].slice(0, 3).join(", ");
   const title = `${d.name}: insider trades${cos ? ` (${cos})` : ""}`;
   const description = `Every recent stock purchase and sale ${d.name} reported to the SEC${cos ? `, at ${cos}` : ""}, in plain English.`;
-  return { title, description, alternates: { canonical: `/insider/${cik}` }, openGraph: { title: `${title} · Arkanum`, description, url: `/insider/${cik}` } };
+  return { title, description, alternates: { canonical: `/insider/${cik}` }, openGraph: { title: `${title} · Arkanum Data`, description, url: `/insider/${cik}` } };
 }
 
 export default async function InsiderPage({ params }: { params: Promise<{ cik: string }> }) {
