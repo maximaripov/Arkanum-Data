@@ -5,10 +5,13 @@
 // Private Vercel Blob store:
 //   alerts/devices.json → { devices: { [id]: Device } }
 //   alerts/digest.json  → the latest public daily digest
+//   alerts/pending.json → the day's digest notifications, held until 5:00 PM New York time
 import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from "@vercel/blob";
 import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { nyNow, pastSendTime } from "./sendTime.mjs";
+export { pastSendTime };
 
 export type Device = {
   id: string;
@@ -24,6 +27,7 @@ type Store = { devices: Record<string, Device> };
 
 const DEVICES = "alerts/devices.json";
 const DIGEST = "alerts/digest.json";
+const PENDING = "alerts/pending.json";
 export const MAX_DEVICES = 5000;
 
 async function readJson<T>(path: string): Promise<{ data: T | null; etag: string | null }> {
@@ -128,6 +132,53 @@ export async function pushEach(items: { id: string; sub: PushSubscription; msg: 
   }
   return { sent, gone, errors };
 }
+
+// ---- The 5 PM send ------------------------------------------------------------------
+// The 4 PM job builds the digest whenever GitHub gets round to it (often 30-60 min late).
+// If it's done before 5:00 PM New York time the notifications are held, and a timer
+// (cron-job.org, with the hourly job as a backstop) releases them at 5:00. After 5 they go at once.
+export type DigestMessage = { id: string; title: string; body: string };
+type Pending = { date: string; messages: DigestMessage[]; sent: boolean };
+const STALE_DAYS = 120; // forget devices that haven't opened the app in ~4 months
+export const holdDigest = (messages: DigestMessage[], now = new Date()) =>
+  writeJson(PENDING, { date: nyNow(now).date, messages, sent: false } satisfies Pending);
+
+/** Sends today's held digest once. Claims it first (a conditional write), so two
+ *  releases at the same moment can't both send. */
+export async function releaseDigest(now = new Date()) {
+  const tag = await currentTag(PENDING);
+  if (!tag) return { released: false, reason: "nothing held" };
+  const { data, etag } = await readJson<Pending>(PENDING);
+  if (!data || tagCore(etag) !== tagCore(tag)) return { released: false, reason: "busy, try again" };
+  if (data.sent) return { released: false, reason: "already sent" };
+  if (data.date !== nyNow(now).date) return { released: false, reason: `held digest is from ${data.date}` };
+  try { await writeJson(PENDING, { ...data, sent: true }, tag); }
+  catch (e) { if (e instanceof BlobPreconditionFailedError) return { released: false, reason: "already being sent" }; throw e; }
+  return { released: true, ...(await sendDigestMessages(data.messages)) };
+}
+
+/** Pushes each device its message, then forgets devices whose push address is gone or
+ *  that haven't opened the app in months. */
+export async function sendDigestMessages(messages: DigestMessage[]) {
+  const { devices } = await readDevices();
+  const items = messages.flatMap((m) => {
+    const d = devices[m.id];
+    return d?.sub ? [{ id: m.id, sub: d.sub, msg: { title: String(m.title).slice(0, 80), body: String(m.body).slice(0, 300), url: "/briefing", tag: "digest" } }] : [];
+  });
+  const r = await pushEach(items);
+  const cutoff = Date.now() - STALE_DAYS * 86_400_000;
+  // Bookkeeping after the notifications went out: if storage is busy it waits for tomorrow
+  // rather than failing a run whose notifications were already sent.
+  let saved = true;
+  await updateDevices((s) => {
+    for (const id of r.gone) delete s.devices[id];
+    for (const [id, d] of Object.entries(s.devices)) if (Date.parse(d.seen) < cutoff) delete s.devices[id];
+  }).catch((e) => { saved = false; console.error("Device bookkeeping skipped:", e); });
+  return { ...r, saved, devices: Object.keys(devices).length, messages: messages.length };
+}
+
+/** The 5 PM timer's own key (CRON_SECRET on Vercel); the GitHub jobs use secretOk. */
+export const cronOk = (req: Request) => same(req.headers.get("authorization")?.replace(/^Bearer /, ""), process.env.CRON_SECRET);
 
 // ---- Input cleaning ------------------------------------------------------------------
 const clean = (sym: unknown) => String(sym ?? "").toUpperCase().trim().slice(0, 12);

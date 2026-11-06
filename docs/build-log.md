@@ -439,3 +439,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 
 - **Alerts fallback:** on 2026-11-06 the failure alert itself went to the dead old address and was lost. `scripts/notify.mjs` now opens a GitHub issue (label `alert`, mentions the owner, so the GitHub app pushes it) whenever the site doesn't accept the notification: site down, moved, or rejecting the job. One issue stays open per alert title; repeats add a comment. Logic in `scripts/lib/issue-alert.mjs` (tests in `tests/issue-alert.test.mjs`); data, hourly and stakes workflows got `issues: write` and pass `GITHUB_TOKEN` to their notify steps. Not yet exercised for real (needs the site to fail); close the issue once fixed.
 - **Link previews:** pages that set their own `openGraph` (congress, markets, stakes, digest, research) dropped the site's share image, so shared links showed no picture. They now name `/opengraph-image`. Canonical links added to home, congress, markets, stakes, digest, about and terms.
+
+## Round 49: the digest goes out at 5:00 PM (2026-11-06)
+
+- The owner wanted the digest at exactly 5:00 PM New York time instead of whenever the 4 PM job finished (GitHub starts it 30-60 min late). Waiting inside the job was turned down: a private repo's Actions minutes are capped and the wait would add ~400-700 min a month.
+- How it works now: scheduled runs call `daily-digest.mjs --hold`. If it's before 5, `/api/alerts/send` publishes the Digest page at once but stores the notifications in Blob (`alerts/pending.json`). At 5:00 a free cron-job.org timer calls `/api/alerts/release` (Bearer `CRON_SECRET`, set on Vercel), which sends today's held digest once (a conditional write claims it, so two calls can't both send). After 5 the job sends at once. Manual runs send right away.
+- Backstop: the hourly job runs `scripts/release-digest.mjs` (GitHub identity); the endpoint does nothing before 5 (no storage read) or once sent, so a missed timer costs at most about an hour.
+- `lib/sendTime.mjs` holds the New York 5 PM check (tests in `tests/send-time.test.mjs`); fires from 15 s early in case the timer is early.

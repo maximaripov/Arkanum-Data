@@ -96,9 +96,11 @@ jobs:
       - id: check_all
         name: Check all data before sending or publishing
         run: node scripts/health-check.mjs all
+      # Scheduled runs hold the notifications until 5:00 PM New York time (released by the
+      # cron-job.org timer; sent at once if it's already past 5). Manual runs send right away.
       - id: digest
         name: Send daily digest
-        run: node scripts/daily-digest.mjs ${{ github.event_name == 'workflow_dispatch' && !inputs.notify && '--no-push' || '' }}
+        run: node scripts/daily-digest.mjs ${{ github.event_name == 'workflow_dispatch' && !inputs.notify && '--no-push' || '' }} ${{ github.event_name == 'schedule' && '--hold' || '' }}
       - name: Commit data
         run: |
           # Vercel's Hobby plan only deploys commits authored by the project owner,

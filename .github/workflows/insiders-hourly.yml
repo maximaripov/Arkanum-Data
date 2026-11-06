@@ -72,6 +72,11 @@ jobs:
       - id: alerts
         name: Instant alerts
         run: NEW_TRADES_OUT="$RUNNER_TEMP/new-trades.json" node scripts/instant-alerts.mjs
+      # Backstop for the 5 PM digest timer: after 5:00 PM New York time, sends today's held
+      # digest if the timer didn't. Does nothing before 5 or once it's sent.
+      - name: Release held digest (backstop)
+        continue-on-error: true
+        run: node scripts/release-digest.mjs
       # Tell the owner's devices when the job breaks, and when it works again. Only on a
       # change from the previous run, so a lasting outage sends one message, not one an hour.
       - name: Notify on failure

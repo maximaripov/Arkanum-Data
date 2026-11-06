@@ -6,12 +6,14 @@
 //   node scripts/daily-digest.mjs             build + send (GitHub job identity or ALERTS_SECRET)
 //   node scripts/daily-digest.mjs --dry-run   build and print, send nothing
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
+//   node scripts/daily-digest.mjs --hold      notify at 5:00 PM New York time (now, if it's later)
 import { readFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push");
+const HOLD = process.argv.includes("--hold");
 const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
@@ -138,7 +140,7 @@ if (DRY || !auth) {
 const res = await siteFetch(`${SITE}/api/alerts/send`, {
   method: "POST",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` },
-  body: JSON.stringify({ digest, messages, notify: !NO_PUSH }),
+  body: JSON.stringify({ digest, messages, notify: !NO_PUSH, hold: HOLD }),
 });
 console.log(`Send: HTTP ${res.status}`, await res.text());
 if (!res.ok) process.exit(1);
