@@ -1,15 +1,17 @@
 :root {
-  --bg: #0a0b0d; --card: #121418; --card2: #171a1f; --line: #23272e; --text: #eceef2; --muted: #8a909c;
-  --up: #a3e635; --down: #ff6161; --accent: #a3e635; --brand: #a3e635; --bar: #a3e635; --chip: #1b1e24; --meter-off: #262a31; --level: #f59e0b;
+  --bg: #000000; --card: #000000; --card2: #0c0c0c; --line: #2b2b2b; --text: #e9e9e9; --muted: #8c8c8c;
+  --up: #3ddc84; --down: #ff5f56; --accent: #ffffff; --brand: #ffffff; --bar: #3ddc84; --chip: #141414; --meter-off: #262626; --level: #f5c542;
+  --glow: 0 0 6px rgba(233, 233, 233, .28);
   --ma50: #60a5fa; --ma200: #c084fc; --rsi: #22d3ee; --cmp1: #60a5fa; --cmp2: #f472b6; --cmp3: #facc15;
   --shadow: none;
   color-scheme: dark;
 }
-/* Light mode is a choice (the sun/moon button), remembered per device. Lime text is
-   darkened for contrast on white; bars and buttons keep a brighter lime. */
+/* Light mode is a choice (the sun/moon button), remembered per device: a black-on-white
+   "printout" of the terminal, with green and red darkened for contrast. */
 html[data-theme="light"] {
-  --bg: #eef0f3; --card: #ffffff; --card2: #f6f7f9; --line: #e4e7ec; --text: #0d1015; --muted: #636a77;
-  --up: #4d7c0f; --down: #dc2626; --accent: #4d7c0f; --bar: #65a30d; --chip: #eef0f3; --meter-off: #e3e6eb; --level: #d97706;
+  --bg: #ffffff; --card: #ffffff; --card2: #f5f5f5; --line: #d4d4d4; --text: #0a0a0a; --muted: #5c5c5c;
+  --up: #0a8a3e; --down: #c6282d; --accent: #0a0a0a; --brand: #0a0a0a; --bar: #0a8a3e; --chip: #f0f0f0; --meter-off: #e2e2e2; --level: #b7791f;
+  --glow: none;
   --ma50: #2563eb; --ma200: #9333ea; --rsi: #0891b2; --cmp1: #2563eb; --cmp2: #db2777; --cmp3: #ca8a04;
   --shadow: 0 1px 2px #0000000d, 0 8px 24px -14px #0f172a26;
   color-scheme: light;
@@ -521,3 +523,40 @@ html[data-theme="light"] .party.r { color: #b91c1c; } html[data-theme="light"] .
 @media (max-width: 760px) { .tabbar a { min-width: 0; flex: 1; font-size: .66rem; } }
 .ttable td.cstock { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 761px) and (max-width: 1299px) { .ttable td.cstock .muted { display: none; } }
+
+/* ---- Retro terminal (round 42) -------------------------------------------------------
+   Black and white with green/red for buys and sales; monospace text, a pixel font for
+   headings, square corners, inverse-video selection, faint scanlines and glow (dark only),
+   a blinking cursor after the wordmark (still when the visitor asks for less motion). */
+html, body, button, input, select, textarea { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
+*, *::before, *::after { border-radius: 0 !important; }
+:root { --shadow: none; }
+::selection { background: var(--text); color: var(--bg); }
+
+/* Screen: faint scanlines over everything, glow on headings and big numbers. */
+html:not([data-theme="light"]) body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .028) 0 1px, transparent 1px 3px); }
+h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
+
+/* Pixel font for the wordmark and section headings, which read as prompts. */
+.wordmark { font-family: var(--font-retro), var(--font-mono), monospace; font-size: 1.75rem; font-weight: 400; letter-spacing: .02em; line-height: 1; }
+.cursor { display: inline-block; width: .5em; height: .78em; margin-left: .12em; vertical-align: -.04em; background: currentColor; box-shadow: var(--glow); animation: blink 1.05s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+.card-title h2, .card > h2, .card-head h2, .ov h1:not(.sr-only), .prose h1 { font-family: var(--font-retro), var(--font-mono), monospace; font-weight: 400; font-size: 1.35rem; letter-spacing: .03em; text-transform: uppercase; }
+.card-title h2 .small, .card > h2 .small, .card-head h2 .small { font-family: var(--font-mono), monospace; font-size: .72rem; text-transform: none; letter-spacing: 0; }
+.card-title h2::before, .card > h2::before, .card-head h2::before { content: "> "; color: var(--up); }
+
+/* Selection in inverse video: the active nav item and tab, like a highlighted menu line. */
+.nav-links a.active, .tabs button.on, .tabs button[aria-selected="true"] { background: var(--text) !important; color: var(--bg) !important; text-shadow: none; }
+.tabs button.on::before, .tabs button[aria-selected="true"]::before { content: "["; } .tabs button.on::after, .tabs button[aria-selected="true"]::after { content: "]"; }
+.nav-links a, .tabs button, .tabbar a, .wordmark { text-transform: lowercase; }
+
+/* Boxes: double-line borders on the key boxes, single lines elsewhere. */
+.hero, .kpis { border: 3px double var(--text) !important; background: var(--card) !important; }
+.hero-tag { background: transparent !important; border: 1px solid var(--up); color: var(--up) !important; text-transform: uppercase; letter-spacing: .06em; }
+.hero-chips span { background: transparent !important; }
+.side.up { background: transparent !important; border: 1px solid var(--up); color: var(--up); }
+.side.down { background: transparent !important; border: 1px solid var(--down); color: var(--down); }
+.linkbtn::before { content: "> "; }
+

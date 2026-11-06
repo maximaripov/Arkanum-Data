@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, VT323 } from "next/font/google";
 import { Nav, TabBar } from "@/components/Nav";
 import { Ticker } from "@/components/Ticker";
 import { Welcome } from "@/components/Welcome";
@@ -11,6 +11,7 @@ import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono" });
+const retro = VT323({ subsets: ["latin"], weight: "400", display: "swap", variable: "--font-retro" });
 
 const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
 export const metadata: Metadata = {
@@ -31,7 +32,7 @@ const THEME_SCRIPT = `try{if(localStorage.getItem(${JSON.stringify(THEME_KEY)})=
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={`${sans.variable} ${mono.variable} ${retro.variable}`} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body>
         <ServiceWorker />
