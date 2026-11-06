@@ -35,8 +35,9 @@ test("summary: plain sentences, at most three", () => {
   assert.match(summarize(quiet)[0], /^No executive or director bought/);
 });
 
-test("notification says only Daily Digest", () => {
+test("notification says only Daily Digest (Weekly Digest on Saturday)", () => {
   assert.deepEqual(notification(d), { title: "Daily Digest", body: "" });
+  assert.deepEqual(notification({ ...d, kind: "weekly" }), { title: "Weekly Digest", body: "" });
 });
 
 test("funds and companies are told apart from people", async () => {

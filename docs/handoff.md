@@ -17,6 +17,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 2. Search Console / Bing Webmaster, and re-adding the old addresses: declined by the owner; don't raise again.
 
 ## Still to check
+- **First Saturday week in review: Sat 2026-11-07** (`weekly-digest.yml`, built ~9-10 AM ET, held to 5 PM; notification "Weekly Digest"). Check it arrived and `/briefing/2026-11-07` exists.
 - **5 PM digest:** `CRON_SECRET` is on Vercel and a cron-job.org job calls the release (Mon-Sat 17:00 America/New_York, POST https://arkanumdata.vercel.app/api/alerts/release, header `Authorization: Bearer <CRON_SECRET>`). First real test: the next weekday's digest should arrive at 5:00; cron-job.org's history should show HTTP 200 `released: true`.
 - **Vercel Functions Storage** was 8.04 / 10 GB on 2026-11-06 (old deployments piling up; everything else far under). Retention set to 1 day for all deployment types; confirm it dropped. If not, cut the number of deploys.
 - (Done 2026-11-06: the digest reached the owner via the new address and `form4-alerts` audience.)
@@ -33,7 +34,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 - `/` Insiders: tabs Overview, Group buys, All trades, Big funds, Well-known. Overview reads `overview.json` (~16 KB): headline numbers, Most unusual buys, Buying together, buying by day, Latest filings, Notable sales; phone leads with the week's most unusual buy.
 - **Well-known** (`components/FamousView.tsx`, `famous.json`): up to 100 CEOs/chairs ranked by English Wikipedia views (30 days), from Wikidata CEO/chair entries matched to Form 4 filers (`scripts/build-famous.mjs`, `scripts/lib/famous.mjs`); each row shows their last-30-days trading ("Bought $3.0M · Oct 26", "Sold $2.7M · pre-planned", or "Last buy or big sale: Sep 2025"), refreshed hourly. Gaps from Wikidata: Tim Cook, Jeff Bezos.
 - `/congress` (server-rendered) and `/congress/[member]` (one page per House member, 101, in the sitemap; data `public/data/congress/<slug>.json`; old `?member=` links redirect).
-- `/stock/[symbol]`, `/insider/[cik]` (Follow), `/markets`, `/stakes`, `/briefing` (Digest: market-wide, no watchlist; notification text is just "Daily Digest"; archive at `/briefing/<date>` and `/briefing/archive`; Saturday week in review), `/research/insider-buys` (backtest write-up), `/about`, `/terms`.
+- `/stock/[symbol]`, `/insider/[cik]` (Follow), `/markets`, `/stakes`, `/briefing` (Digest: market-wide, no watchlist; notification text is just "Daily Digest" ("Weekly Digest" on Saturday); archive at `/briefing/<date>` and `/briefing/archive`; Saturday week in review), `/research/insider-buys` (backtest write-up), `/about`, `/terms`.
 - Search (`/api/search`): tickers + 19,381 insiders (two years, backfilled from SEC quarterly data; Wikipedia common names as aliases, so "jensen huang" works).
 - RSS `/feeds/insider-buys.xml`, `/feeds/congress.xml` (discoverable via page head only). Share images per stock, insider and member page (`lib/og.tsx`).
 - Sitemap: main pages, research, 101 members, stocks and insiders with a buy or a $250K+ exec sale in 30 days (~760 stocks, ~1,200 insiders), well-known insiders. Not every insider: insider pages read SEC live.
