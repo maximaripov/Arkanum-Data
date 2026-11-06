@@ -11,7 +11,7 @@
 //   node scripts/daily-digest.mjs --weekly    the week in review (run on Saturday)
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
-import { companyName, personName, roleLabel, isExecOrDirector } from "../lib/people.mjs";
+import { companyName, personName, roleLabel, isExecOrDirector, isEntity } from "../lib/people.mjs";
 import { isLateFiling, isUpcoming, notification, summarize } from "../lib/digest.mjs";
 import { nyNow } from "../lib/sendTime.mjs";
 import { SITE, token, siteFetch } from "./lib/site.mjs";
@@ -40,7 +40,8 @@ const allEvents = (await load("public/data/events.json", { events: [] })).events
 
 // Buys by executives and directors, filed on time (late filings are left out entirely).
 const buys = ins.trades.filter((t) => t.code === "P" && (t.value ?? 0) > 0 && isExecOrDirector(t) && !isLateFiling(t));
-const windowBuys = buys.filter((t) => inWindow(t.filed)).sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+// People first, then funds and companies with a board seat, each biggest first.
+const windowBuys = buys.filter((t) => inWindow(t.filed)).sort((a, b) => isEntity(a.owner) - isEntity(b.owner) || (b.value ?? 0) - (a.value ?? 0));
 
 const clusters = (() => {
   const by = new Map();
@@ -72,7 +73,7 @@ const digest = {
   title: WEEKLY ? `Week in review · ${short(from)}–${short(addDays(today, -1)).replace(short(from).split(" ")[0] + " ", "")}` : `Daily digest · ${pretty(today)}`,
   totals: { buys: windowBuys.length, value: Math.round(windowBuys.reduce((s, t) => s + (t.value ?? 0), 0)), insiders: new Set(windowBuys.map((t) => t.owner)).size },
   buys: windowBuys.slice(0, 5).map((t) => ({
-    symbol: t.symbol, company: companyName(t.issuer, t.symbol), name: personName(t.owner), ownerCik: t.ownerCik,
+    symbol: t.symbol, company: companyName(t.issuer, t.symbol), name: personName(t.owner), ownerCik: t.ownerCik, entity: isEntity(t.owner),
     role: roleLabel(t.role), value: Math.round(t.value), date: t.date, filed: t.filed,
     // Facts worth a chip; not ones the role already says ("CEO" next to "CEO & director").
     facts: (t.conv?.reasons ?? []).map((r) => r.text).filter((s) => !/insiders buying/.test(s) && !roleLabel(t.role).toLowerCase().includes(s.replace(/^also an? /i, "").toLowerCase())).slice(0, 2),

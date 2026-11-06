@@ -28,14 +28,19 @@ const quiet = { ...d, totals: { buys: 0, value: 0 }, buys: [], clusters: [] };
 
 test("summary: plain sentences, at most three", () => {
   assert.deepEqual(summarize(d), [
-    "Nine insider buys were filed today, $3.2M in total; the biggest was Mike Manley at AN, $1.4M.",
+    "Nine insider buys were filed today, $3.2M in total; the biggest by a person was Mike Manley at AN, $1.4M.",
     "Seven insiders at Upbound Group (UPBD) bought over the past week, $1.3M together.",
     "Next: CPI inflation, Tue, Nov 10.",
   ]);
   assert.match(summarize(quiet)[0], /^No executive or director bought/);
 });
 
-test("notification: one thing, then how many more", () => {
-  assert.equal(notification(d).body, "Biggest insider buy today: Mike Manley (CEO) at AN, $1.4M. Plus eight more buys.");
-  assert.equal(notification(quiet).body, "Quiet day: no insider buys filed. Next: CPI inflation, Tue, Nov 10.");
+test("notification says only Daily Digest", () => {
+  assert.deepEqual(notification(d), { title: "Daily Digest", body: "" });
+});
+
+test("funds and companies are told apart from people", async () => {
+  const { isEntity } = await import("../lib/people.mjs");
+  assert.equal(isEntity("Baker Bros. Advisors LP, Baker Julian"), true);
+  assert.equal(isEntity("GOVE SUE"), false);
 });
