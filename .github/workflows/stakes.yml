@@ -37,4 +37,4 @@ jobs:
       - name: Notify on failure
         if: failure()
         run: |
-          node scripts/notify.mjs "Form4: company stakes update failed" "The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/notify.mjs "Arkanum: company stakes update failed" "The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -25,7 +25,7 @@ const before = deals.size;
 let ok = 0;
 for (const [source, url] of FEEDS) {
   try {
-    const r = await fetch(url, { headers: { "User-Agent": "Form4 (form4-insiders.vercel.app)" }, signal: AbortSignal.timeout(20_000) });
+    const r = await fetch(url, { headers: { "User-Agent": "Arkanum (form4-insiders.vercel.app)" }, signal: AbortSignal.timeout(20_000) });
     if (!r.ok) { console.warn(`${source}: HTTP ${r.status}`); continue; }
     const items = parseRss(await r.text());
     ok++;

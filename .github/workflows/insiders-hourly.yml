@@ -88,7 +88,7 @@ jobs:
           [ "${{ steps.commit.outcome }}" = "failure" ] && failed="$failed saving the data,"
           [ "${{ steps.alerts.outcome }}" = "failure" ] && failed="$failed instant alerts,"
           failed="${failed%,}"
-          node scripts/notify.mjs "Form4: hourly insider update failed" "Failed:${failed:- setup}. The site keeps the last good data; you'll hear once it works again. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/notify.mjs "Arkanum: hourly insider update failed" "Failed:${failed:- setup}. The site keeps the last good data; you'll hear once it works again. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - name: Notify on recovery
         if: success()
         env:
@@ -97,5 +97,5 @@ jobs:
           prev=$(gh run list --repo "${{ github.repository }}" --workflow insiders-hourly.yml --limit 5 --json databaseId,conclusion,status \
             --jq '[.[] | select(.databaseId != ${{ github.run_id }} and .status == "completed")][0].conclusion' || echo "")
           if [ "$prev" = "failure" ]; then
-            node scripts/notify.mjs "Form4: hourly insider update is working again" "The latest run succeeded." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            node scripts/notify.mjs "Arkanum: hourly insider update is working again" "The latest run succeeded." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi

@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 
 // The backtest behind the buy labels, written up for readers (numbers from docs/backtest/results.md).
 const title = "Do insider stock purchases beat the market? A test of 23,000 buys";
-const description = "Form4 scored 22,969 officer and director purchases from 2023–2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.";
+const description = "Arkanum scored 22,969 officer and director purchases from 2023–2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.";
 export const metadata: Metadata = {
   title, description,
   alternates: { canonical: "/research/insider-buys" },
-  openGraph: { title: `${title} · Form4`, description, url: "/research/insider-buys", type: "article" },
+  openGraph: { title: `${title} · Arkanum`, description, url: "/research/insider-buys", type: "article" },
 };
 
 // Six months after the filing, versus the median insider buy filed the same month.
@@ -29,16 +29,16 @@ export default function InsiderBuysResearch() {
     <div className="stack prose">
       <section className="card">
         <h1>{title}</h1>
-        <p className="muted small">Form4 research · November 2026</p>
-        <p>Insider-trading sites, Form4 included, rank purchases with the same rules of thumb: a CEO buying matters more than a director, a big purchase matters more than a small one, a first purchase in years is a strong sign, and several insiders buying at once is the strongest sign of all. Purchases set up in advance under a trading plan count for less.</p>
-        <p>Form4 used those rules to label purchases &quot;Strong signal&quot;, then tested them on three years of real filings. They didn&apos;t pick better buys.</p>
+        <p className="muted small">Arkanum research · November 2026</p>
+        <p>Insider-trading sites, Arkanum included, rank purchases with the same rules of thumb: a CEO buying matters more than a director, a big purchase matters more than a small one, a first purchase in years is a strong sign, and several insiders buying at once is the strongest sign of all. Purchases set up in advance under a trading plan count for less.</p>
+        <p>Arkanum used those rules to label purchases &quot;Strong signal&quot;, then tested them on three years of real filings. They didn&apos;t pick better buys.</p>
       </section>
 
       <section className="card">
         <h2>How it was tested</h2>
         <ul>
           <li><strong>The purchases:</strong> every open-market purchase by an officer or director filed with the SEC from January 2023 to December 2025: 22,969 after removing stocks with no price history and filings whose price didn&apos;t match the ticker.</li>
-          <li><strong>The score:</strong> each purchase was scored with exactly the formula Form4 used on its pages: the insider&apos;s role, how much the purchase grew their stake, how long since their last purchase, how many insiders were buying, the size, and a penalty for pre-planned trades.</li>
+          <li><strong>The score:</strong> each purchase was scored with exactly the formula Arkanum used on its pages: the insider&apos;s role, how much the purchase grew their stake, how long since their last purchase, how many insiders were buying, the size, and a penalty for pre-planned trades.</li>
           <li><strong>The returns:</strong> from the first close <em>after the filing</em>, when the public could act on it, not the insider&apos;s own trade date.</li>
           <li><strong>The comparison:</strong> each purchase against the typical insider purchase filed the same month. That cancels out the market and the timing, so the only question left is whether a higher score picked the better purchases.</li>
         </ul>
@@ -68,7 +68,7 @@ export default function InsiderBuysResearch() {
       </section>
 
       <section className="card">
-        <h2>What Form4 changed</h2>
+        <h2>What Arkanum changed</h2>
         <p>Purchases are no longer called &quot;Strong signals.&quot; The labels now say what the score measures: <strong>Unusual</strong>, <strong>Somewhat unusual</strong> or <strong>Routine</strong>, meaning how out of the ordinary a purchase is for that person, not how it will do. Claims that group buying is &quot;the strongest signal&quot; were removed. The filings themselves are still worth reading: an unusual purchase is a reason to look closer, not a reason to buy.</p>
         <p><Link href="/">See this month&apos;s most unusual insider buys ›</Link></p>
       </section>
@@ -79,7 +79,7 @@ export default function InsiderBuysResearch() {
           <li><strong>One three-year period.</strong> Older academic studies found insider purchases did beat the market, with the edge shrinking over time. A different period could give different results.</li>
           <li><strong>Delisted stocks.</strong> 654 stocks had no price history, mostly companies that were delisted. Delistings usually mean losses, so the true results are probably a little worse, not better.</li>
           <li><strong>Overlapping purchases.</strong> Many purchases overlap in time and cluster in the same stocks, so the evidence is less certain than 23,000 purchases makes it sound.</li>
-          <li><strong>One formula.</strong> A different combination of factors might work. Form4 hasn&apos;t tested a reweighted score on data it wasn&apos;t built from, and won&apos;t claim one works until it has.</li>
+          <li><strong>One formula.</strong> A different combination of factors might work. Arkanum hasn&apos;t tested a reweighted score on data it wasn&apos;t built from, and won&apos;t claim one works until it has.</li>
         </ul>
         <p className="muted small">Filings from the SEC&apos;s quarterly insider transaction data sets. Returns computed from daily closing prices and published only as these summary statistics. Not investment advice.</p>
       </section>

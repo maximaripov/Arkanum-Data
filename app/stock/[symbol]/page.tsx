@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ symbol: s
   const name = co?.name ? titleCase(co.name, symbol) : null;
   const title = name ? `${symbol}: ${name} insider trades` : `${symbol} insider trades`;
   const description = `What ${name ?? symbol}'s executives and directors are buying and selling, which big funds hold it, and how the business is doing, from SEC filings.`;
-  return { title, description, alternates: { canonical: `/stock/${encodeURIComponent(symbol)}` }, openGraph: { title: `${title} · Form4`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
+  return { title, description, alternates: { canonical: `/stock/${encodeURIComponent(symbol)}` }, openGraph: { title: `${title} · Arkanum`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
 }
 
 async function load(symbol: string): Promise<StockInitial> {

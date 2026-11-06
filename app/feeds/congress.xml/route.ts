@@ -32,5 +32,5 @@ export async function GET() {
       const html = `<p>${esc(who)}, disclosed ${day(t.filed)}.</p><ul>${rows}</ul>${list.length > 40 ? `<p>and ${list.length - 40} more</p>` : ""}<p><a href="${esc(t.url)}">The report (PDF)</a></p>`;
       return { title: `${who} ${summary}`, link: `/congress/${memberSlug(t.member)}`, guid: t.url, date: t.filed, html };
     });
-  return rss({ title: "Form4: Congress stock trades", path: "/feeds/congress.xml", description: "Stock trades House members disclose in their STOCK Act reports, one item per report, from the U.S. House Clerk.", items });
+  return rss({ title: "Arkanum: Congress stock trades", path: "/feeds/congress.xml", description: "Stock trades House members disclose in their STOCK Act reports, one item per report, from the U.S. House Clerk.", items });
 }

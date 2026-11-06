@@ -1,5 +1,5 @@
 "use client";
-// Your watchlist: one card per stock with what Form4 knows about it — insider buying
+// Your watchlist: one card per stock with what Arkanum knows about it — insider buying
 // and selling, what big funds did, and how the business is growing. Stored on this device.
 import { useEffect, useState } from "react";
 import Link from "next/link";

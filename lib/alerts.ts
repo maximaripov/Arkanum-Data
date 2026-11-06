@@ -88,8 +88,8 @@ function same(a: string | null | undefined, b: string | undefined) {
 // secret is stored in GitHub. ALERTS_SECRET still works for manual runs.
 const GITHUB_JWKS = createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const OWNER_ID = process.env.GITHUB_OWNER_ID ?? "351230404";
-// The repo was renamed from Foresight to Form4; accept either name (and any GITHUB_REPO set on Vercel).
-const REPOS = new Set([process.env.GITHUB_REPO, "maximaripov/form4", "maximaripov/foresight"].filter(Boolean).map((r) => r!.toLowerCase()));
+// The repo may be named Foresight (its original name), Form4 or Arkanum; accept any (and any GITHUB_REPO set on Vercel).
+const REPOS = new Set([process.env.GITHUB_REPO, "maximaripov/arkanum", "maximaripov/form4", "maximaripov/foresight"].filter(Boolean).map((r) => r!.toLowerCase()));
 
 /** The owner code (ALERTS_PASSCODE) marks a device as the site owner's. */
 export const ownerCodeOk = (code: unknown) => typeof code === "string" && same(code, process.env.ALERTS_PASSCODE);

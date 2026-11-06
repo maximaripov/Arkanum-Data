@@ -37,5 +37,5 @@ export async function GET() {
         + `<p><a href="${esc(t.url)}">SEC filing</a></p>`;
       return { title: `${t.symbol}: ${who}, ${role}, bought $${fmtBig(value)}`, link: `/stock/${encodeURIComponent(t.symbol)}`, guid: `${t.accession}-${t.symbol}`, date: t.filed || t.date, html };
     });
-  return rss({ title: "Form4: unusual insider buys", path: "/feeds/insider-buys.xml", description: "Open-market purchases by executives and directors that Form4 labels Unusual (score 60+: how out of the ordinary the buy is, not a prediction of returns), from SEC Form 4 filings.", items });
+  return rss({ title: "Arkanum: unusual insider buys", path: "/feeds/insider-buys.xml", description: "Open-market purchases by executives and directors that Arkanum labels Unusual (score 60+: how out of the ordinary the buy is, not a prediction of returns), from SEC Form 4 filings.", items });
 }

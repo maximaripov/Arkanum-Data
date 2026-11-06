@@ -5,7 +5,7 @@ import { ogImage, ogDay, OG_SIZE } from "@/lib/og";
 import type { CTrade, Member } from "@/components/CongressView";
 
 export const revalidate = 3600;
-export const alt = "This House member's stock trades on Form4";
+export const alt = "This House member's stock trades on Arkanum";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 const SITE = "https://form4-insiders.vercel.app";

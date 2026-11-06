@@ -1,4 +1,4 @@
-// The Form4 mark: a ring with a gap where a drop broke free. Plain shapes in the text colour,
+// The Arkanum mark: a ring with a gap where a drop broke free. Plain shapes in the text colour,
 // so it reads the same in every theme and at every size.
 export const LOGO_RING = "M71.5 47.5A27 27 0 1 1 57 30.8";
 export function LogoMark({ size = 24 }: { size?: number }) {

@@ -24,7 +24,7 @@ export function ogImage({ section, title, subtitle, tag, stats = [], rows = [], 
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: C.bg, color: C.text, padding: "40px 64px", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 30, fontWeight: 700 }}>
           <Logo size={44} />
-          <span>form4</span>
+          <span>arkanum</span>
           <span style={{ color: C.muted, fontWeight: 400 }}>· {section}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 24 }}>

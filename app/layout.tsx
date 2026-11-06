@@ -15,13 +15,13 @@ const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--
 const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
 export const metadata: Metadata = {
   metadataBase: new URL("https://form4-insiders.vercel.app"),
-  title: { default: "Form4: what insiders are buying", template: "%s · Form4" },
+  title: { default: "Arkanum: what insiders are buying", template: "%s · Arkanum" },
   description: DESCRIPTION,
-  openGraph: { type: "website", siteName: "Form4", title: "Form4: what insiders are buying", description: DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: "Form4: what insiders are buying", description: DESCRIPTION },
-  appleWebApp: { capable: true, title: "Form4", statusBarStyle: "black-translucent" },
+  openGraph: { type: "website", siteName: "Arkanum", title: "Arkanum: what insiders are buying", description: DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: "Arkanum: what insiders are buying", description: DESCRIPTION },
+  appleWebApp: { capable: true, title: "Arkanum", statusBarStyle: "black-translucent" },
   // Lets feed readers find the RSS feeds (pages that set their own canonical link drop this).
-  alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Form4: unusual insider buys" }, { url: "/feeds/congress.xml", title: "Form4: Congress stock trades" }] } },
+  alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Arkanum: unusual insider buys" }, { url: "/feeds/congress.xml", title: "Arkanum: Congress stock trades" }] } },
 };
 export const viewport: Viewport = { themeColor: THEME_COLORS.dark, width: "device-width", initialScale: 1, viewportFit: "cover" };
 

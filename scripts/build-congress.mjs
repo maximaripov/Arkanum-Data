@@ -11,7 +11,7 @@ import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { parsePtr, stateDistrict } from "./lib/congress.mjs";
 import { writeSummaries } from "./lib/congress-summary.mjs";
 
-const UA = "Form4 (free, non-commercial insider-trading site; form4-insiders.vercel.app)";
+const UA = "Arkanum (free, non-commercial insider-trading site; form4-insiders.vercel.app)";
 const BASE = "https://disclosures-clerk.house.gov/public_disc";
 const MAX = +(process.argv[process.argv.indexOf("--max") + 1] || 0) || Infinity;
 const TMP = "/tmp/form4-congress";

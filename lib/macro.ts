@@ -1,4 +1,4 @@
-// The market numbers Form4 shows itself, from sources that allow public display:
+// The market numbers Arkanum shows itself, from sources that allow public display:
 //   - 10-year Treasury yield: Federal Reserve (H.15), fetched through FRED's public CSV download.
 //   - Bitcoin and gold: CoinGecko's public API, which requires a visible "Powered by CoinGecko" credit.
 // Stock and index prices (S&P 500, Nasdaq-100) are licensed for display, so the Markets page
@@ -36,7 +36,7 @@ function finish(base: Omit<Series, "date" | "value" | "prev" | "weekAgo" | "hist
 async function fred(id: string, start: string): Promise<Point[]> {
   try {
     // FRED turns away requests without a recognizable client name, so say who we are.
-    const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { headers: { "User-Agent": "Form4/1.0 (+https://form4-insiders.vercel.app)" }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(15_000) });
+    const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { headers: { "User-Agent": "Arkanum/1.0 (+https://form4-insiders.vercel.app)" }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(15_000) });
     if (!r.ok) return [];
     const out: Point[] = [];
     for (const line of (await r.text()).trim().split("\n").slice(1)) {

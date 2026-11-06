@@ -26,7 +26,7 @@ export function Nav() {
     <header className={`nav${searching ? " searching" : ""}`}>
       <Link href="/" className="brand">
         <LogoMark size={28} />
-        <span className="wordmark">form4<span className="cursor" aria-hidden /></span>
+        <span className="wordmark">arkanum<span className="cursor" aria-hidden /></span>
       </Link>
       <nav className="nav-links">
         {LINKS.map(([href, label]) => (

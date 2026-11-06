@@ -5,7 +5,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { sectorForSic } from "../lib/sectors.mjs";
 
-const SEC_UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
+const SEC_UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 const limitArg = process.argv.indexOf("--limit");
 const LIMIT = limitArg > -1 ? Number(process.argv[limitArg + 1]) : Infinity;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

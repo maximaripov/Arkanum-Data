@@ -1,6 +1,6 @@
 // Polite SEC EDGAR fetching for the data scripts: identifies itself (SEC asks for a
 // contact in the User-Agent; set SEC_USER_AGENT), retries, and backs off when throttled.
-export const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
+export const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // SEC allows 10 requests a second per client; space every request out to stay under it.

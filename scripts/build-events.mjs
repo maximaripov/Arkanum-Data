@@ -4,7 +4,7 @@
 // FRED_API_KEY (or else BLS's own calendar), the jobs report and CPI.
 import { writeFile, mkdir } from "node:fs/promises";
 
-const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
+const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 const FRED = process.env.FRED_API_KEY;
 const get = async (url, as = "text") => {
   try { const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) }); return r.ok ? (as === "json" ? r.json() : r.text()) : null; } catch { return null; }

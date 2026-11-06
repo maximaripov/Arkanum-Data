@@ -6,7 +6,7 @@ import { fmtBig } from "@/lib/format";
 import { ogImage, ogDay, OG_SIZE } from "@/lib/og";
 
 export const revalidate = 21600;
-export const alt = "This insider's latest trades on Form4";
+export const alt = "This insider's latest trades on Arkanum";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

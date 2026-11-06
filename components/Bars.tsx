@@ -1,5 +1,5 @@
 "use client";
-// Bar charts drawn by Form4. HBars: ranked rows (label, bar, amount), optionally links.
+// Bar charts drawn by Arkanum. HBars: ranked rows (label, bar, amount), optionally links.
 // VBars: one column per day; tap a column to select it.
 import { useState } from "react";
 import Link from "next/link";

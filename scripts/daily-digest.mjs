@@ -12,7 +12,7 @@ import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
 const NO_PUSH = process.argv.includes("--no-push");
-const UA = process.env.SEC_USER_AGENT || "Form4 (set SEC_USER_AGENT)";
+const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
 const money = (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`);

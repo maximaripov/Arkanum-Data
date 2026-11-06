@@ -7,7 +7,7 @@ import { fmtBig } from "@/lib/format";
 import { loadInsiders } from "@/lib/insiderData";
 import { companyName } from "@/lib/people.mjs";
 
-export const alt = "Insider trades on Form4";
+export const alt = "Insider trades on Arkanum";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const revalidate = 3600;
@@ -31,7 +31,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "#000000", color: "#e9e9e9", padding: "64px 80px", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 32, fontWeight: 700, color: "#e9e9e9" }}>
           <svg width={44} height={44} viewBox="0 0 100 100"><path d="M71.5 47.5A27 27 0 1 1 57 30.8" fill="none" stroke="#e9e9e9" strokeWidth="12" strokeLinecap="round" /><circle cx="78" cy="22" r="9" fill="#e9e9e9" /></svg>
-          form4
+          arkanum
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontSize: 110, fontWeight: 800, lineHeight: 1 }}>{symbol}</div>

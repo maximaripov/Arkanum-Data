@@ -1,4 +1,4 @@
-// Everything Form4 knows about each watchlist stock, from its own data files:
+// Everything Arkanum knows about each watchlist stock, from its own data files:
 // name and sector, recent insider buying and selling, and what tracked funds did.
 import { cikForTicker } from "@/lib/sec";
 import type { InsiderTrade } from "@/lib/sec";

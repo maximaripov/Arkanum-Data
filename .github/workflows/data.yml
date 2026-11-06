@@ -59,7 +59,7 @@ jobs:
       - name: Test failure alert
         if: github.event_name == 'workflow_dispatch' && inputs.test_alert
         run: |
-          node scripts/notify.mjs "Form4: test alert" "This is a test. If a daily update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/notify.mjs "Arkanum: test alert" "This is a test. If a daily update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - id: screener
         name: Build screener (SEC fundamentals)
         run: node scripts/build-screener.mjs
@@ -120,4 +120,4 @@ jobs:
           [ "${{ steps.check_all.outcome }}" = "failure" ] && failed="$failed data check,"
           [ "${{ steps.digest.outcome }}" = "failure" ] && failed="$failed digest,"
           failed="${failed%,}"
-          node scripts/notify.mjs "Form4: daily update failed" "Failed:${failed:- setup}. The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/notify.mjs "Arkanum: daily update failed" "Failed:${failed:- setup}. The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

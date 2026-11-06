@@ -1,7 +1,7 @@
-// The picture shown when a Form4 link is shared (messages, X, Reddit, Slack…).
+// The picture shown when an Arkanum link is shared (messages, X, Reddit, Slack…).
 import { ImageResponse } from "next/og";
 
-export const alt = "Form4: what insiders are buying";
+export const alt = "Arkanum: what insiders are buying";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,7 +14,7 @@ export default function Image() {
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 40, fontWeight: 700, color: "#e9e9e9" }}>
             <svg width={52} height={52} viewBox="0 0 100 100"><path d="M71.5 47.5A27 27 0 1 1 57 30.8" fill="none" stroke="#e9e9e9" strokeWidth="12" strokeLinecap="round" /><circle cx="78" cy="22" r="9" fill="#e9e9e9" /></svg>
-            Form4
+            arkanum
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
             <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, maxWidth: 640 }}>What insiders are buying</div>

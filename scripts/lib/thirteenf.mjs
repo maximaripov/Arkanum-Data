@@ -103,7 +103,7 @@ export async function addTickers(lists) {
   }
   let byNameHits = 0;
   for (const h of all) {
-    // OpenFIGI writes share classes as "LEN/B"; Form4 (like Yahoo) uses "LEN-B".
+    // OpenFIGI writes share classes as "LEN/B"; Arkanum (like Yahoo) uses "LEN-B".
     h.t = cache[h.cusip]?.replace(/[/ ]/g, "-") ?? null;
     if (h.t) continue;
     const hit = byName.get(norm(h.name));
