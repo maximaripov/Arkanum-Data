@@ -413,3 +413,11 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - Full name **Arkanum Data** in page titles and their template, link previews and their alt text, feed titles, the app name (`manifest.name`) and the first formal mention on About and Terms. What's shown on the page stays `arkanum` (wordmark, welcome screen, home-screen label `short_name`), at the owner's request, for a cleaner look. "Arkanum Data" also separates it in search from the Arcanum trademark and scam warning.
 - **Owner to do:** add `arkanumdata.vercel.app` in Vercel (project → Settings → Domains); free when checked. Then the site moves there with a redirect from form4-insiders.vercel.app.
 
+
+## Round 45: moved to arkanumdata.vercel.app (2026-11-06)
+
+- The owner added arkanumdata.vercel.app and renamed the Vercel project. The rename detached both old addresses: form4-insiders.vercel.app and foresightscreener.vercel.app answered `DEPLOYMENT_NOT_FOUND` (404) for every path, including `/api/*` and `/sw.js`.
+- Moved everything to the new address: `SITE` constants, `metadataBase`, sitemap, robots, feeds, share images, `SITE_URL` in the data, hourly and stakes workflows, the VAPID fallback and the user-agent strings. `vercel.json` now redirects both old hosts to it (except `/api/*` and `/sw.js`); the redirects only act once those domains are re-added to the project.
+- Checked live on phone and desktop: pages load without errors; canonicals, share images, sitemap and feed use the new address.
+- That day's 4 PM run started 23 seconds before the push, still on the old `SITE_URL`.
+- Search Console and Bing Webmaster dropped: the owner won't do them.
