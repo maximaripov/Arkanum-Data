@@ -140,7 +140,9 @@ export async function latestInsiders(limit = 60): Promise<InsiderTrade[]> {
 export async function insiderTradesByOwner(ownerCik: string, limit = 30): Promise<{ name: string; trades: InsiderTrade[] } | null> {
   const cik = Number(ownerCik);
   if (!Number.isInteger(cik) || cik <= 0) return null;
-  const sub = await secFetch(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`, 3600).catch(() => null);
+  // Only "no such filer" is a null; an SEC outage throws, so a cached page never turns into a 404.
+  const sub = await secFetch(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`, 3600)
+    .catch((e) => { if (/SEC 404 /.test(String(e?.message))) return null; throw e; });
   const r = sub?.filings?.recent;
   if (!r) return null;
   const picks: number[] = [];

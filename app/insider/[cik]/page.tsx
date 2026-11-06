@@ -12,14 +12,16 @@ import type { InsiderTrade } from "@/lib/sec";
 import { companyName } from "@/lib/people.mjs";
 
 // One insider across every company they report for, from their own SEC filings.
-// Rebuilt at most every 6 hours; search engines get the full page.
+// Built on first visit, then cached and rebuilt at most every 6 hours; search engines get
+// the full page. (generateStaticParams returning [] is what makes Next cache it at all.)
 export const revalidate = 21600;
+export async function generateStaticParams() { return []; }
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 async function load(cik: string) {
   const [r, site] = await Promise.all([
-    insiderTradesByOwner(cik).catch(() => null),
+    insiderTradesByOwner(cik), // an SEC outage fails the render, so the last good page stays cached
     loadInsiders("https://arkanumdata.vercel.app", { next: { revalidate: 1800 } }).catch(() => null),
   ]);
   if (!r) return null;

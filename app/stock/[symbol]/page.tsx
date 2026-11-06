@@ -9,6 +9,9 @@ import { companyName } from "@/lib/people.mjs";
 // Rebuilt at most every 30 minutes: the page arrives with its insider trades, fundamentals
 // and announcements already in it, so visitors see them at once and search engines can read them.
 export const revalidate = 1800;
+// Returning [] builds each stock page on its first visit and caches it (without it, Next
+// rebuilt the page on every visit). Missing pieces still load in the browser.
+export async function generateStaticParams() { return []; }
 const SITE = "https://arkanumdata.vercel.app";
 
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);

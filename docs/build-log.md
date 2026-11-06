@@ -455,3 +455,9 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Archive:** each digest is saved to `public/data/digests/<date>.json` (+ `index.json`) and committed with the data; `/briefing/<date>` pages and `/briefing/archive` are built at deploy (static, no runtime cost) and listed in the sitemap. `/briefing` shows the latest stored digest, or the newest archive file if the stored one is missing or old-format.
 - **Saturday week in review:** `weekly-digest.yml` builds it Saturday morning from committed data (Monday-Friday filings), holds it until 5 PM, and has its own 6-7 PM backstop release (the hourly job doesn't run Saturdays). The owner added Saturday to the cron-job.org timer.
 - Wording that described the old digest fixed: welcome popup, notifications card, footer, About.
+
+## Round 51: stock and insider pages cached (2026-11-06)
+
+- Both were rebuilt on every visit (`cache-control: private, no-store`, ƒ in the build) despite `revalidate`: a dynamic route without `generateStaticParams` isn't cached in Next 16. Each now exports `generateStaticParams() { return []; }`, so a page is built on its first visit and cached (stock 30 min, insider effectively 30 min because its shared-data fetch revalidates at 1800).
+- Guard first: an SEC outage used to make an insider page "not found", which caching would have pinned. `insiderTradesByOwner()` now returns null only for SEC 404 (no such filer) and throws otherwise, so a failed rebuild keeps the last good page. Stock pages already fill any missing piece in from the browser.
+- Not changed: share images (`opengraph-image`) are still built per request; each deploy (hourly) still starts with an empty cache.
