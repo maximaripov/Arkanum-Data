@@ -390,3 +390,8 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - `withActivity()` in [scripts/lib/famous.mjs](../scripts/lib/famous.mjs) (tested) sums each person's buys and $250K+ sales from the 30-day + today data; `build-famous.mjs --activity-only` refreshes it hourly (new step in `insiders-hourly.yml`; famous.json added to its commit) and the daily run adds it after ranking.
 - The activity line wraps instead of being cut off on small phones (`.lrow-main > .wraps`): an ellipsis had hidden the year in "last filing Oct 31, 2025", which read as a recent date.
 
+## Round 41: totals typed into the price box (2026-11-06)
+
+- **Bug (filers' mistakes):** some Form 4s put the total dollar amount in the per-share price box: three SPPL sales filed 2026-11-05 (189,310 shares at "$270,710.44" became a $51.2B sale), one LONA buy ($9.9B) and two IHT sales ($2.2B, $2.0B). The 30-day large-sales total read $75.6B (true: $4.25B) and SPPL led the ticker.
+- **Fix:** `priceAndValue()` in [lib/form4.mjs](../lib/form4.mjs) reads a price over $1,000 a share that makes a trade over $1B as the total (real $1B+ trades happen at ordinary prices; $1,000+ stocks don't trade $1B at a time); tests in `tests/form4.test.mjs`. `mergeInsiders()` applies it to trades already saved and drops corrected sales that fall under the $250K cut-off (they were kept only because of the wrong amount). overview.json rebuilt.
+

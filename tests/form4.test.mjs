@@ -63,3 +63,11 @@ test("adds up every account in the filing (a trust emptied, shares still held di
   assert.equal(r.ownedAfter, 0); // the trust's own balance
   assert.equal(r.ownedTotal, 1108972); // trust 0 + direct 1,108,972
 });
+
+test("a total typed into the per-share price box is read as the total", async () => {
+  const { priceAndValue } = await import("../lib/form4.mjs");
+  assert.deepEqual(priceAndValue(189310, 270710.44), { price: 1.43, value: 270710 }, "SPPL filing: $270K, not $51B");
+  assert.deepEqual(priceAndValue(19_000_000, 207.5), { price: 207.5, value: 3_942_500_000 }, "a real $3.9B sale at an ordinary price stays");
+  assert.deepEqual(priceAndValue(10, 700_000), { price: 700_000, value: 7_000_000 }, "a $700K-a-share stock in a normal-size trade stays");
+  assert.deepEqual(priceAndValue(100, 0), { price: null, value: null });
+});
