@@ -7,7 +7,7 @@ const description = "Arkanum scored 22,969 officer and director purchases from 2
 export const metadata: Metadata = {
   title, description,
   alternates: { canonical: "/research/insider-buys" },
-  openGraph: { title: `${title} · Arkanum Data`, description, url: "/research/insider-buys", type: "article" },
+  openGraph: { title: `${title} · Arkanum Data`, description, url: "/research/insider-buys", type: "article", images: "/opengraph-image" },
 };
 
 // Six months after the filing, versus the median insider buy filed the same month.

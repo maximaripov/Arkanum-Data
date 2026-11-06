@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  issues: write # alerts fall back to a GitHub issue when the site can't send them
   id-token: write # lets the job prove to the site that it is this repo's job
 jobs:
   update:
@@ -36,5 +37,7 @@ jobs:
           exit 1
       - name: Notify on failure
         if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           node scripts/notify.mjs "Arkanum: company stakes update failed" "The site keeps the last good data. Details in GitHub Actions." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "About, data & privacy", description: "Where Arkanum's data comes from, and what it does (and doesn't) keep about you." };
+export const metadata = { title: "About, data & privacy", description: "Where Arkanum's data comes from, and what it does (and doesn't) keep about you.", alternates: { canonical: "/about" } };
 
 export default function About() {
   return (

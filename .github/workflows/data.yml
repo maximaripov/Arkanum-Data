@@ -23,6 +23,7 @@ on:
         default: false
 permissions:
   contents: write
+  issues: write # alerts fall back to a GitHub issue when the site can't send them
   id-token: write # lets the job prove to the site that it is this repo's job
 jobs:
   gate:
@@ -58,6 +59,8 @@ jobs:
       - run: npm ci
       - name: Test failure alert
         if: github.event_name == 'workflow_dispatch' && inputs.test_alert
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           node scripts/notify.mjs "Arkanum: test alert" "This is a test. If a daily update ever fails, you'll get a message like this naming the step." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - id: screener
@@ -111,6 +114,8 @@ jobs:
       # data) and the owner's devices get a notification naming the step.
       - name: Notify on failure
         if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           failed=""
           [ "${{ steps.screener.outcome }}" = "failure" ] && failed="$failed SEC fundamentals,"

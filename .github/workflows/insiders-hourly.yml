@@ -15,6 +15,7 @@ on:
         default: false
 permissions:
   contents: write
+  issues: write # alerts fall back to a GitHub issue when the site can't send them
   id-token: write # lets the job prove to the site that it is this repo's job
   actions: read # to check how the previous run ended before alerting
 jobs:
@@ -76,6 +77,7 @@ jobs:
       - name: Notify on failure
         if: failure()
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
         run: |
           prev=$(gh run list --repo "${{ github.repository }}" --workflow insiders-hourly.yml --limit 5 --json databaseId,conclusion,status \
@@ -92,6 +94,7 @@ jobs:
       - name: Notify on recovery
         if: success()
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
         run: |
           prev=$(gh run list --repo "${{ github.repository }}" --workflow insiders-hourly.yml --limit 5 --json databaseId,conclusion,status \
