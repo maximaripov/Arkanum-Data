@@ -421,3 +421,4 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - Checked live on phone and desktop: pages load without errors; canonicals, share images, sitemap and feed use the new address.
 - That day's 4 PM run started 23 seconds before the push, still on the old `SITE_URL`.
 - Search Console and Bing Webmaster dropped: the owner won't do them.
+- The owner decided not to re-add the old addresses, so `vercel.json` (redirects only) was deleted. Old links, RSS subscriptions and home-screen installs from the old addresses stay dead; re-add the app from the new address.

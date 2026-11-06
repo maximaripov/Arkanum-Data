@@ -4,7 +4,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 
 ## Basics
 - **Name: Arkanum Data** (was Form4, before that Foresight). Full name in page titles, link previews, feeds, app name, About/Terms; the page itself (header wordmark, welcome screen, home-screen label) shows just `arkanum`.
-- **Live:** https://arkanumdata.vercel.app (Vercel project renamed too). Old addresses form4-insiders.vercel.app and foresightscreener.vercel.app redirect via `vercel.json` only while they are attached to the project. **Repo:** github.com/maximaripov/Arkanum-Data (private, `main`; renamed from Foresight 2026-11-06, old URLs redirect). Next.js App Router on Vercel Hobby (a newer Next than most training data: read `node_modules/next/dist/docs/` before Next-specific code).
+- **Live:** https://arkanumdata.vercel.app (Vercel project renamed too). The old addresses form4-insiders.vercel.app and foresightscreener.vercel.app are gone for good (owner chose not to re-add them; no redirects). **Repo:** github.com/maximaripov/Arkanum-Data (private, `main`; renamed from Foresight 2026-11-06, old URLs redirect). Next.js App Router on Vercel Hobby (a newer Next than most training data: read `node_modules/next/dist/docs/` before Next-specific code).
 - Free hobby site: no income, no accounts, no contact address. Must stay free.
 - Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; commits and workflows use that identity.
 - **Working rules:** fix bugs without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions work on a `claude/...` branch; push to both; merge `origin/main` rather than rebase, since force-pushes are blocked). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes. Show design changes as screenshots before shipping.
@@ -13,9 +13,8 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 - How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language. The owner likes options in batches of 10.
 
 ## Waiting on the owner
-1. **Re-add the old addresses** `form4-insiders.vercel.app` and `foresightscreener.vercel.app` in Vercel (project → Settings → Domains). The project rename detached them (404 everywhere); `vercel.json` redirects them once attached. Until then old links, search results, RSS subscribers and subscribed phones hit a 404.
-2. Delete stale branches `proto-news`, `proto-track`, `round2`.
-3. Search Console / Bing Webmaster: declined by the owner; don't raise again.
+1. Delete stale branches `proto-news`, `proto-track`, `round2`.
+2. Search Console / Bing Webmaster, and re-adding the old addresses: declined by the owner; don't raise again.
 
 ## Still to check
 - **New alert audience:** jobs now send `form4-alerts` (site accepts it and `foresight-alerts`). The first job that actually calls the site (the 4 PM digest) is the real test; a failure sends the owner a failure alert.
