@@ -1,60 +1,53 @@
-# Arkanum handoff (formerly Form4) (read this first)
+# Arkanum Data handoff (read this first)
 
-Paste this into a new chat to continue. History of every change is in [build-log.md](build-log.md) (rounds 1–44); add new rounds there.
+Paste this into a new chat to continue. Every change is in [build-log.md](build-log.md) (rounds 1–44); add new rounds there.
 
 ## Basics
-- **Name: Arkanum Data** (rounds 43–44; was Form4, before that Foresight). The full name is used in page titles, link previews, feeds, the app name and formal mentions (About, Terms); everything shown on the page (header wordmark, welcome screen, home-screen label) says just `arkanum`. Live: https://form4-insiders.vercel.app until the owner adds the new address in Vercel (planned `arkanumdata.vercel.app`; then the site constants move and the old address redirects). foresightscreener.vercel.app redirects. Repo github.com/maximaripov/Form4 (private, `main`; renamed from Foresight, old URLs redirect). Next.js App Router (a newer version than most training data: read `node_modules/next/dist/docs/` before Next-specific code) on Vercel Hobby.
-- Free hobby site: no income, no accounts, no contact address. Must stay free (no paid APIs or hosting).
+- **Name: Arkanum Data** (was Form4, before that Foresight). Full name in page titles, link previews, feeds, app name, About/Terms; the page itself (header wordmark, welcome screen, home-screen label) shows just `arkanum`.
+- **Live:** https://form4-insiders.vercel.app (foresightscreener.vercel.app redirects). **Repo:** github.com/maximaripov/Foresight (private, `main`; not renamed yet). Next.js App Router on Vercel Hobby (a newer Next than most training data: read `node_modules/next/dist/docs/` before Next-specific code).
+- Free hobby site: no income, no accounts, no contact address. Must stay free.
 - Vercel only deploys commits authored by `maximaripov <351230404+maximaripov@users.noreply.github.com>`; commits and workflows use that identity.
-- **Working rules:** fix bugs and glitches without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions develop on a `claude/...` branch; push to both). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes.
-- Owner alerts are gated by the `ALERTS_PASSCODE` env var on Vercel (never store its value anywhere). Two owner devices are registered. GitHub secrets: `SEC_USER_AGENT` (contact string SEC requires); no `FRED_API_KEY` (not needed: BLS works).
-- Never put the owner's email in request headers or code.
-- Browser storage keys keep the old `foresight.` prefix on purpose (renaming would need a migration on every device). The site's alert check accepts jobs from either repo name.
+- **Working rules:** fix bugs without asking. Push straight to `main` once `npm test` and `npx tsc --noEmit` pass (sessions work on a `claude/...` branch; push to both; merge `origin/main` rather than rebase, since force-pushes are blocked). Verify on the live site with Playwright, phone and desktop, before reporting. Ping the owner's phone when a long task finishes. Show design changes as screenshots before shipping.
+- Owner alerts are gated by `ALERTS_PASSCODE` on Vercel (never store its value). Two owner devices registered. GitHub secret `SEC_USER_AGENT`. SEC blocks the dev sandbox: anything that reads SEC runs in GitHub Actions.
+- Never put the owner's email in request headers or code. Browser storage keys keep old `foresight.`/`form4.` prefixes on purpose (renaming needs a per-device migration).
+- How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language. The owner likes options in batches of 10.
 
-## Owner's style rules
-- **No emoji anywhere** (site, notifications, copy). Words or line-drawn SVG icons; plain marks ▲ ▼ › ↗ × are fine. `tests/no-emoji.test.mjs` enforces it.
-- No intro blurbs or "How to read this" sections. Exception: the first-visit welcome popup stays.
-- Consistent layouts: dropdown pickers (no sideways chip sliders; long lists use the searchable `Picker`); "what changed" as short lines inside the holdings card; cross-company lists at the bottom.
-- Logo: a ring with a gap where a drop broke free (`components/Logo.tsx`, in the text colour) next to a lowercase `form4` wordmark with a blinking block cursor. Colours: black and white, green `#3ddc84` for buys/up and red `#ff5f56` for sales/down (light mode: black on white, `#0a8a3e` / `#c6282d`). Market quotes (S&P 500, Nasdaq 100, BTC, gold, 10-year) only through TradingView embeds (index levels are licensed; FRED's S&P series is copyrighted).
-- How to talk to the owner: rigorous, honest advisor; lead with the main criticism; flag inference vs evidence; say when something is good enough to ship; plain language, no jargon.
+## Waiting on the owner
+1. **New address:** add `arkanumdata.vercel.app` in Vercel (project → Settings → Domains); free when checked. Then: move `SITE`/`metadataBase`/sitemap/robots/feeds/workflow `SITE_URL` to it and add a `vercel.json` redirect from form4-insiders.vercel.app (keep `/api/*` and `/sw.js` reachable for subscribed phones, as with foresightscreener).
+2. Optional, after that: rename the GitHub repo and the Vercel project (the alert check in `lib/alerts.ts` already accepts repo names arkanum, form4 and foresight).
+3. Search Console + Bing Webmaster (the only way to know if search traffic works). The owner declined posting/outreach; drafts exist in `docs/backtest/social-drafts.md` and `writeup-draft.md`.
+4. Delete stale branches `proto-news`, `proto-track`, `round2`.
 
-## Design (round 42: retro terminal)
-Black by default; sun/moon button switches to a black-on-white "printout" (per device, `form4.theme` in localStorage, applied before first paint by a script in `app/layout.tsx`; constants in `lib/theme.ts`). Monospace (JetBrains Mono via `next/font`) everywhere; section headings are bold capitals with a green `>` prompt; square corners; the active nav item and tab in inverse video (`[overview]`); double-line borders on the headline numbers and the week's top buy; a soft glow on headings and big numbers in dark mode. The owner turned down scanlines and a pixel font. All of it is one section at the end of `app/globals.css` plus the colour tokens at its top. Desktop: top bar, ticker band, dense tables with 10-bar meters. Phone: compact header with search button, hero card, 2x2 stat cards, score rings, bottom tab bar (Insiders / Congress / Markets / Stakes / Digest).
+## Still to check
+- **New alert audience:** jobs now send `form4-alerts` (site accepts it and `foresight-alerts`). The first job that actually calls the site (the 4 PM digest) is the real test; a failure sends the owner a failure alert.
+- **Search directory gap:** SEC's quarterly data sets for 2026q2–q3 returned "not published"; rerun `people-backfill.yml` once they appear.
+- **Name risk:** "Arkanum" sounds like ARCANUM (registered trademark for financial services, Arcanum Global, Inc., reg. 5191550), a June 2026 Swedish fraud warning about "Arcanum Global Trading", and an Arcanum crypto token. The owner chose it knowingly; revisit before anything commercial.
+
+## Style rules
+- **No emoji anywhere** (`tests/no-emoji.test.mjs`); plain marks ▲ ▼ › ↗ × are fine. No intro blurbs (except the first-visit welcome popup). Dropdown pickers, never sideways sliders (long lists use the searchable `components/Picker.tsx`). Footer link row only: About, data & privacy · Research findings · Terms (no links inside cards, no visible RSS links).
+- **Design (round 42, retro terminal):** black, white, green `#3ddc84` (buys/up), red `#ff5f56` (sales/down); light mode is a black-on-white printout (`#0a8a3e` / `#c6282d`). Monospace (JetBrains Mono) everywhere; bold capital headings with a green `>` prompt; square corners; inverse-video active nav/tab (`[overview]`); double-line borders on headline numbers and the week's top buy; soft glow in dark mode. The owner rejected scanlines and pixel fonts. Lives in the colour tokens at the top of `app/globals.css` and one section at its end.
+- **Logo:** a ring with a gap where a drop broke free (`components/Logo.tsx`), next to lowercase `arkanum` and a blinking block cursor (still under reduced motion). Same mark in `app/icon.svg`, `public/icon.svg`, `app/apple-icon.png`, `public/icon-192/512.png`, share images.
+- Market quotes only through TradingView embeds (index levels are licensed).
 
 ## Pages
-- `/` Insiders. Tabs Overview, Group buys, All trades, Big funds, Well-known (CEOs/chairs ranked by Wikipedia views, `famous.json`, daily). Overview reads `public/data/overview.json` (15 KB; the 850 KB 30-day file loads only for the trade lists): headline numbers, Strongest buys, Buying together, buying by day, Latest filings, Notable sales. Phone leads with the week's strongest buy.
-- `/congress` House members' stock trades: member dropdown, 30-day numbers, latest disclosures (linked to the PDF), most bought/sold (90 days), most active members.
-- `/congress/[member]` one server-rendered page per member (slug from `memberSlug()` in `lib/congress.mjs`; data `public/data/congress/<slug>.json`), all in the sitemap. Old `?member=` links redirect.
-- `/markets` TradingView overview, watchlist, people you follow, Coming up (Fed, jobs, CPI, GDP, PCE).
-- `/stakes` what listed companies own: company dropdown, holdings, 5%+ stakes, private investments ("not verified"), cross-company lists.
-- `/stock/[symbol]`: chart + insider strip under it (buys/sales marks over the chart's range), SEC fundamentals, 8-Ks, Congress trades, companies that own it, big funds, insider trades. (FINRA retail table removed 2026-11-05.)
-- `/research/insider-buys`: the backtest for readers (linked from About).
-- `/insider/[cik]` with Follow; `/briefing` Digest (S&P/Nasdaq TradingView cards, markets this week, owner box); `/about`, `/terms`.
-- Search (`/api/search`) finds tickers and insiders by name (directory `public/data/people.json`, kept two years; backfilled from SEC's quarterly data sets by the manual `people-backfill.yml`).
-- RSS: `/feeds/insider-buys.xml` (score 60+ buys) and `/feeds/congress.xml` (one item per House report); found by feed readers from the page head (not linked visibly: raw XML looks broken on phones). Share pictures (`opengraph-image.tsx`) on stock, insider and member pages; shared layout in `lib/og.tsx` (stock page keeps its own).
+- `/` Insiders: tabs Overview, Group buys, All trades, Big funds, Well-known. Overview reads `overview.json` (~16 KB): headline numbers, Most unusual buys, Buying together, buying by day, Latest filings, Notable sales; phone leads with the week's most unusual buy.
+- **Well-known** (`components/FamousView.tsx`, `famous.json`): up to 100 CEOs/chairs ranked by English Wikipedia views (30 days), from Wikidata CEO/chair entries matched to Form 4 filers (`scripts/build-famous.mjs`, `scripts/lib/famous.mjs`); each row shows their last-30-days trading ("Bought $3.0M · Oct 26", "Sold $2.7M · pre-planned", or "Last buy or big sale: Sep 2025"), refreshed hourly. Gaps from Wikidata: Tim Cook, Jeff Bezos.
+- `/congress` (server-rendered) and `/congress/[member]` (one page per House member, 101, in the sitemap; data `public/data/congress/<slug>.json`; old `?member=` links redirect).
+- `/stock/[symbol]`, `/insider/[cik]` (Follow), `/markets`, `/stakes`, `/briefing` (Digest), `/research/insider-buys` (backtest write-up), `/about`, `/terms`.
+- Search (`/api/search`): tickers + 19,381 insiders (two years, backfilled from SEC quarterly data; Wikipedia common names as aliases, so "jensen huang" works).
+- RSS `/feeds/insider-buys.xml`, `/feeds/congress.xml` (discoverable via page head only). Share images per stock, insider and member page (`lib/og.tsx`).
+- Sitemap: main pages, research, 101 members, stocks and insiders with a buy or a $250K+ exec sale in 30 days (~760 stocks, ~1,200 insiders), well-known insiders. Not every insider: insider pages read SEC live.
 
-## Data jobs (GitHub Actions; SEC work runs there)
-- `data.yml` weekdays 4:02 PM ET (two crons; a gate skips the wrong one for DST): fundamentals, 30-day insiders, overview, people directory, funds, events (BEA, Fed, BLS), private-deal catch-up (PR Newswire news sitemap, last ~2 days), health check, digest push.
-- `insiders-hourly.yml` weekdays ~7 AM–11 PM ET: live Form 4 feed → `insiders-today.json`, private deals, overview, people, instant alerts. Failure/recovery alerts to owner devices. Calls to the site retry network errors (`siteFetch` in `scripts/lib/site.mjs`).
-- `stakes.yml` weekdays 10:37 UTC (~3.5 min). `congress.yml` weekdays 23:41 UTC: House Clerk yearly index → new PTR PDFs → `pdftotext` (poppler) → `public/data/congress.json` (full, served by `/api/congress?symbol=`) + `congress-overview.json` + one file per member in `public/data/congress/`; `--rebuild` re-reads all. `tests.yml`: tests + tsc. `backtest.yml`: manual, owner-only.
-- GitHub's scheduler often starts jobs 30–60 min late; normal.
-- Private repo: 2,000 free Actions minutes/month; current use is well under.
+## Data jobs (GitHub Actions)
+- `data.yml` weekdays 4:02 PM ET (150-min limit): fundamentals, 30-day insiders, overview, people, well-known insiders (`build-famous.mjs`, Wikipedia paced at 1 req/s), funds, events, private-deal catch-up, health check, digest. `insiders-hourly.yml` weekdays ~7 AM–11 PM ET (also refreshes well-known activity). `stakes.yml`, `congress.yml` daily. Manual: `people-backfill.yml`, `backtest.yml`. Jobs often start 30–60 min late.
+- **Data fixes worth knowing:** the daily job once read each Form 4 twice (index lists it per filer), doubling amounts; fixed by `form4Files()` and a one-time rebuild (file `version: 2`). Some filers type the total into the price box; `priceAndValue()` in `lib/form4.mjs` reads price > $1,000 with value > $1B as a total, and `cleanTrades()` in `lib/insiderMerge.mjs` applies it to saved data. Anything reading trade files directly must go through `mergeInsiders()` or `cleanTrades()`.
 
-## Scoring and flags (`lib/conviction.mjs`)
-- Buys: score 0–100 (role, stake increase, first buy in N years, other insiders buying, size, pre-planned penalty); shown as Unusual 60+, Somewhat unusual 40–59, Routine (stored tiers still `strong`/`notable`/`routine`). Vice presidents are officers, not top executives.
-- Sales: `saleFlags()`: top executive, share of holding sold, several insiders selling, not pre-planned. "Notable" = not pre-planned, not a fund/10% owner, and a top executive selling 25%+ or $1M+, or anyone selling half or more.
-- Holdings: Form 4 parsing adds every account into `ownedTotal` (round 30). Share-sold figures use only that and say nothing for older rows without it (so Notable sales is ~72 for now and refills over ~30 days).
+## Scoring and backtest
+- Buy score 0–100 (`lib/conviction.mjs`), shown as Unusual 60+, Somewhat unusual 40–59, Routine (stored as strong/notable/routine). Sales flags: `saleFlags()`.
+- Backtest (`docs/backtest/`, public at `/research/insider-buys`): 22,969 officer/director buys 2023–2025; the score doesn't pick better buys; $1M+ and CEO buys did worse; only the pre-planned penalty holds up; insider buys trailed small caps.
 
-## Backtest (owner-only, `docs/backtest/`)
-2023–2025, 22,969 officer/director buys, scored with the site's formula. **The score does not pick better buys:** Strong vs Routine no difference against same-month buys; 80+ did worst; $1M+ buys and top-executive buys did worse; only the pre-planned penalty holds up. Insider buys overall didn't beat small caps. Tiers renamed to Unusual / Somewhat unusual / Routine (round 34). Not done: reweighting tested out of sample; a public write-up of the backtest.
+## Decisions
+- Senate trades impossible (Akamai blocks automation). No AI assistant (paid). No custom domain yet (costs money; buy it when search traffic shows up or ads start). Monetization waits for traction.
 
-## Decisions and constraints
-- Senate trades: impossible. The owner agreed to the eFD terms, but Akamai blocks automated access from this dev machine and GitHub runners (even headless Chromium).
-- AI assistant: skipped for now (paid; risk of dressing noise up as insight). If ever: capped daily batch summaries of 8-K filings.
-- Monetization: wait for traction. Ads would need a domain, Vercel Pro, removal of non-commercial data, a privacy policy + consent banner, ads.txt, and a lawyer's view on Congress data (5 U.S.C. §13107 news-media exception).
-- Kept on purpose: welcome popup.
-
-## Open ideas (not started)
-- Form 144 planned-sale notices; notable-sale alerts for watchlist stocks; buybacks from 10-Q share counts.
-- Owner to delete stale branches `proto-news`, `proto-track`, `round2`.
-- Mockup files of the five redesign directions were only in a scratchpad (not in the repo).
+## Ideas not started
+- Congress "late disclosures" page (factual wording only, hand-check rows against PDFs first). Weekly archive pages. Bluesky auto-post bot (owner would create the account). Form 144 notices; watchlist sale alerts; buybacks.
