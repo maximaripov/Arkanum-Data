@@ -9,11 +9,13 @@
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 //   node scripts/daily-digest.mjs --hold      notify at 5:00 PM New York time (now, if it's later)
 //   node scripts/daily-digest.mjs --weekly    the week in review (run on Saturday)
+//   node scripts/daily-digest.mjs --force     build even though the market is closed today
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 import { companyName, personName, roleLabel, isExecOrDirector, isEntity } from "../lib/people.mjs";
 import { isLateFiling, isUpcoming, notification, summarize } from "../lib/digest.mjs";
 import { nyNow } from "../lib/sendTime.mjs";
+import { marketClosed } from "../lib/marketDays.mjs";
 import { SITE, token, siteFetch } from "./lib/site.mjs";
 
 const DRY = process.argv.includes("--dry-run");
@@ -23,6 +25,11 @@ const WEEKLY = process.argv.includes("--weekly");
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
 
 const today = nyNow().date;
+// No daily digest on days the stock market is closed (weekends, NYSE holidays): no page, no notification.
+if (!WEEKLY && marketClosed(today) && !process.argv.includes("--force")) {
+  console.log(`${today}: the market is closed, so no daily digest.`);
+  process.exit(0);
+}
 const addDays = (ymd, n) => new Date(Date.parse(ymd + "T12:00:00Z") + n * 86_400_000).toISOString().slice(0, 10);
 const pretty = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const short = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });

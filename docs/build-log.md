@@ -461,3 +461,8 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - Both were rebuilt on every visit (`cache-control: private, no-store`, ƒ in the build) despite `revalidate`: a dynamic route without `generateStaticParams` isn't cached in Next 16. Each now exports `generateStaticParams() { return []; }`, so a page is built on its first visit and cached (stock 30 min, insider effectively 30 min because its shared-data fetch revalidates at 1800).
 - Guard first: an SEC outage used to make an insider page "not found", which caching would have pinned. `insiderTradesByOwner()` now returns null only for SEC 404 (no such filer) and throws otherwise, so a failed rebuild keeps the last good page. Stock pages already fill any missing piece in from the browser.
 - Not changed: share images (`opengraph-image`) are still built per request; each deploy (hourly) still starts with an empty cache.
+
+## Round 52: no daily digest when the market is closed (2026-11-06)
+
+- `lib/marketDays.mjs` works out NYSE full-day holidays by rule (observed dates, Good Friday from Easter, no Friday closure when Jan 1 is a Saturday); tests match NYSE's published 2026 and 2027 calendars. `daily-digest.mjs` exits before building, archiving or notifying on weekends and those holidays (`--force` overrides). The Saturday week in review is unaffected.
+- Not covered: days the market is open but EDGAR is closed (Veterans Day, Columbus Day), which give a near-empty digest. Owner asked for market days only.
