@@ -8,7 +8,7 @@ export default function About() {
       <section className="card">
         <h1>About Arkanum</h1>
         <p>Arkanum Data is a free market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English, alongside the major indexes, bitcoin, gold and the 10-year Treasury yield, with stock price charts from TradingView. No account, no ads.</p>
-        <p className="muted">The name comes from <em>arcanum</em>, Latin for a secret. What insiders do with their own company&apos;s stock used to be one; now it&apos;s public, in filings like Form 4, which executives, directors and major shareholders must submit within two business days of trading. Arkanum Data is an independent site and isn&apos;t affiliated with the SEC.</p>
+        <p className="muted">What insiders do with their own company&apos;s stock is public, in filings like Form 4, which executives, directors and major shareholders must submit within two business days of trading. Arkanum Data is an independent site and isn&apos;t affiliated with the SEC.</p>
       </section>
 
       <section className="card">

@@ -302,8 +302,8 @@ a.hb-row:hover { background: var(--chip); }
 @media (max-width: 760px) { .mcard.tvq { flex-basis: 60%; } }
 
 /* First-visit welcome */
-.welcome-backdrop { position: fixed; inset: 0; z-index: 50; background: #0008; display: grid; place-items: center; padding: 1rem; animation: fade .2s ease; }
-.welcome { width: min(460px, 100%); max-height: calc(100dvh - 2rem); overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 1.4rem 1.3rem 1rem; box-shadow: 0 20px 60px #0007; }
+.welcome-backdrop { position: fixed; inset: 0; z-index: 50; background: #0008; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 1rem; animation: fade .2s ease; }
+.welcome { width: min(460px, 100%); max-height: calc(100dvh - 2rem); overflow: auto; background: var(--card); border: 1px solid var(--text); border-radius: 18px; padding: 1.4rem 1.3rem 1rem; box-shadow: 0 20px 60px #0007; }
 .welcome h2 { font-size: 1.35rem; margin-bottom: .4rem; }
 .welcome > p { margin: .25rem 0 .9rem; line-height: 1.5; }
 .welcome-steps { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .8rem; }
@@ -314,8 +314,13 @@ a.hb-row:hover { background: var(--chip); }
 .welcome-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: .6rem; }
 @keyframes fade { from { opacity: 0; } }
 @media (max-width: 640px) {
-  .welcome-backdrop { place-items: end center; padding: 0; }
-  .welcome { width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  .welcome-backdrop { padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); }
+  .welcome { max-height: 100%; padding: 1.1rem 1rem .8rem; font-size: .9rem; }
+  .welcome h2 { font-size: 1.15rem; }
+  .welcome > p { margin: .2rem 0 .8rem; line-height: 1.45; }
+  .welcome-steps { gap: .6rem; margin-bottom: .8rem; }
+  .welcome-icon { flex-basis: 1.9rem; height: 1.9rem; }
+  .welcome-tip { padding: .5rem .65rem; margin-bottom: .8rem; }
   .welcome-actions .btn { flex: 1; }
 }
 /* Two columns of rows on wide screens (strongest buys). */

@@ -18,7 +18,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 
 ## Still to check
 - **Vercel Functions Storage** was 8.04 / 10 GB on 2026-11-06 (old deployments piling up; everything else far under). Retention set to 1 day for all deployment types; confirm it dropped. If not, cut the number of deploys.
-- **New alert audience:** jobs now send `form4-alerts` (site accepts it and `foresight-alerts`). The first job that actually calls the site (the 4 PM digest) is the real test; a failure sends the owner a failure alert.
+- (Done 2026-11-06: the digest reached the owner via the new address and `form4-alerts` audience.)
 - **Search directory gap:** SEC's quarterly data sets for 2026q2–q3 returned "not published"; rerun `people-backfill.yml` once they appear.
 - **Name risk:** "Arkanum" sounds like ARCANUM (registered trademark for financial services, Arcanum Global, Inc., reg. 5191550), a June 2026 Swedish fraud warning about "Arcanum Global Trading", and an Arcanum crypto token. The owner chose it knowingly; revisit before anything commercial.
 

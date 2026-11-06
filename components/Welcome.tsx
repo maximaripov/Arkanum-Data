@@ -20,7 +20,7 @@ export function Welcome() {
   }, []);
   useEffect(() => {
     if (!open) return;
-    btn.current?.focus();
+    btn.current?.focus({ preventScroll: true });
     const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
@@ -31,7 +31,7 @@ export function Welcome() {
     <div className="welcome-backdrop" onClick={close}>
       <div className="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="welcome-title">Welcome to Arkanum</h2>
-        <p>See what company insiders and big investment funds are doing with their own money, explained in plain English, from official SEC filings. (Arkanum comes from <em>arcanum</em>, Latin for a secret: what insiders trade used to be one.)</p>
+        <p>See what company insiders and big investment funds are doing with their own money, explained in plain English, from official SEC filings.</p>
         <ol className="welcome-steps">
           <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg></span><div><strong>Follow your stocks</strong><span className="muted">Search for a company at the top and tap &quot;Add to watchlist&quot;.</span></div></li>
           <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8" /><path d="M15 7h6v6" /></svg></span><div><strong>See who&apos;s buying</strong><span className="muted">The Insiders tab shows executives buying their own company&apos;s stock, and what big funds bought last quarter.</span></div></li>

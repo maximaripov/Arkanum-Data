@@ -427,3 +427,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 
 - **Vercel usage (owner's screenshot, last 30 days):** Functions Storage 8.04 / 10 GB was the only limit near its cap (Active CPU 22 min / 4 h, invocations 17K / 1M, CDN requests 41K / 1M, origin transfer 66 MB / 10 GB). Likely cause: every deploy (about 25 a day, one per data commit) keeps its own copy of the functions. The owner set Deployment Retention to 1 day for all four types. If Functions Storage doesn't fall, cut deploys (e.g. hourly job every 2 h off-peak) or move data out of the deployment.
 - **Ticker:** the band under the header now rolls right to left like an exchange tape (`components/Ticker.tsx`): the list is drawn twice and slides by one copy's width (no seam); short lists are repeated first; 3.5 s per trade (~33 px/s); fades at the edges; pauses on hover or keyboard focus; the duplicate copy is hidden from screen readers and tabbing. With reduced motion it stays still and swipeable. "Live · N min ago" stays fixed on the left.
+- **Digest check passed:** the manual rerun of the daily job (new address, `form4-alerts` audience, renamed repo) delivered the digest to the owner's re-registered phone.
+
+## Round 47: welcome popup, name meaning removed (2026-11-06)
+
+- Welcome popup: 1px border in the text colour (white in dark mode, black in light) so the black box doesn't melt into the dimmed page; background blurred (`backdrop-filter: blur(6px)`); on phones it floats with a gap on all sides instead of a bottom sheet, with slightly tighter type and spacing so it fits a standard iPhone (on SE-size phones it scrolls inside the box).
+- Bug: on small phones the popup opened scrolled to the middle (title hidden) because focusing the button scrolled it into view; now `focus({ preventScroll: true })`.
+- Removed the name's meaning ("Latin *arcanum*, a secret") from the welcome text and About, at the owner's request. About keeps the Form 4 explanation and the not-affiliated-with-the-SEC line.
