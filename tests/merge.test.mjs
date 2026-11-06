@@ -62,3 +62,12 @@ test("a Form 4 listed under the company and each insider in the daily index is r
   assert.deepEqual(form4Files(idx), ["edgar/data/1515940/0000945621-26-001261.txt", "edgar/data/111/0000000002-26-000002.txt"]);
 });
 
+test("trades read straight from a file get the price-box correction too", async () => {
+  const { cleanTrades } = await import("../lib/insiderMerge.mjs");
+  const out = cleanTrades([
+    fill({ accession: "X1", code: "S", shares: 189310, price: 270710.44, value: 51248193399 }),
+    fill({ accession: "X2", code: "S", shares: 47171, price: 121664.57, value: 5739039431 }),
+  ]);
+  assert.equal(out.length, 1, "the corrected $121K sale is under the $250K cut-off");
+  assert.equal(out[0].value, 270710);
+});

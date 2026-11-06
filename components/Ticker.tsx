@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
+import { cleanTrades } from "@/lib/insiderMerge.mjs";
 import type { InsiderTrade } from "@/lib/sec";
 
 const ago = (iso: string) => {
@@ -17,7 +18,7 @@ export function Ticker() {
   useEffect(() => {
     fetch("/data/insiders-today.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setD(x)).catch(() => {});
   }, []);
-  const items = (d?.trades ?? [])
+  const items = (cleanTrades(d?.trades ?? []) as InsiderTrade[])
     .filter((t) => (t.code === "P" || t.code === "S") && t.value && isExecOrDirector(t))
     .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
     .slice(0, 24);
