@@ -4,6 +4,7 @@
 // Runs nightly from GitHub Actions. Usage: node scripts/build-screener.mjs [--limit 200]
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { sectorForSic } from "../lib/sectors.mjs";
+import { cleanRow } from "../lib/fundamentals.mjs";
 
 const SEC_UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
 const limitArg = process.argv.indexOf("--limit");
@@ -237,5 +238,7 @@ for (const u of list) {
 }
 console.log(`TTM fundamentals for ${ttmCount} of ${rows.length}`);
 await mkdir("public/data", { recursive: true });
-await writeFile("public/data/screener.json", JSON.stringify({ updated: now.toISOString(), fiscalYear: FY, fields, rows }));
+// Blank figures that can't be right (mis-scaled XBRL tags) before anyone sees them.
+const clean = rows.map((row) => { const o = cleanRow(Object.fromEntries(fields.map((f, i) => [f, row[i]]))); return fields.map((f) => o[f]); });
+await writeFile("public/data/screener.json", JSON.stringify({ updated: now.toISOString(), fiscalYear: FY, fields, rows: clean }));
 console.log(`Wrote ${rows.length} rows to public/data/screener.json`);

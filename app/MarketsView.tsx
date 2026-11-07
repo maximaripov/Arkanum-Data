@@ -1,13 +1,13 @@
 "use client";
 import { Watchlist } from "@/components/Watchlist";
 import { ComingUp } from "@/components/ComingUp";
-import { MarketBoard } from "@/components/MarketBoard";
+import { StocksTable } from "@/components/StocksTable";
 import { FollowingCard } from "@/components/FollowingCard";
 
 export function MarketsView() {
   return (
     <div className="stack">
-      <MarketBoard />
+      <StocksTable />
       <Watchlist />
       <div className="twocol">
         <FollowingCard />
