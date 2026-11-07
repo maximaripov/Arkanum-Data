@@ -45,3 +45,7 @@ test("funds and companies are told apart from people", async () => {
   assert.equal(isEntity("Baker Bros. Advisors LP, Baker Julian"), true);
   assert.equal(isEntity("GOVE SUE"), false);
 });
+
+test("a daily digest that also covers the previous evening says so", () => {
+  assert.match(summarize({ ...d, when: "since Friday's digest" })[0], /^Nine insider buys were filed since Friday's digest, /);
+});

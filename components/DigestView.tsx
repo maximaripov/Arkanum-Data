@@ -4,7 +4,7 @@ import Link from "next/link";
 import { fmtBig } from "@/lib/format";
 
 export type Digest = {
-  kind: "daily" | "weekly"; date: string; from: string; title: string; summary: string[];
+  kind: "daily" | "weekly"; date: string; from: string; when?: string; title: string; summary: string[];
   totals: { buys: number; value: number; insiders: number };
   buys: { symbol: string; company: string; name: string; role: string; value: number; date: string; filed: string; facts: string[] }[];
   clusters: { symbol: string; company: string; insiders: number; value: number }[];
@@ -22,6 +22,7 @@ const counts = (c: Digest["funds"][number]["counts"]) =>
 
 export function DigestView({ d }: { d: Digest }) {
   const week = d.kind === "weekly";
+  const when = week ? "this week" : d.when ?? "today";
   return (
     <>
       <section className="card">
@@ -33,7 +34,7 @@ export function DigestView({ d }: { d: Digest }) {
       <div className="twocol">
         <section className="card">
           <div className="card-head"><h2>Biggest insider buys</h2><Link href="/?view=trades" className="small">All trades ›</Link></div>
-          <p className="muted small">{d.totals.buys ? `${d.totals.buys} ${d.totals.buys === 1 ? "buy" : "buys"} filed ${week ? "this week" : "today"}, $${fmtBig(d.totals.value)} in total.` : `None filed ${week ? "this week" : "today"}.`}</p>
+          <p className="muted small">{d.totals.buys ? `${d.totals.buys} ${d.totals.buys === 1 ? "buy" : "buys"} filed ${when}, $${fmtBig(d.totals.value)} in total.` : `None filed ${when}.`}</p>
           {d.buys.length ? <ul className="rows">{d.buys.map((t, i) => (
             <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
               <div className="row-main">

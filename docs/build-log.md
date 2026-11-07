@@ -466,3 +466,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 
 - `lib/marketDays.mjs` works out NYSE full-day holidays by rule (observed dates, Good Friday from Easter, no Friday closure when Jan 1 is a Saturday); tests match NYSE's published 2026 and 2027 calendars. `daily-digest.mjs` exits before building, archiving or notifying on weekends and those holidays (`--force` overrides). The Saturday week in review is unaffected.
 - Not covered: days the market is open but EDGAR is closed (Veterans Day, Columbus Day), which give a near-empty digest. Owner asked for market days only.
+
+## Round 53: digest catches evening filings; skips days EDGAR is closed (2026-11-07)
+
+- **Gap found:** most Form 4s are filed after the close. On Nov 5, 13 executive/director buys were in hand when the 4 PM job ran and 46 by the end of the day; with "today's filings only" the rest never reached any daily digest. On Nov 6 the digest counted 24 buys; 3 more ($50M) came in that evening.
+- **Fix:** a daily digest now covers everything filed since the previous daily digest that it didn't show. Each archive file lists the filings it counted (`seen`, accession numbers); the next digest leaves those out. Wording follows: "filed since yesterday's digest" / "since Friday's digest". Fund filings (no IDs) count from the day after the previous digest. After a gap over 7 days it starts fresh. The Nov 6 file's list was rebuilt from the data at commit c4477cb (exact match: 24 buys, $32,719,864).
+- **EDGAR closed** (market open, SEC closed: Veterans Day, Columbus Day): no filings dated today, so no digest and no ping; that evening's filings carry into the next digest.
+- `DIGEST_DATE=YYYY-MM-DD` runs the script as another day (testing, reruns). Simulated: Mon Nov 9 leads with 4 Friday-evening buys ($50.1M, none of Friday's 24 repeated); Nov 11 and Nov 26 skip.

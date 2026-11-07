@@ -9,7 +9,7 @@
 //   node scripts/daily-digest.mjs --no-push   update the Digest page without notifying
 //   node scripts/daily-digest.mjs --hold      notify at 5:00 PM New York time (now, if it's later)
 //   node scripts/daily-digest.mjs --weekly    the week in review (run on Saturday)
-//   node scripts/daily-digest.mjs --force     build even though the market is closed today
+//   node scripts/daily-digest.mjs --force     build even if the market or EDGAR was closed today
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 import { companyName, personName, roleLabel, isExecOrDirector, isEntity } from "../lib/people.mjs";
@@ -24,7 +24,8 @@ const HOLD = process.argv.includes("--hold");
 const WEEKLY = process.argv.includes("--weekly");
 const load = async (f, d) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return d; } };
 
-const today = nyNow().date;
+// DIGEST_DATE runs it as if it were another day (for testing and reruns).
+const today = process.env.DIGEST_DATE || nyNow().date;
 // No daily digest on days the stock market is closed (weekends, NYSE holidays): no page, no notification.
 if (!WEEKLY && marketClosed(today) && !process.argv.includes("--force")) {
   console.log(`${today}: the market is closed, so no daily digest.`);
@@ -34,21 +35,36 @@ const addDays = (ymd, n) => new Date(Date.parse(ymd + "T12:00:00Z") + n * 86_400
 const pretty = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 const short = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
-// Daily: filings made today. Weekly (run on Saturday): filings Monday to Friday.
-const from = WEEKLY ? addDays(today, -5) : today;
+// Weekly (run on Saturday): filings Monday to Friday. Daily: everything filed since the
+// previous daily digest that it didn't already show. Many Form 4s are filed in the evening,
+// after that digest was built; they lead the next one instead of being skipped.
+const index = (await load("public/data/digests/index.json", { digests: [] })).digests;
+const prev = WEEKLY ? null : index.find((x) => x.kind === "daily" && x.date < today) ?? null;
+const prevSeen = new Set((prev && (await load(`public/data/digests/${prev.date}.json`, null))?.seen) ?? []);
+const since = prev && prev.date >= addDays(today, -7) ? prev.date : today; // after a long gap, start fresh
+const from = WEEKLY ? addDays(today, -5) : since;
 const inWindow = (ymd) => ymd >= from && ymd <= today;
+// Fund filings carry no ID, so a day the previous digest covered counts as shown.
+const fundsInWindow = (ymd) => (WEEKLY || since === today ? inWindow(ymd) : ymd > since && ymd <= today);
+const dayName = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+const when = WEEKLY ? "this week" : since === today ? "today" : since === addDays(today, -1) ? "since yesterday's digest" : `since ${dayName(since)}'s digest`;
 // "Buying together" always looks back a week.
 const weekAgo = addDays(today, -6);
 
 // ---- Shared data built earlier in the job ---------------------------------------------
 const ins = mergeInsiders(await load("public/data/insiders.json", { trades: [] }), await load("public/data/insiders-today.json", null));
+// Nothing filed today means EDGAR was closed (Veterans Day, Columbus Day): no digest, no notification.
+if (!WEEKLY && !ins.trades.some((t) => t.filed === today) && !process.argv.includes("--force")) {
+  console.log(`${today}: nothing was filed with the SEC today, so no daily digest.`);
+  process.exit(0);
+}
 const funds = await load("public/data/funds.json", { funds: [] });
 const allEvents = (await load("public/data/events.json", { events: [] })).events;
 
 // Buys by executives and directors, filed on time (late filings are left out entirely).
 const buys = ins.trades.filter((t) => t.code === "P" && (t.value ?? 0) > 0 && isExecOrDirector(t) && !isLateFiling(t));
 // People first, then funds and companies with a board seat, each biggest first.
-const windowBuys = buys.filter((t) => inWindow(t.filed)).sort((a, b) => isEntity(a.owner) - isEntity(b.owner) || (b.value ?? 0) - (a.value ?? 0));
+const windowBuys = buys.filter((t) => inWindow(t.filed) && !prevSeen.has(t.accession)).sort((a, b) => isEntity(a.owner) - isEntity(b.owner) || (b.value ?? 0) - (a.value ?? 0));
 
 const clusters = (() => {
   const by = new Map();
@@ -64,7 +80,7 @@ const clusters = (() => {
 })();
 
 // Big funds' quarterly 13F filings in the window, one line each.
-const fundLines = funds.funds.filter((f) => inWindow(f.filed)).map((f) => ({
+const fundLines = funds.funds.filter((f) => fundsInWindow(f.filed)).map((f) => ({
   fund: f.name, filed: f.filed,
   newPositions: f.new.slice(0, 3).map((h) => h.t ?? h.name), soldOut: f.sold.slice(0, 3).map((h) => h.t ?? h.name),
   counts: { new: f.new.length, added: f.added.length, cut: f.reduced.length, sold: f.sold.length },
@@ -76,7 +92,7 @@ const events = allEvents.filter((e) => isUpcoming(e) && e.date <= addDays(today,
 
 const digest = {
   kind: WEEKLY ? "weekly" : "daily",
-  generated: new Date().toISOString(), date: today, from,
+  generated: new Date().toISOString(), date: today, from, when,
   title: WEEKLY ? `Week in review · ${short(from)}–${short(addDays(today, -1)).replace(short(from).split(" ")[0] + " ", "")}` : `Daily digest · ${pretty(today)}`,
   totals: { buys: windowBuys.length, value: Math.round(windowBuys.reduce((s, t) => s + (t.value ?? 0), 0)), insiders: new Set(windowBuys.map((t) => t.owner)).size },
   buys: windowBuys.slice(0, 5).map((t) => ({
@@ -86,6 +102,8 @@ const digest = {
     facts: (t.conv?.reasons ?? []).map((r) => r.text).filter((s) => !/insiders buying/.test(s) && !roleLabel(t.role).toLowerCase().includes(s.replace(/^also an? /i, "").toLowerCase())).slice(0, 2),
   })),
   clusters, funds: fundLines, events,
+  // Every filing this digest counted, so the next one doesn't count it again.
+  ...(WEEKLY ? {} : { seen: [...new Set(windowBuys.map((t) => t.accession))] }),
 };
 digest.summary = summarize(digest);
 const note = notification(digest);
@@ -94,10 +112,10 @@ const note = notification(digest);
 if (!process.argv.includes("--no-archive")) {
   await mkdir("public/data/digests", { recursive: true });
   await writeFile(`public/data/digests/${today}.json`, JSON.stringify(digest));
-  const index = (await load("public/data/digests/index.json", { digests: [] })).digests.filter((x) => x.date !== today);
-  index.unshift({ date: today, kind: digest.kind, title: digest.title, lead: digest.summary[0] });
-  index.sort((a, b) => b.date.localeCompare(a.date));
-  await writeFile("public/data/digests/index.json", JSON.stringify({ digests: index }));
+  const list = index.filter((x) => x.date !== today);
+  list.unshift({ date: today, kind: digest.kind, title: digest.title, lead: digest.summary[0] });
+  list.sort((a, b) => b.date.localeCompare(a.date));
+  await writeFile("public/data/digests/index.json", JSON.stringify({ digests: list }));
 }
 
 // ---- Everyone gets the same message (the site addresses it per device) ------------------
