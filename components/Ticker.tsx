@@ -8,17 +8,9 @@ import { isExecOrDirector } from "@/lib/insider";
 import { cleanTrades } from "@/lib/insiderMerge.mjs";
 import type { InsiderTrade } from "@/lib/sec";
 
-// The hourly update runs weekdays about 7 AM to 11 PM New York time (SEC takes no filings at
-// weekends), so data hours old isn't "live": then say when it was last updated instead.
-const STALE_MIN = 3 * 60;
-const minutesOld = (iso: string) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
-const status = (iso: string) => {
-  const m = minutesOld(iso);
-  if (m < 60) return `Live · ${m} min ago`;
-  if (m < STALE_MIN) return `Live · ${Math.round(m / 60)} h ago`;
-  const d = new Date(iso);
-  const day = m < 6 * 24 * 60 ? d.toLocaleDateString(undefined, { weekday: "short" }) : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  return `Updated ${day} ${d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+const ago = (iso: string) => {
+  const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+  return m < 60 ? `${m} min ago` : m < 48 * 60 ? `${Math.round(m / 60)} h ago` : new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 };
 
 export function Ticker() {
@@ -86,7 +78,7 @@ export function Ticker() {
   );
   return (
     <div className="ticker" aria-label="Today's insider trades">
-      <span className={`ticker-live${minutesOld(d.updated) >= STALE_MIN ? " stale" : ""}`}><i aria-hidden />{status(d.updated)}</span>
+      <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>
       <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
         onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
         <div className="ticker-run" ref={runRef} style={{ animationDuration: `${run.length * 3.5}s` }}>
