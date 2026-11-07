@@ -489,4 +489,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - A few companies tag figures at the wrong scale in their XBRL: FedEx's net income came through as $4,092, PG&E's as $2,593, Kilroy's as $302.64, and 69 payout ratios were over 300% (some in the millions). `lib/fundamentals.mjs` (`cleanRow`, tested) blanks net income under 0.01% of $100M+ revenue or with cents, plus the margin, ROE and payout built on it, and any payout over 1,000% (REITs can genuinely pay 200%+). `build-screener.mjs` applies it nightly; the current file was cleaned once (48 rows). Stock pages show "—" for those.
 - Not caught: subtler errors (Medtronic's net income looks low).
 - A Markets stock table was mocked the same day and turned down by the owner (Markets stays as it was).
-- Owner rule: mock everything and wait for approval before committing, even to the session branch.
+
+## Round 56: health insurers, company names, diagnostics (2026-11-07)
+
+- **Sectors:** SEC code 6324 (hospital and medical service plans: UnitedHealth, Elevance, Cigna, Humana, Centene and 5 more) now maps to Health Care, not Financials (`lib/sectors.mjs`; current screener.json patched, 10 rows). Accident and health insurers (Aflac) stay in Financials.
+- **Company names** (`companyName` in `lib/people.mjs`, tested): exact spellings for brands no rule can produce (`SPELLED`: Amazon.com, NVIDIA, UnitedHealth, JPMorgan, IBM, eBay...); "COM" after a name becomes ".com"; LTD/CORP/INC suffixes normalised; in names already in mixed case, stray capital words of 5+ letters are title-cased ("CVS HEALTH Corp" to "CVS Health Corp", "Duke Energy CORP" to "Duke Energy Corp") while shorter ones stay (CBIZ, NIKE, FTAI). About 200 of 4,662 names change.
+- **Diagnostics:** `diagnose.yml` (manual, read-only) runs a script from `scripts/diagnose/` on GitHub, where SEC is reachable. `fundamentals.mjs` lists a company's capital-spending labels and its quarterly net income facts.
+- Owner withdrew the "mock before committing" rule (it was a misunderstanding). Ping the owner on every finished task.

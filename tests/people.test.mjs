@@ -38,3 +38,15 @@ test("funds and companies filing as insiders keep LLC and LP in capitals", () =>
   assert.equal(personName("ORBIMED ADVISORS LLC"), "Orbimed Advisors LLC");
   assert.equal(personName("TAN LIP BU"), "Lip Bu Tan");
 });
+
+test("company names: brands, stray capitals, suffixes and .com", () => {
+  assert.equal(companyName("AMAZON COM INC", "AMZN"), "Amazon.com, Inc.");
+  assert.equal(companyName("UNITEDHEALTH GROUP INC", "UNH"), "UnitedHealth Group Inc");
+  assert.equal(companyName("CVS HEALTH Corp", "CVS"), "CVS Health Corp");
+  assert.equal(companyName("Duke Energy CORP", "DUK"), "Duke Energy Corp");
+  assert.equal(companyName("Garmin LTD", "GRMN"), "Garmin Ltd");
+  assert.equal(companyName("OVERSTOCK COM INC", "OSTK"), "Overstock.com Inc");
+  assert.equal(companyName("CBIZ, Inc.", "CBZ"), "CBIZ, Inc."); // short capital brands stay
+  assert.equal(companyName("MGM Resorts International", "MGM"), "MGM Resorts International");
+  assert.equal(companyName("BANK OF AMERICA CORP /DE/", "BAC"), "Bank of America Corp");
+});
