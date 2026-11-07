@@ -16,12 +16,49 @@ const ago = (iso: string) => {
 export function Ticker() {
   const [d, setD] = useState<{ updated: string; trades: InsiderTrade[] } | null>(null);
   // On phones there's no hover: a finger on the tape stops it, so a tap lands on the trade
-  // under the finger; it starts again shortly after the finger lifts.
+  // under the finger. Sliding the finger moves the tape either way; a moment after the
+  // finger lifts it rolls on from where it was left. A drag doesn't count as a tap.
   const [held, setHeld] = useState(false);
   const resume = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hold = () => { if (resume.current) clearTimeout(resume.current); setHeld(true); };
-  const release = () => { if (resume.current) clearTimeout(resume.current); resume.current = setTimeout(() => setHeld(false), 1500); };
+  const runRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ x0: 0, base: 0, pos: 0, moved: false, on: false });
   useEffect(() => () => { if (resume.current) clearTimeout(resume.current); }, []);
+  const still = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches; // the tape then just scrolls natively
+  const half = () => (runRef.current?.scrollWidth ?? 0) / 2;
+  // Keep the position inside one copy's width, so the loop stays seamless however far you drag.
+  const wrap = (x: number) => { const h = half(); return h ? (((x % h) - h) % h) : x; };
+  const onStart = (e: React.TouchEvent) => {
+    if (resume.current) clearTimeout(resume.current);
+    setHeld(true);
+    const run = runRef.current;
+    if (!run || still()) return;
+    const x = new DOMMatrixReadOnly(getComputedStyle(run).transform).m41;
+    run.style.animationName = "none"; // only the name: the inline duration (speed) must survive
+    run.style.transform = `translateX(${x}px)`;
+    drag.current = { x0: e.touches[0].clientX, base: x, pos: x, moved: false, on: true };
+  };
+  const onMove = (e: React.TouchEvent) => {
+    const d = drag.current, run = runRef.current;
+    if (!d.on || !run) return;
+    const dx = e.touches[0].clientX - d.x0;
+    if (Math.abs(dx) > 6) d.moved = true;
+    d.pos = wrap(d.base + dx);
+    run.style.transform = `translateX(${d.pos}px)`;
+  };
+  const onEnd = () => {
+    if (resume.current) clearTimeout(resume.current);
+    resume.current = setTimeout(() => {
+      setHeld(false);
+      const d = drag.current, run = runRef.current, h = half();
+      if (!d.on || !run) return;
+      d.on = false;
+      // Restart the roll part-way through, at the spot the tape was left.
+      const dur = parseFloat(run.style.animationDuration) || 0;
+      run.style.transform = "";
+      run.style.animationName = "";
+      run.style.animationDelay = h ? `${(d.pos / h) * dur}s` : "";
+    }, 1500);
+  };
   useEffect(() => {
     fetch("/data/insiders-today.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setD(x)).catch(() => {});
   }, []);
@@ -42,8 +79,9 @@ export function Ticker() {
   return (
     <div className="ticker" aria-label="Today's insider trades">
       <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>
-      <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={hold} onTouchEnd={release} onTouchCancel={release}>
-        <div className="ticker-run" style={{ animationDuration: `${run.length * 3.5}s` }}>
+      <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
+        onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
+        <div className="ticker-run" ref={runRef} style={{ animationDuration: `${run.length * 3.5}s` }}>
           <div className="ticker-copy">{run.map((t, i) => chip(t, i, 0))}</div>
           <div className="ticker-copy" aria-hidden>{run.map((t, i) => chip(t, i, 1))}</div>
         </div>
