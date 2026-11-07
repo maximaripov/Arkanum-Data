@@ -135,6 +135,13 @@ function fiscal(co, cik) {
   return { value: last.val, prior: prev && Math.abs(days(prev.end, last.end) - 365) < 20 ? prev.val : null, end: last.end };
 }
 
+/** The fiscal year ending within 5 days of `end` (the revenue's fiscal year); the latest if none. */
+function fiscalAt(co, cik, end) {
+  if (!end) return fiscal(co, cik);
+  const ys = [...(co.get(cik)?.y.values() ?? [])].filter((y) => Math.abs(days(y.end, end)) <= 5);
+  return ys.length ? { value: ys[0].val, prior: null, end: ys[0].end } : fiscal(co, cik);
+}
+
 /** Annual-only version of periods(): cash-flow items are reported year-to-date, so
  *  single quarters are rarely available; the last fiscal year is used instead. */
 async function annual(tags) {
@@ -247,7 +254,10 @@ for (const u of list) {
   const E = equity.get(u.cik);
   const [sic, ind] = sicCache[u.cik] ?? ["", ""];
   // Last fiscal year: dividends paid, free cash flow (operating cash flow − capital spending).
-  const ocf = fiscal(ocfY, u.cik), capex = fiscal(capexY, u.cik), div = fiscal(divY, u.cik);
+  // Same fiscal year as the revenue, as the page says ("last fiscal year"): some companies
+  // also report a rolling 12 months in a quarterly report (Amazon), which SEC's frames file
+  // as a later "year" and which would otherwise be mixed in with full-year figures.
+  const ocf = fiscalAt(ocfY, u.cik, rF?.end), capex = fiscalAt(capexY, u.cik, rF?.end), div = fiscalAt(divY, u.cik, rF?.end);
   // SEC lists closed-end funds and BDCs (lending funds) with no industry code.
   const sector = sic ? sectorForSic(sic) : u.cik in sicCache ? "Funds & investment companies" : null;
   // Free cash flow and debt-to-equity aren't meaningful for banks, insurers and funds,
