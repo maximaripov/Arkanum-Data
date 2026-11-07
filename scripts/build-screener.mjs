@@ -50,6 +50,23 @@ for (let y = Y - 3; y <= Y; y++) for (let q = 1; q <= 4; q++) QTRS.push(`CY${y}Q
 const DAY = 86_400_000;
 const days = (a, b) => (Date.parse(b) - Date.parse(a)) / DAY;
 
+/** A company's full-year figure from its own annual report (10-K / 20-F), for one of the
+ *  tags, ending within 5 days of `end`, at a scale that fits its quarters. */
+const factsCache = new Map();
+async function annualReportValue(cik, tags, end, sum3) {
+  if (!factsCache.has(cik)) {
+    factsCache.set(cik, await sec(`https://data.sec.gov/api/xbrl/companyfacts/CIK${String(cik).padStart(10, "0")}.json`));
+    await sleep(150);
+  }
+  const gaap = factsCache.get(cik)?.facts?.["us-gaap"] ?? {};
+  for (const t of tags) {
+    const hit = (gaap[t]?.units?.USD ?? []).find((x) => /^(10-K|20-F|40-F)/.test(x.form) && x.start && Math.abs(days(x.end, end)) <= 5
+      && Math.abs(days(x.start, x.end) - 365) <= 20 && Math.abs(x.val) * 1000 >= Math.abs(sum3));
+    if (hit) return hit.val;
+  }
+  return null;
+}
+
 /** Per company: quarters and fiscal years with dates. Largest tag wins per period. */
 async function periods(tags) {
   const co = new Map(); // cik → { q: Map(end → {start,end,val}), y: Map(end → {...}) }
@@ -65,9 +82,25 @@ async function periods(tags) {
       for (const row of d?.data ?? []) if (row.start) add(kind, row);
     }
   }
+  // Since 2022 proxy statements carry a "pay versus performance" table that tags net
+  // income in millions (Medtronic: "4801" for $4.8B), and SEC's yearly frame sometimes
+  // takes that figure instead of the annual report's. A year far smaller than its own
+  // three quarters is re-read from the company's 10-K (or 20-F); if that fails it's dropped.
+  const insideOf = (c, yr) => [...c.q.values()].filter((q) => days(yr.start, q.start) >= -5 && days(q.end, yr.end) >= -5);
+  let fixed = 0, dropped = 0;
+  for (const [cik, c] of co) {
+    for (const [end, yr] of [...c.y]) {
+      const inside = insideOf(c, yr);
+      const sum3 = inside.length === 3 ? inside.reduce((a, q) => a + q.val, 0) : 0;
+      if (!sum3 || Math.abs(yr.val) * 1000 >= Math.abs(sum3)) continue;
+      const real = await annualReportValue(cik, tags, yr.end, sum3);
+      if (real != null) { yr.val = real; fixed++; } else { c.y.delete(end); dropped++; }
+    }
+  }
+  if (fixed || dropped) console.log(`  ${tags[0]}: ${fixed} years re-read from annual reports, ${dropped} dropped (mis-scaled yearly figures)`);
   for (const c of co.values()) {
     for (const yr of c.y.values()) {
-      const inside = [...c.q.values()].filter((q) => days(yr.start, q.start) >= -5 && days(q.end, yr.end) >= -5);
+      const inside = insideOf(c, yr);
       if (inside.length !== 3 || inside.some((q) => Math.abs(days(q.end, yr.end)) <= 5)) continue;
       const lastEnd = inside.map((q) => q.end).sort().at(-1);
       c.q.set(yr.end, { start: new Date(Date.parse(lastEnd) + DAY).toISOString().slice(0, 10), end: yr.end, val: yr.val - inside.reduce((a, q) => a + q.val, 0) });
@@ -123,9 +156,12 @@ console.log("Quarterly fundamentals…");
 const revQ = await periods(REV);
 const niQ = await periods(["NetIncomeLoss"]);
 console.log("Cash flow, dividends, debt…");
-const ocfY = await annual(["NetCashProvidedByUsedInOperatingActivities"]);
-// Companies label the same item differently (AT&T: "productive assets"; J&J: "ordinary dividends").
-const capexY = await annual(["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"]);
+const ocfY = await annual(["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"]);
+// Companies label the same item differently (AT&T: "productive assets"; J&J: "ordinary dividends";
+// Eli Lilly: "other property, plant and equipment"; Verizon: "other productive assets"; EOG:
+// "oil and gas property"; Jones Lang LaSalle: net of asset sales). Largest per year wins.
+const capexY = await annual(["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsToAcquireOtherPropertyPlantAndEquipment",
+  "PaymentsToAcquireOtherProductiveAssets", "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsForProceedsFromProductiveAssets"]);
 const divY = await annual(["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"]);
 // Debt from the newest balance sheet. Total debt labels first; otherwise long-term
 // (non-current) debt plus its current portion.
