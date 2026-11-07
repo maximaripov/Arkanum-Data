@@ -22,4 +22,5 @@ jobs:
       - name: Alert through a dead address
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/notify.mjs "Arkanum: alert fallback test" "This is a test: the site couldn't be reached, so the alert came as a GitHub issue. Close this issue." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: |
+          node scripts/notify.mjs "Arkanum: alert fallback test" "This is a test: the site couldn't be reached, so the alert came as a GitHub issue. Close this issue." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
