@@ -483,3 +483,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Bug: insider search missed 2026 Q2-Q3.** SEC moved new quarterly Form 3/4/5 data sets to `/files/datastandardsinnovation/...` (2026 Q2 on; older stay under `/files/structureddata/...`), so the backfill read a 404 as "not published". `getZip()` in `scripts/lib/form345.mjs` now tries both folders (`ZIP_DIRS`). Backfill rerun after the fix.
 - **Correction, same round:** the first version 404'd QQQ and other ETFs, which SEC's company list leaves out but fund holdings and Congress trades link to. `scripts/build-known-tickers.mjs` (npm `prebuild`, so every deploy) writes `public/data/known-tickers.json` (gitignored) from funds.json and congress.json; a stock page 404s only for a ticker in none of SEC's list, the screener, insider data or that file, and if the file can't be read it assumes the ticker is real. A sample of 150 sitemap stock pages all returned 200.
 - Backfill rerun with the folder fix: 2026q2 +2,205 new people (3,415 updated), 2026q3 +1,714 (3,321 updated); search now has 23,296 insiders (was 19,377). Phone tap on the ticker checked in Playwright with real touch events: the tape stops (0 px in 1 s) and the tap opens the stock page.
+
+## Round 55: impossible SEC figures blanked (2026-11-07)
+
+- A few companies tag figures at the wrong scale in their XBRL: FedEx's net income came through as $4,092, PG&E's as $2,593, Kilroy's as $302.64, and 69 payout ratios were over 300% (some in the millions). `lib/fundamentals.mjs` (`cleanRow`, tested) blanks net income under 0.01% of $100M+ revenue or with cents, plus the margin, ROE and payout built on it, and any payout over 1,000% (REITs can genuinely pay 200%+). `build-screener.mjs` applies it nightly; the current file was cleaned once (48 rows). Stock pages show "—" for those.
+- Not caught: subtler errors (Medtronic's net income looks low).
+- A Markets stock table was mocked the same day and turned down by the owner (Markets stays as it was).
+- Owner rule: mock everything and wait for approval before committing, even to the session branch.
