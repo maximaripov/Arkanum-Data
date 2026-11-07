@@ -394,7 +394,7 @@ a.person:hover strong { color: var(--accent); }
 .ticker-tape { flex: 1 1 auto; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
 .ticker-run { display: flex; width: max-content; animation: ticker-roll linear infinite; }
 .ticker-copy { display: flex; gap: 1.6rem; padding-right: 1.6rem; }
-.ticker-tape:hover .ticker-run, .ticker-tape:focus-within .ticker-run { animation-play-state: paused; }
+.ticker-tape:hover .ticker-run, .ticker-tape:focus-within .ticker-run, .ticker-tape.held .ticker-run { animation-play-state: paused; }
 @keyframes ticker-roll { to { transform: translateX(-50%); } }
 .ticker a strong { color: var(--text); font-weight: 600; }
 .ticker .ticker-v { color: var(--muted); }

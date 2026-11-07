@@ -22,7 +22,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 - **5 PM digest:** `CRON_SECRET` is on Vercel and a cron-job.org job calls the release (Mon-Sat 17:00 America/New_York, POST https://arkanumdata.vercel.app/api/alerts/release, header `Authorization: Bearer <CRON_SECRET>`). First real test: the next weekday's digest should arrive at 5:00; cron-job.org's history should show HTTP 200 `released: true`.
 - **Vercel Functions Storage** was 8.04 / 10 GB on 2026-11-06 (old deployments piling up; everything else far under). Retention set to 1 day for all deployment types; confirm it dropped. If not, cut the number of deploys.
 - (Done 2026-11-06: the digest reached the owner via the new address and `form4-alerts` audience.)
-- **Search directory gap:** SEC's quarterly data sets for 2026q2–q3 returned "not published"; rerun `people-backfill.yml` once they appear.
+- **SEC data set folders:** quarterly Form 3/4/5 files from 2026 Q2 on are under `/files/datastandardsinnovation/...`, older under `/files/structureddata/...` (`ZIP_DIRS` in `scripts/lib/form345.mjs`). Rerun `people-backfill.yml` after each new quarter.
 - **Name risk:** "Arkanum" sounds like ARCANUM (registered trademark for financial services, Arcanum Global, Inc., reg. 5191550), a June 2026 Swedish fraud warning about "Arcanum Global Trading", and an Arcanum crypto token. The owner chose it knowingly; revisit before anything commercial.
 
 ## Style rules

@@ -6,6 +6,8 @@ import { fmtBig } from "@/lib/format";
 import { ogImage, ogDay, OG_SIZE } from "@/lib/og";
 
 export const revalidate = 21600;
+// Returning [] makes each image built on first request and cached, not rebuilt every time.
+export async function generateStaticParams() { return []; }
 export const alt = "This insider's latest trades on Arkanum";
 export const size = OG_SIZE;
 export const contentType = "image/png";

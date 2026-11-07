@@ -42,20 +42,29 @@ export function roleOf(rel, title) {
 }
 
 /** The quarter's zip (downloaded into `tmp`, or found in `local`); null if not published yet. */
+/** Folders SEC has published the quarterly Form 3/4/5 data sets in, newest first. */
+export const ZIP_DIRS = ["datastandardsinnovation", "structureddata"];
+
 export async function getZip(quarter, { tmp, local = null, ua }) {
   const file = local ? `${local}/${quarter}.zip` : `${tmp}/${quarter}.zip`;
   if (existsSync(file)) return file;
   if (local) return null; // a local set has only the quarters it has
-  const url = `https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/${quarter}_form345.zip`;
-  for (let i = 0; i < 4; i++) {
-    const r = await fetch(url, { headers: { "User-Agent": ua } });
-    if (r.ok) {
-      const buf = Buffer.from(await r.arrayBuffer());
-      if (buf.subarray(0, 2).toString() !== "PK") throw new Error(`${quarter}: not a zip (SEC refused? check SEC_USER_AGENT)`);
-      await writeFile(file, buf); return file;
+  // SEC moved new quarters to a different folder (2026 Q2 onwards); older ones stay in the first.
+  // Missing from every folder means "not published yet".
+  for (const dir of ZIP_DIRS) {
+    const url = `https://www.sec.gov/files/${dir}/data/insider-transactions-data-sets/${quarter}_form345.zip`;
+    let found = false;
+    for (let i = 0; i < 4; i++) {
+      const r = await fetch(url, { headers: { "User-Agent": ua } });
+      if (r.ok) {
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (buf.subarray(0, 2).toString() !== "PK") throw new Error(`${quarter}: not a zip (SEC refused? check SEC_USER_AGENT)`);
+        await writeFile(file, buf); return file;
+      }
+      if (r.status === 404) { found = true; break; }
+      await sleep(2000 * (i + 1));
     }
-    if (r.status === 404) return null;
-    await sleep(2000 * (i + 1));
+    if (!found) throw new Error(`${quarter}: download failed`);
   }
-  throw new Error(`${quarter}: download failed`);
+  return null;
 }

@@ -474,3 +474,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **EDGAR closed** (market open, SEC closed: Veterans Day, Columbus Day): no filings dated today, so no digest and no ping; that evening's filings carry into the next digest.
 - `DIGEST_DATE=YYYY-MM-DD` runs the script as another day (testing, reruns). Simulated: Mon Nov 9 leads with 4 Friday-evening buys ($50.1M, none of Friday's 24 repeated); Nov 11 and Nov 26 skip.
 - **Alert fallback tested for real** (`alert-test.yml`, manual): with the site address unreachable, `notify.mjs` retried, gave up and opened issue #1 ("Arkanum: alert fallback test", label `alert` created automatically, owner mentioned); closed after. My first push of that workflow had a YAML error (a colon in an unquoted `run:`), which showed as two failed runs; all workflow files now parse.
+
+## Round 54: 404 for unknown tickers, phone ticker taps, cached share images, SEC folder move (2026-11-07)
+
+- **Unknown tickers:** `/stock/NOTAREALTICKERX` used to load a normal page (200), and with caching each one was stored. Now a 404 when SEC's company list doesn't have the ticker and the site has no data for it. If SEC can't be reached the page still loads and fills in from the browser (an outage must not 404 real stocks).
+- **Ticker on phones:** a finger on the tape pauses it (`.held`), so a tap lands on the trade under it; it restarts 1.5 s after the finger lifts.
+- **Share images** for stock, insider and House member pages are cached like their pages (`generateStaticParams` returning []), instead of rebuilt on every request.
+- **Bug: insider search missed 2026 Q2-Q3.** SEC moved new quarterly Form 3/4/5 data sets to `/files/datastandardsinnovation/...` (2026 Q2 on; older stay under `/files/structureddata/...`), so the backfill read a 404 as "not published". `getZip()` in `scripts/lib/form345.mjs` now tries both folders (`ZIP_DIRS`). Backfill rerun after the fix.

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { StockView, type StockInitial } from "./StockView";
 import { cikForTicker, insidersForTicker } from "@/lib/sec";
 import { announcements } from "@/lib/news";
@@ -26,25 +27,30 @@ export async function generateMetadata({ params }: { params: Promise<{ symbol: s
   return { title, description, alternates: { canonical: `/stock/${encodeURIComponent(symbol)}` }, openGraph: { title: `${title} · Arkanum Data`, description, url: `/stock/${encodeURIComponent(symbol)}` } };
 }
 
-async function load(symbol: string): Promise<StockInitial> {
+async function load(symbol: string): Promise<{ initial: StockInitial; known: boolean }> {
   const quiet = <T,>(p: Promise<T>) => p.catch(() => null);
   const [c, ins, news, sc, site] = await Promise.all([
-    quiet(cikForTicker(symbol)),
+    cikForTicker(symbol).catch(() => undefined), // null: SEC doesn't list it; undefined: SEC couldn't be reached
     quiet(insidersForTicker(symbol)),
     quiet(announcements(symbol)),
     quiet(fetch(`${SITE}/data/screener.json`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null))),
     quiet(loadInsiders(SITE, { next: { revalidate: 1800 } })),
   ]);
   const row = sc?.rows?.find((r: unknown[]) => r[0] === symbol);
-  return {
+  // A ticker SEC doesn't list and the site has no data for is not a stock page.
+  // (If SEC couldn't be reached we can't tell, so the page loads and fills in from the browser.)
+  const known = c !== null || !!row || !!site?.trades?.some((t: { symbol: string }) => t.symbol === symbol);
+  return { known, initial: {
     co: c ? { ticker: symbol, name: c.name, exchange: c.exchange } : null,
     fund: row ? Object.fromEntries(sc.fields.map((f: string, i: number) => [f, row[i]])) : null,
     insiders: ins ? withConviction(withHistory(ins, site)) : null,
     news,
-  };
+  } };
 }
 
 export default async function Page({ params }: { params: Promise<{ symbol: string }> }) {
   const symbol = clean((await params).symbol);
-  return <StockView symbol={symbol} initial={await load(symbol)} />;
+  const { initial, known } = await load(symbol);
+  if (!known) notFound();
+  return <StockView symbol={symbol} initial={initial} />;
 }

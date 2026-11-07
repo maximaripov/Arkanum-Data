@@ -11,6 +11,8 @@ export const alt = "Insider trades on Arkanum";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const revalidate = 3600;
+// Returning [] makes each image built on first request and cached, not rebuilt every time.
+export async function generateStaticParams() { return []; }
 
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 

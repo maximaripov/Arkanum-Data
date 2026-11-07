@@ -1,7 +1,7 @@
 "use client";
 // The band under the header: today's insider buys and large sales from the hourly file,
 // newest first, with how long ago the data was refreshed. Hidden when there's nothing yet.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
@@ -15,6 +15,13 @@ const ago = (iso: string) => {
 
 export function Ticker() {
   const [d, setD] = useState<{ updated: string; trades: InsiderTrade[] } | null>(null);
+  // On phones there's no hover: a finger on the tape stops it, so a tap lands on the trade
+  // under the finger; it starts again shortly after the finger lifts.
+  const [held, setHeld] = useState(false);
+  const resume = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hold = () => { if (resume.current) clearTimeout(resume.current); setHeld(true); };
+  const release = () => { if (resume.current) clearTimeout(resume.current); resume.current = setTimeout(() => setHeld(false), 1500); };
+  useEffect(() => () => { if (resume.current) clearTimeout(resume.current); }, []);
   useEffect(() => {
     fetch("/data/insiders-today.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setD(x)).catch(() => {});
   }, []);
@@ -35,7 +42,7 @@ export function Ticker() {
   return (
     <div className="ticker" aria-label="Today's insider trades">
       <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>
-      <div className="ticker-tape">
+      <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={hold} onTouchEnd={release} onTouchCancel={release}>
         <div className="ticker-run" style={{ animationDuration: `${run.length * 3.5}s` }}>
           <div className="ticker-copy">{run.map((t, i) => chip(t, i, 0))}</div>
           <div className="ticker-copy" aria-hidden>{run.map((t, i) => chip(t, i, 1))}</div>
