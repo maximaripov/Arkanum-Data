@@ -570,3 +570,5 @@ h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
 .side.down { background: transparent !important; border: 1px solid var(--down); color: var(--down); }
 .linkbtn::before { content: "> "; }
 
+
+.ticker-live.stale i { background: var(--muted); box-shadow: none; }
