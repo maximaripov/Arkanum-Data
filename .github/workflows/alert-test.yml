@@ -1,0 +1,25 @@
+name: Test the alert fallback
+# Manual only. Sends an owner alert to an address that doesn't exist, so the site can't
+# deliver it and scripts/notify.mjs opens a GitHub issue instead (the fallback for when the
+# site is down). Expect one issue labelled "alert"; close it afterwards.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: https://arkanum-alert-test.invalid
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Alert through a dead address
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/notify.mjs "Arkanum: alert fallback test" "This is a test: the site couldn't be reached, so the alert came as a GitHub issue. Close this issue." "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
