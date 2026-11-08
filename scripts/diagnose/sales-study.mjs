@@ -6,12 +6,13 @@
 // caps (IWM) and the S&P 500 (SPY). For a sale, a NEGATIVE number means the stock did worse:
 // the sale "worked" as a warning. Prices from Yahoo, used only to compute these statistics.
 //
-//   node scripts/diagnose/sales-study.mjs [2023q1] [2025q4] [2022q1]
-import { mkdir, rm } from "node:fs/promises";
+//   node scripts/diagnose/sales-study.mjs [2023q1] [2025q4] [2022q1] [out.json]
+// With out.json the results are also written there (the monthly research refresh uses this).
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from "../lib/form345.mjs";
 import { roleKind, saleFlags } from "../../lib/conviction.mjs";
 
-const [FROM = "2023q1", TO = "2025q4", HIST = "2022q1"] = process.argv.slice(2);
+const [FROM = "2023q1", TO = "2025q4", HIST = "2022q1", OUT = null] = process.argv.slice(2);
 const UA = process.env.SEC_USER_AGENT;
 const TMP = "/tmp/sales-study";
 const HORIZONS = [["1 month", 21], ["3 months", 63], ["6 months", 126]];
@@ -24,9 +25,11 @@ const FUND_NAME = /\b(LLC|L\.?P\.?|FUND|TRUST|PARTNERS|CAPITAL|MANAGEMENT|ADVISO
 // ---- 1. Sales, one event per filing and insider -------------------------------------------
 await mkdir(TMP, { recursive: true });
 const events = new Map();
+const read = []; // quarters actually published and read
 for (const quarter of quarterRange(HIST, TO)) {
   const zip = await getZipFor(quarter, { tmp: TMP, ua: UA });
   if (!zip) { console.log(`${quarter}: not published`); continue; }
+  read.push(quarter);
   const sub = tsv(zip, "SUBMISSION.tsv"), own = tsv(zip, "REPORTINGOWNER.tsv"), tr = tsv(zip, "NONDERIV_TRANS.tsv");
   const S = (n) => sub.col(n), O = (n) => own.col(n), T = (n) => tr.col(n);
   const subs = new Map(sub.rows.map((r) => [r[S("ACCESSION_NUMBER")], {
@@ -134,7 +137,8 @@ const groups = {
 };
 const BENCH = ["month", "iwm", "spy"];
 const tables = Object.fromEntries(BENCH.map((b) => [b, Object.entries(groups).map(([name, f]) => { const g = rows.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stats(g, b, l)]))]; })]));
-const out = { generated: new Date().toISOString(), from: testStart, to: TO, tested: tested.length, kept: rows.length, mismatched, noPrices: symbols.length - px.size, symbols: symbols.length, tables };
+const out = { generated: new Date().toISOString(), from: testStart, to: read.at(-1) ?? TO, tested: tested.length, kept: rows.length, mismatched, noPrices: symbols.length - px.size, symbols: symbols.length, tables };
+if (OUT) await writeFile(OUT, JSON.stringify(out, null, 1));
 console.log("RESULT_JSON_START");
 console.log(JSON.stringify(out));
 console.log("RESULT_JSON_END");
