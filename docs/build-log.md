@@ -564,3 +564,7 @@ A read-only audit of the data files (owner-approved fixes):
 - First result: notable sales filed in 2026 so far were followed by worse returns by the median (−3.3% against the month's typical sale, 56% did worse; 2023–2025: 0.0%, 50%) but not by the mean (+0.1%), on 1,167 sales with six months of returns. The paper says so and calls it unsettled. No site change.
 - `lib/researchClaims.mjs` (was oosClaims.mjs) holds one entry per paper; `research-refresh.yml` runs one job per paper (buys ~18 min, sales ~10 min) and `research-check.mjs <paper>` gates each. Paper no. 2's entry has no fixed claims, since its 2026 wording is conditional; the shrinking-sample guard still applies.
 - Paper charts' hover counts say "sales" in paper no. 2 (they said "purchases").
+
+## Round 66: Functions Storage over the limit (2026-11-08)
+
+- Vercel showed Functions Storage at 11.92 GB of 10 GB. Every server function bundled sharp (Next's image library: libvips for glibc and musl plus a wasm build, ~48 MB of a ~54 MB function), though the site never uses next/image, and Vercel keeps every function of every retained deployment (24–29 deploys a day). `outputFileTracingExcludes` in next.config.mjs leaves it out: the largest function is now 5.4 MB. Pages, share images and icons checked after the change.
