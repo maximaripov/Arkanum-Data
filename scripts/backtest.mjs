@@ -75,6 +75,8 @@ const exec = all.filter((e) => roleKind(e.role) !== "owner");
 const byPair = new Map();
 for (const e of all.sort((a, b) => a.date.localeCompare(b.date))) { const k = e.ownerCik + "|" + e.issuerCik; if (!byPair.has(k)) byPair.set(k, []); byPair.get(k).push(e.date); }
 const histStart = `${HIST.slice(0, 4)}-${String((+HIST.slice(5) - 1) * 3 + 1).padStart(2, "0")}-01`;
+// The last quarter actually read: asking for one SEC hasn't published yet just skips it.
+const LAST = quarters.filter((q) => !skippedQuarters.includes(q)).at(-1) ?? TO;
 const testStart = `${FROM.slice(0, 4)}-${String((+FROM.slice(5) - 1) * 3 + 1).padStart(2, "0")}-01`;
 const days = (a, b) => (Date.parse(b) - Date.parse(a)) / 86_400_000;
 const tested = exec.filter((e) => e.filed >= testStart);
@@ -185,7 +187,7 @@ const pct = (x) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(
 const cell = (s) => s.mean == null ? `n=${s.n}` : `${s.n} · ${pct(s.mean)} · ${pct(s.median)} · ${(s.hit * 100).toFixed(0)}% · ${s.t.toFixed(1)}`;
 const gap = (b, l) => { const t = Object.fromEntries(tables[b]); const s = t["Strong (60+)"][l], r = t["Routine (<40)"][l]; return s.mean == null || r.mean == null ? "not enough data" : `${pct(s.mean - r.mean)} mean, ${pct(s.median - r.median)} median`; };
 const md = [`# Signal backtest (owner-only)`, ``,
-  `Generated ${new Date().toISOString().slice(0, 10)}. Officer and director open-market purchases (original Form 4s) filed ${testStart} to the end of ${TO.toUpperCase()}, scored with the site's \`conviction()\`; returns from the first close after the filing date. History for "first buy in N years" from ${histStart}.`, ``,
+  `Generated ${new Date().toISOString().slice(0, 10)}. Officer and director open-market purchases (original Form 4s) filed ${testStart} to the end of ${LAST.toUpperCase()}, scored with the site's \`conviction()\`; returns from the first close after the filing date. History for "first buy in N years" from ${histStart}.`, ``,
   `${tested.length} buys scored; ${rows.length} kept. Dropped: stocks with no price history (${symbols.length - px.size} of ${symbols.length}, mostly delisted or renamed: survivorship bias) and ${mismatched} buys whose filing price didn't match the ticker's price (wrong or reused symbol).`, ``,
   `## Does the score pick better buys?`, ``,
   `Strong minus Routine, versus same-month insider buys: 1 month ${gap("month", "1 month")}; 3 months ${gap("month", "3 months")}; 6 months ${gap("month", "6 months")}.`, ``,
@@ -200,5 +202,5 @@ const md = [`# Signal backtest (owner-only)`, ``,
 ].join("\n");
 await mkdir(OUT, { recursive: true });
 await writeFile(`${OUT}/results.md`, md + "\n");
-await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: TO, scored: tested.length, kept: rows.length, mismatched, tables }, null, 1));
+await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: LAST, scored: tested.length, kept: rows.length, mismatched, tables }, null, 1));
 console.log(md);

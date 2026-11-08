@@ -539,3 +539,10 @@ A read-only audit of the data files (owner-approved fixes):
 - `/research/insider-sales`, four pages (abstract and introduction, method, results, discussion with appendix tables A1 to A3). Numbers read at build time from `docs/backtest/sales.json` (the sales study run through diagnose.yml) via `saleStat`/`saleGroups`/`saleName` in `lib/research.ts`.
 - Finding: Arkanum's notable-sale rule, and every trait behind it, was followed by the same returns as other sales (6-month median about 0% against same-month sales, 50% worse). Only cheap stocks (under $5) fell, as after purchases. The paper says the label describes and does not predict; no site changes were made from it.
 - `/research` index lists both papers; the footer's Research link points there; the two papers link to each other; sitemap updated. `Paper` takes `no`; `DotPlot` takes `verb` and `invert`.
+
+## Round 63: monthly refresh of paper no. 1's 2026 test (2026-11-08)
+
+- `.github/workflows/research-refresh.yml` (5th of each month, and by hand): reruns `backtest.mjs` on purchases filed since January 2026 through the latest published SEC quarter and replaces `docs/backtest/oos-2026.json`.
+- Section 4.5's sentences are hand-written, so a refresh is committed only while they still hold: `lib/oosClaims.mjs` lists the five claims (score 60+ no better than under 40; CEO-level, $1M+ and pre-planned worse; directors better), `scripts/research-check.mjs` checks them plus a shrinking-sample guard. On failure nothing is committed and the owner gets a phone alert (`notify.mjs`, issue fallback); the paper keeps the last good figures.
+- Wording that would go stale is now derived from the data: date span, months covered, purchases with six months of returns, "last updated", the Table 4 column year, and the three-or-more-insiders paragraph (written for each outcome).
+- `backtest.mjs` now records the last quarter it actually read as `to`, not the one requested.

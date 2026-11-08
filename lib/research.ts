@@ -3,6 +3,7 @@
 import results from "../docs/backtest/results.json";
 import oos from "../docs/backtest/oos-2026.json";
 import sales from "../docs/backtest/sales.json";
+import { oosSpan } from "./oosClaims.mjs";
 
 export type Stat = { n: number; mean: number; median: number; hit: number; t: number };
 export type Horizon = "1 month" | "3 months" | "6 months";
@@ -37,9 +38,10 @@ export const groups = (bench: Bench = "month") => tables[bench].map(([g]) => g);
 /** Percent, one decimal, for charts. */
 export const p = (x: number) => Math.round(x * 1000) / 10;
 
-/** The same test on purchases filed in 2026 (January to September), which the score was never examined on. */
+/** The same test on purchases filed since January 2026, which the score was never examined on. */
 const oosTables = oos.tables as unknown as { month: Table };
-export const OOS = { kept: oos.kept, from: oos.from, to: oos.to };
+/** span: e.g. "January to September 2026"; refreshed monthly by research-refresh.yml. */
+export const OOS = { kept: oos.kept, from: oos.from, to: oos.to, generated: oos.generated, span: oosSpan(oos) };
 export function oosStat(group: string, h: Horizon): Stat {
   const row = oosTables.month.find(([g]) => g === group);
   if (!row) throw new Error(`No 2026 group "${group}"`);
