@@ -7,7 +7,7 @@ import { loadInsiders } from "@/lib/insiderData";
 import { FundsView } from "@/components/FundsView";
 import { VBars } from "@/components/Bars";
 import { fmtBig } from "@/lib/format";
-import { isExecOrDirector, plausibleReason } from "@/lib/insider";
+import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
 import { buildOverview } from "@/lib/overview.mjs";
 
@@ -196,12 +196,12 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
       {o ? (
         <div className="ov">
           {o.hero ? (
-            <Link href={`/stock/${o.hero.t.symbol}`} className="hero lead">
+            <Link href={`/stock/${o.hero.t.symbol}`} className="hero m-only">
               <span className="hero-tag">{o.hero.recent ? "Most unusual buy this week" : "Most unusual buy, last 30 days"}</span>
               <span className="hero-big mono">${fmtBig(o.hero.t.value ?? 0)}</span>
               <span className="hero-sym"><strong>{o.hero.t.symbol}</strong> · {titleCase(o.hero.t.issuer, o.hero.t.symbol)}</span>
               <span className="muted">{personName(o.hero.t.owner)}, {roleLabel(o.hero.t.role)} · {shortDay(o.hero.t.date)}{o.hero.t.price ? ` · $${o.hero.t.price.toFixed(2)}/share` : ""}</span>
-              {o.hero.t.conv ? <span className="hero-chips"><span>Score {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg && plausibleReason(r)).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
+              {o.hero.t.conv ? <span className="hero-chips"><span>Score {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
             </Link>
           ) : null}
 
@@ -222,7 +222,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
                   <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
                   <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
                   <td className="nowrap">{t.conv ? <><Meter score={t.conv.score} /> <span className="mono muted">{t.conv.score}</span></> : null}</td>
-                  <td>{t.conv?.reasons.filter((r) => !r.neg && plausibleReason(r) && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).slice(0, 1).map((r) => <span key={r.text} className="why">{r.text}</span>)}</td>
+                  <td>{t.conv?.reasons.filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).slice(0, 1).map((r) => <span key={r.text} className="why">{r.text}</span>)}</td>
                   <td className="r"><span className="mono up"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.date)}</div></td>
                 </tr>
               ))}</tbody>

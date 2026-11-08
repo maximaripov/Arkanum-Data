@@ -10,6 +10,3 @@ export const WHO = { exec: "Officers & directors", owner: "Funds & 10% owners", 
 export type Who = keyof typeof WHO;
 export const matchesWho = (t: Pick<InsiderTrade, "role">, who: Who) =>
   who === "all" ? true : who === "exec" ? isExecOrDirector(t) : !isExecOrDirector(t);
-
-/** A stake change over +1,000% (a token holding topped up) reads as noise, not information. */
-export const plausibleReason = (r: { text: string }) => { const m = /^Stake \+([\d,]+)%$/.exec(r.text); return !m || Number(m[1].replace(/,/g, "")) <= 1000; };

@@ -31,7 +31,7 @@ export function VBars({ cols, selected, onPick, height = 150 }: { cols: VCol[]; 
   const every = Math.ceil(cols.length / 6);
   return (
     <div className="vbars">
-      <div className="vb-read small">{show ? <><strong>{show.label}</strong> · {show.detail}</> : <span className="muted">{" "}</span>}</div>
+      <div className="vb-read small">{show ? <><strong>{show.label}</strong> · {show.detail}</> : <span className="muted">Tap a bar to see that day&apos;s trades</span>}</div>
       <div className="vb-cols" style={{ height }} onPointerLeave={() => setHover(null)}>
         {cols.map((c) => (
           <button key={c.key} className={`vb-col${c.key === selected ? " on" : ""}${selected && c.key !== selected ? " dim" : ""}`}
