@@ -573,3 +573,7 @@ A read-only audit of the data files (owner-approved fixes):
 
 - `vercel.json` turns off Vercel deployments for `claude/**` branches (and the current one by name). Every push there built a preview nobody opened (21 on 2026-11-08), on top of 24–55 production deploys a day from data saves, against the Hobby plan's daily deployment cap. Production (main) deploys as before.
 - The repo is now public (owner, 2026-11-08), so GitHub Actions minutes are unlimited; checked beforehand that no secrets are in its history and that the site's job login only accepts this repo's main branch.
+
+## Round 68: AI training crawlers blocked in robots.txt (2026-11-08)
+
+- `app/robots.ts` disallows the whole site for crawlers that collect pages to train AI models (GPTBot, ClaudeBot, CCBot, Google-Extended, Applebot-Extended, Bytespider, Meta, Amazonbot, Cohere, Diffbot and others): each visit to a stock page can rebuild it on the server and spend the Hobby plan's 4 h of Active CPU. Google, Bing and AI search engines that link back (OAI-SearchBot, PerplexityBot) are still allowed. robots.txt is a request: Bytespider in particular is known to ignore it.
