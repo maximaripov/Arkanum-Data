@@ -47,7 +47,7 @@ async function withReturns(trades: InsiderTrade[]): Promise<string | null> {
   const init = { next: { revalidate: 43200 } };
   const [spy, px] = await Promise.all([dailyCloses("SPY", from, { init }), closesFor(trades.map((t) => t.symbol), from, { init })]).catch(() => [null, new Map()] as const);
   if (!spy) return null;
-  for (const t of trades) { const s = px.get(t.symbol); if (s) t.ret = tradeReturns(s, spy, { traded: t.date, filed: t.filed }); }
+  for (const t of trades) { const s = px.get(t.symbol); if (s) t.ret = tradeReturns(s, spy, { traded: t.date, filed: t.filed, paid: t.price }); }
   return spy.at(-1)?.[0] ?? null;
 }
 const side = (list: InsiderTrade[]): RetSide => ({ trade: summarize(list.map((t) => t.ret?.trade)), pub: summarize(list.map((t) => t.ret?.pub)) });
