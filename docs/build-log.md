@@ -568,3 +568,8 @@ A read-only audit of the data files (owner-approved fixes):
 ## Round 66: Functions Storage over the limit (2026-11-08)
 
 - Vercel showed Functions Storage at 11.92 GB of 10 GB. Every server function bundled sharp (Next's image library: libvips for glibc and musl plus a wasm build, ~48 MB of a ~54 MB function), though the site never uses next/image, and Vercel keeps every function of every retained deployment (24–29 deploys a day). `outputFileTracingExcludes` in next.config.mjs leaves it out: the largest function is now 5.4 MB. Pages, share images and icons checked after the change.
+
+## Round 67: no preview builds for the working branch (2026-11-08)
+
+- `vercel.json` turns off Vercel deployments for `claude/**` branches (and the current one by name). Every push there built a preview nobody opened (21 on 2026-11-08), on top of 24–55 production deploys a day from data saves, against the Hobby plan's daily deployment cap. Production (main) deploys as before.
+- The repo is now public (owner, 2026-11-08), so GitHub Actions minutes are unlimited; checked beforehand that no secrets are in its history and that the site's job login only accepts this repo's main branch.
