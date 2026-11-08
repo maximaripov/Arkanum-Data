@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Paper, type PaperPage } from "@/components/research/Paper";
 import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/research/Charts";
-import { BENCH, HORIZONS, SALES, p, saleGroups, saleName, saleStat, type Bench } from "@/lib/research";
+import { BENCH, HORIZONS, SALES, SALES_OOS, p, saleGroups, saleName, saleOosStat, saleStat, type Bench } from "@/lib/research";
 
 export const BASE = "/research/insider-sales";
 export const TITLE = "Do insider stock sales predict anything? A test of 84,000 sales";
@@ -47,7 +47,7 @@ function Page0() {
     <>
       <section className="paper-abstract">
         <h2>Abstract</h2>
-        <p>Insider sales are far more common than insider purchases, and much harder to read: executives sell to diversify, pay taxes and fund their lives, often on a schedule set months in advance. Websites, Arkanum included, therefore try to pick out the sales that might matter: a top executive selling a large share of their stake, outside a pre-planned trading plan. We tested {n(SALES.kept)} open-market sales by officers and directors filed with the SEC from January 2023 to December 2025, measuring each stock&apos;s return from the first close after the sale became public. Sales that met Arkanum&apos;s &ldquo;notable&rdquo; rule were followed by the same returns as other sales filed the same month: a median of {signed(notable.median)} over six months, with {p(notable.below).toFixed(0)}% doing worse. No other trait (size, role, share of the stake sold, several insiders selling) moved the median by more than two points; the one large effect, cheap stocks falling after insiders sold, is about cheap stocks rather than the sales.</p>
+        <p>Insider sales are far more common than insider purchases, and much harder to read: executives sell to diversify, pay taxes and fund their lives, often on a schedule set months in advance. Websites, Arkanum included, therefore try to pick out the sales that might matter: a top executive selling a large share of their stake, outside a pre-planned trading plan. We tested {n(SALES.kept)} open-market sales by officers and directors filed with the SEC from January 2023 to December 2025, measuring each stock&apos;s return from the first close after the sale became public. Sales that met Arkanum&apos;s &ldquo;notable&rdquo; rule were followed by the same returns as other sales filed the same month: a median of {signed(notable.median)} over six months, with {p(notable.below).toFixed(0)}% doing worse. No other trait (size, role, share of the stake sold, several insiders selling) moved the median by more than two points; the one large effect, cheap stocks falling after insiders sold, is about cheap stocks rather than the sales. <OosAbstract /></p>
         <p className="paper-keywords"><strong>Keywords:</strong> insider trading, insider sales, Form 4, Rule 10b5-1, event study</p>
       </section>
 
@@ -56,7 +56,7 @@ function Page0() {
       <p>Arkanum lists every large sale by an executive or director and labels a subset &ldquo;notable&rdquo;: sales that are not pre-planned, not by an investment fund, and either by a top executive selling at least a quarter of their stake or $1 million or more, or by anyone selling at least half of what they hold. This paper asks whether that label, or any of the traits behind it, picks out sales that were followed by worse returns.</p>
       <p>It does not. Figure 1 shows the median six-month result for all sales and for notable and other sales, each against the typical sale filed the same month: all three are at or very near zero.</p>
       <Figure n={1} title="Median six-month return after the sale, against the month's typical insider sale." note={`${n(all.n)} sales. 0% means the same as the median insider sale filed that month; a negative number means the stock did worse after the sale. Source: SEC Form 4 data; Arkanum calculations.`}>
-        <DivergingBars rows={bars(HEADLINE)} label="Median 6-month return vs the month's typical insider sale" />
+        <DivergingBars rows={bars(HEADLINE)} label="Median 6-month return vs the month's typical insider sale" unit="sales" />
       </Figure>
       <p>Page 2 describes the data and method; page 3 the results by trait and against the market; page 4 what the results mean, the limits of the test, the full tables and references. A companion paper tests insider purchases: <Link href="/research/insider-buys">Do insider stock purchases beat the market?</Link></p>
     </>
@@ -115,10 +115,10 @@ function Page2() {
       <h3>4.2 The traits behind it</h3>
       <p>Figure 2 breaks sales down by the traits the rule and the usual advice rely on. Most sit within a point of zero. The exception runs the opposite way to the usual advice: small sales, under $100,000, did slightly worse ({signed(small.median)}), while sales of $1 million or more were followed by slightly <em>better</em> returns ({signed(big.median)}), and a top executive selling outside a trading plan only slightly worse ({signed(top.median)}). Selling half or more of a stake ({signed(half.median)}) or all of it ({signed(entire.median)}) made no difference. Pre-planned and unplanned sales ({signed(plan.median)} and {signed(unplan.median)}) were also alike, which matters: if insiders were timing unplanned sales on bad news, those should have done clearly worse.</p>
       <Figure n={2} title="Median six-month return after the sale by trait, against the month's typical insider sale." note="Negative: the stock did worse after the sale. Groups overlap: a sale can be a CEO's, $1M+ and half a stake at once.">
-        <DivergingBars rows={bars(TRAITS)} label="Median 6-month return vs the month's typical insider sale" />
+        <DivergingBars rows={bars(TRAITS)} label="Median 6-month return vs the month's typical insider sale" unit="sales" />
       </Figure>
       <Figure n={3} title="Share of sales followed by a worse six-month return than the month's typical insider sale, by trait." note="50% = a coin flip. Above 50%: more of these sales were followed by worse returns.">
-        <DotPlot rows={dots(TRAITS)} verb="did worse" invert label="Share of sales followed by a worse return" />
+        <DotPlot rows={dots(TRAITS)} verb="did worse" invert label="Share of sales followed by a worse return" unit="sales" />
       </Figure>
 
       <h3>4.3 Cheap stocks fell, whoever sold</h3>
@@ -142,8 +142,41 @@ function Page2() {
           ))}
         </div>
       </Figure>
+
+      <h3>4.5 Out of sample: sales filed since January 2026</h3>
+      <p>The whole test was repeated, unchanged, on the {n(SALES_OOS.kept)} sales filed from {SALES_OOS.span.text}, which the 2023 to 2025 results were not built on. Only {n(oosAll.n)} of them have six months of returns so far, so these figures are less certain than the main ones. This section is rerun every month as new filings and returns come in; it was last updated in {oosUpdated}.</p>
+      <p><NotableOos /></p>
+      <Figure n={5} title="Median six-month return after the sale by group, sales filed since January 2026, against the month's typical insider sale." note={`Only the ${n(oosAll.n)} sales with six months of returns so far. Negative: the stock did worse after the sale.`}>
+        <DivergingBars rows={OOS_GROUPS.map((g) => ({ label: saleName(g), value: p(saleOosStat(g, "6 months").median), n: saleOosStat(g, "6 months").n })).sort((a, b) => a.value - b.value)} label="Median 6-month return vs the month's typical insider sale" unit="sales" />
+      </Figure>
+      <table className="ttable fit paper-table">
+        <caption><strong>Table 4.</strong> Six months after the sale against the month&apos;s typical insider sale: median, and share that did worse</caption>
+        <thead><tr><th>Group</th><th className="r">2023–2025</th><th className="r">{SALES_OOS.span.years}</th></tr></thead>
+        <tbody>{OOS_GROUPS.map((g) => { const a = six(g), b = saleOosStat(g, "6 months"); return (
+          <tr key={g}><td>{saleName(g)}</td><td className="mono r">{signed(a.median)}<span className="muted"> · {p(a.below).toFixed(0)}%</span></td><td className="mono r">{signed(b.median)}<span className="muted"> · {p(b.below).toFixed(0)}%</span><div className="muted small">{n(b.n)} sales</div></td></tr>
+        ); })}</tbody>
+      </table>
     </>
   );
+}
+
+// ---- Section 4.5 is refreshed monthly (research-refresh.yml), so its wording follows the numbers.
+const OOS_GROUPS = ["Notable (site rule)", "Not notable", "Not pre-planned", "Top exec, not pre-planned", "Value $1M+", "Sold 50%+ of stake", "Sold entire stake", "Price under $5"];
+const oosAll = saleOosStat("All officer/director sales", "6 months");
+const oosUpdated = new Date(SALES_OOS.generated).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+/** Notable sales since 2026 followed by clearly worse returns: a median 2+ points below the month and 53%+ doing worse. */
+export const oosWarns = () => { const s = saleOosStat("Notable (site rule)", "6 months"); return p(s.median) <= -2 && p(s.below) >= 53; };
+function NotableOos() {
+  const now = saleOosStat("Notable (site rule)", "6 months"), then = six("Notable (site rule)");
+  const was = `(2023 to 2025: ${signed(then.median)}, ${p(then.below).toFixed(0)}% did worse)`;
+  if (oosWarns()) return <>Unlike 2023 to 2025, notable sales were followed by worse returns: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}. The mean was {signed(now.mean)}, so the typical notable sale&apos;s stock lagged while a few rose enough to cancel that out. Sales of half or all of a stake show the same pattern (Table 4). It rests on {n(now.n)} notable sales with six months of returns, all filed in the first months of the year, and could be one period&apos;s luck; it needs more filings before the label can be read as a warning.</>;
+  if (Math.abs(p(now.median)) < 1) return <>As in 2023 to 2025, notable sales were followed by much the same returns as other sales: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}.</>;
+  return <>Notable sales were followed by a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}. It rests on {n(now.n)} notable sales with six months of returns, too few to change the main finding.</>;
+}
+function OosAbstract() {
+  return oosWarns()
+    ? <>Sales filed in 2026, which the test was not built on, are the exception so far: notable sales were followed by worse returns by the median, though not by the mean, on a few months of data.</>
+    : <>Repeating the test on sales filed in 2026, which it was not built on, gave the same answer so far.</>;
 }
 
 function Page3() {
@@ -153,7 +186,7 @@ function Page3() {
       <h2>5. Discussion</h2>
       <p>The results fit the usual explanation for insider sales: they are mostly about the seller&apos;s own finances, not the company&apos;s prospects. Even the sales built to look most like a warning (a top executive selling much of their stake, outside a pre-planned plan) were followed by returns within a point of other sales. The test does not rule out that a handful of sales carry real information; it shows that the simple rules websites use can&apos;t find them.</p>
       <h3>5.1 What this means for Arkanum&apos;s label</h3>
-      <p>Arkanum&apos;s &ldquo;notable&rdquo; label should be read as a description, not a prediction: it marks sales that are out of the ordinary in size or share of a stake, which is worth knowing about a company, but it does not mean the stock is more likely to fall. The same is true of the labels on purchases (<Link href="/research/insider-buys">working paper no. 1</Link>).</p>
+      <p>Arkanum&apos;s &ldquo;notable&rdquo; label should be read as a description, not a prediction: it marks sales that are out of the ordinary in size or share of a stake, which is worth knowing about a company, but it does not mean the stock is more likely to fall. The same is true of the labels on purchases (<Link href="/research/insider-buys">working paper no. 1</Link>).{oosWarns() ? <> Sales filed in 2026 so far point the other way (section 4.5); if that holds as more filings come in, this section will need rewriting.</> : null}</p>
 
       <h2>6. Limits of the test</h2>
       <ul>
@@ -164,7 +197,7 @@ function Page3() {
       </ul>
 
       <h2>7. Conclusion</h2>
-      <p>Across {n(SALES.kept)} sales by company officers and directors in 2023 to 2025, neither Arkanum&apos;s notable-sale rule nor any of the usual warning signs picked out sales followed by worse returns. Insider sales are worth knowing about, but not as a signal to sell.</p>
+      <p>Across {n(SALES.kept)} sales by company officers and directors in 2023 to 2025, neither Arkanum&apos;s notable-sale rule nor any of the usual warning signs picked out sales followed by worse returns. Insider sales are worth knowing about, but not as a signal to sell{oosWarns() ? ", though sales filed in 2026 so far are a reason to keep checking (section 4.5)" : ""}.</p>
 
       <h2>Appendix</h2>
       <p>Each cell: median return after the sale against the benchmark · share of sales followed by a worse return. Sales counted at six months.</p>

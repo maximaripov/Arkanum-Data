@@ -35,7 +35,7 @@ function rowGeom(narrow: boolean, i: number, top: number) {
 }
 
 /** Horizontal bars either side of zero, one per row: "how far above or below". */
-export function DivergingBars({ rows, label = "Median 6-month return vs the month's typical insider buy" }: { rows: Row[]; label?: string }) {
+export function DivergingBars({ rows, label = "Median 6-month return vs the month's typical insider buy", unit = "purchases" }: { rows: Row[]; label?: string; unit?: string }) {
   const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
   const lim = Math.ceil(max / 2) * 2; // even, so the halfway gridlines land on whole percentages
   return <Both draw={(narrow) => {
@@ -55,7 +55,7 @@ export function DivergingBars({ rows, label = "Median 6-month return vs the mont
           const g = rowGeom(narrow, i, top), x0 = x(0), x1 = x(r.value);
           return (
             <g key={r.label}>
-              <title>{`${r.label}: ${pct(r.value)}${r.n ? ` (${r.n.toLocaleString("en-US")} purchases)` : ""}`}</title>
+              <title>{`${r.label}: ${pct(r.value)}${r.n ? ` (${r.n.toLocaleString("en-US")} ${unit})` : ""}`}</title>
               <rect x={0} y={g.y} width={L.W} height={L.rowH} fill="transparent" />
               <text x={g.labelX} y={g.labelY} textAnchor={g.anchor} className="paper-label">{r.label}</text>
               <rect x={Math.min(x0, x1)} y={g.barY} width={Math.max(1.5, Math.abs(x1 - x0))} height={g.barH} rx={2} fill={tone(r.value)} />
@@ -70,7 +70,7 @@ export function DivergingBars({ rows, label = "Median 6-month return vs the mont
 
 /** One dot per row on a 35–60% scale, with a reference line (50% = a coin flip). */
 /** `verb` words the hover ("beat it"); `invert` colours above the line red (for sales, more doing worse is bad for the stock). */
-export function DotPlot({ rows, refValue = 50, label = "Share that beat the benchmark", verb = "beat it", invert = false }: { rows: Row[]; refValue?: number; label?: string; verb?: string; invert?: boolean }) {
+export function DotPlot({ rows, refValue = 50, label = "Share that beat the benchmark", verb = "beat it", invert = false, unit = "purchases" }: { rows: Row[]; refValue?: number; label?: string; verb?: string; invert?: boolean; unit?: string }) {
   const lo = 35, hi = 60;
   return <Both draw={(narrow) => {
     const L = narrow ? LAYOUT.narrow : LAYOUT.wide, top = 8, bottom = 26;
@@ -89,7 +89,7 @@ export function DotPlot({ rows, refValue = 50, label = "Share that beat the benc
           const g = rowGeom(narrow, i, top);
           return (
             <g key={r.label}>
-              <title>{`${r.label}: ${r.value.toFixed(1)}% ${verb}${r.n ? ` (${r.n.toLocaleString("en-US")} purchases)` : ""}`}</title>
+              <title>{`${r.label}: ${r.value.toFixed(1)}% ${verb}${r.n ? ` (${r.n.toLocaleString("en-US")} ${unit})` : ""}`}</title>
               <rect x={0} y={g.y} width={L.W} height={L.rowH} fill="transparent" />
               <text x={g.labelX} y={g.labelY} textAnchor={g.anchor} className="paper-label">{r.label}</text>
               <line x1={x(refValue)} x2={x(r.value)} y1={g.mid} y2={g.mid} stroke="var(--line)" strokeWidth={2} />

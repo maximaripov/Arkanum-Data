@@ -49,7 +49,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 - Backtest (`docs/backtest/`, public at `/research/insider-buys`): 22,969 officer/director buys 2023–2025; the score doesn't pick better buys; $1M+ and CEO buys did worse; only the pre-planned penalty holds up; insider buys trailed small caps.
 
 ## Decisions
-- Research refresh: paper no. 1's 2026 section reruns monthly (research-refresh.yml). If an alert says a claim no longer holds, rewrite section 4.5 and update lib/oosClaims.mjs to match, then rerun the workflow by hand.
+- Research refresh: both papers' 2026 sections rerun monthly (research-refresh.yml, one job per paper). If an alert says a claim no longer holds, rewrite that paper's section 4.5 and update lib/researchClaims.mjs to match, then rerun the workflow by hand. Paper no. 2's 2026 wording is conditional (no fixed claims). As of Nov 2026, notable sales filed in 2026 lag by the median but not the mean: watch it before changing the site's sale labels.
 - Research: two working papers at /research (insider buys no. 1, insider sales no. 2). The Bloomberg-terminal look and the restrained redesign were both rejected; keep the current design.
 - Senate trades impossible (Akamai blocks automation). No AI assistant (paid). No custom domain yet (costs money; buy it when search traffic shows up or ads start). Monetization waits for traction.
 

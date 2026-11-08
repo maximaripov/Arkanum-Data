@@ -1,10 +1,11 @@
 // The research index: Arkanum's working papers, newest first.
 import Link from "next/link";
 import type { Metadata } from "next";
+import { oosWarns } from "./insider-sales/paper";
 
 const PAPERS = [
   { no: 2, href: "/research/insider-sales", title: "Do insider stock sales predict anything? A test of 84,000 sales", date: "November 2026",
-    summary: "Sales by company officers and directors from 2023 to 2025, including the ones Arkanum labels notable, were followed by the same returns as any other insider sale." },
+    summary: "Sales by company officers and directors from 2023 to 2025, including the ones Arkanum labels notable, were followed by the same returns as any other insider sale" + (oosWarns() ? "; sales filed in 2026 so far are an exception worth watching." : ".") },
   { no: 1, href: "/research/insider-buys", title: "Do insider stock purchases beat the market? A test of 23,000 buys", date: "November 2026",
     summary: "How purchases by company officers and directors performed afterwards, whether Arkanum's buy score picked out the better ones, and a check on 2026 filings the score was never tuned on." },
 ];

@@ -3,6 +3,7 @@
 import results from "../docs/backtest/results.json";
 import oos from "../docs/backtest/oos-2026.json";
 import sales from "../docs/backtest/sales.json";
+import salesOos from "../docs/backtest/sales-2026.json";
 import { oosSpan } from "./researchClaims.mjs";
 
 export type Stat = { n: number; mean: number; median: number; hit: number; t: number };
@@ -60,6 +61,14 @@ export function saleStat(bench: Bench, group: string, h: Horizon): SaleStat {
   return row[1][h];
 }
 export const saleGroups = () => saleTables.month.map(([g]) => g);
+/** The sales test on sales filed since January 2026 (refreshed monthly by research-refresh.yml). */
+const saleOosTables = salesOos.tables as unknown as Record<Bench, SaleTable>;
+export const SALES_OOS = { kept: salesOos.kept, from: salesOos.from, to: salesOos.to, generated: salesOos.generated, span: oosSpan(salesOos) };
+export function saleOosStat(group: string, h: Horizon): SaleStat {
+  const row = saleOosTables.month.find(([g]) => g === group);
+  if (!row) throw new Error(`No 2026 sales group "${group}"`);
+  return row[1][h];
+}
 const SALE_NAME: Record<string, string> = {
   "All officer/director sales": "All officer and director sales", "Notable (site rule)": "Notable (Arkanum's rule)",
   "Pre-planned (10b5-1)": "Pre-planned (Rule 10b5-1)", "Top executive": "CEO, CFO, President or Chair", "Other officer": "Other officers",
