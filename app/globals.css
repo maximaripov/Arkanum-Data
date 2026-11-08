@@ -652,3 +652,14 @@ section[id] { scroll-margin-top: 5rem; }
 .chart-narrow { display: none; }
 @media (max-width: 640px) { .chart-wide { display: none; } .chart-narrow { display: block; } .paper-chart .paper-label, .paper-chart .paper-value { font-size: 13px; } .paper-chart .paper-tick { font-size: 11.5px; } }
 .chart-narrow .paper-label { paint-order: stroke; stroke: var(--card); stroke-width: 5px; stroke-linejoin: round; }
+/* Returns after a trade (components/Returns.tsx) */
+.retline { margin-top: .25rem; color: var(--muted); }
+.retline .mono { font-weight: 600; }
+/* Congress trades: filters and sorting */
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); align-items: center; }
+.filters select { background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 0; padding: .4rem .55rem; font: inherit; font-size: .82rem; max-width: 100%; }
+.filters select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 760px) { .filters .filt { flex: 1 1 45%; } .filters select { width: 100%; } }
+/* A wide trades table scrolls inside its card instead of being cut at the edge. */
+.tscroll { overflow-x: auto; }
+.span8 .ttable td.cstock { max-width: 11rem; }

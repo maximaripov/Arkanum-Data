@@ -47,10 +47,10 @@ export function Watchlist() {
   }, [key]);
   return (
     <section className="card">
-      <div className="card-head"><h2>Your watchlist <span className="muted small">insiders: 30 days · funds: last quarter</span></h2><button className="linkbtn" onClick={focusSearch}>+ Add a stock</button></div>
+      <div className="card-head"><h2>Watchlist <span className="muted small">insiders: 30 days · funds: last quarter</span></h2><button className="linkbtn" onClick={focusSearch}>+ Add a stock</button></div>
       {!list.length ? (
         <div className="empty">
-          <p><strong>Your watchlist is empty.</strong></p>
+          <p><strong>The watchlist is empty.</strong></p>
           <p className="muted">Search for a company at the top, open it, and tap &quot;Add to watchlist&quot; to follow it here. Your daily digest will then tell you when its insiders trade or big funds move.</p>
         </div>
       ) : (

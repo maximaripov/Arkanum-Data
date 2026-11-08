@@ -7,6 +7,7 @@ import type { InsiderTrade } from "@/lib/sec";
 import { fmtBig } from "@/lib/format";
 import { TIER_LABEL } from "@/lib/conviction.mjs";
 import { personName, roleLabel, companyName } from "@/lib/people.mjs";
+import { ReturnLine } from "@/components/Returns";
 
 export { personName, roleLabel };
 
@@ -58,6 +59,7 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
           {t.ownedAfter != null && t.ownedAfter >= t.shares ? `now owns ${fmtBig(t.ownedAfter)} shares · ` : ""}
           <a href={t.url} target="_blank" rel="noreferrer">SEC filing ↗</a>
         </div>
+        {t.ret && (buy || sell) ? <ReturnLine trade={t.ret.trade} pub={t.ret.pub} sale={sell} /> : null}
       </div>
       <div className={`trade-value mono ${buy ? "up" : sell ? "down" : "muted"}`}>{t.value ? "$" + fmtBig(t.value) : "—"}</div>
     </li>

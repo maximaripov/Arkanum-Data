@@ -61,6 +61,8 @@ export async function searchCompanies(q: string, limit = 8): Promise<Company[]> 
 export type Conviction = { score: number; tier: "strong" | "notable" | "routine"; reasons: { text: string; neg?: boolean }[] };
 
 export type InsiderTrade = {
+  /** Stock and S&P 500 change since the trade and since it was public (insider pages only; lib/returns.mjs). */
+  ret?: { trade: [number, number] | null; pub: [number, number] | null };
   accession: string;
   filed: string;
   symbol: string;

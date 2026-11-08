@@ -11,10 +11,14 @@ on:
         default: false
 permissions:
   contents: write
+  issues: write # alerts fall back to a GitHub issue when the site can't send them
+  id-token: write # lets the job prove to the site that it is this repo's job
 jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SITE_URL: https://arkanumdata.vercel.app
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -23,13 +27,16 @@ jobs:
       - name: PDF text tool
         run: sudo apt-get install -y -q poppler-utils > /dev/null
       - name: Congress trades (House Clerk)
-        run: node scripts/build-congress.mjs ${{ github.event_name == 'workflow_dispatch' && inputs.rebuild && '--rebuild' || '' }}
+        run: CONGRESS_NEW_OUT="$RUNNER_TEMP/congress-new.json" node scripts/build-congress.mjs ${{ github.event_name == 'workflow_dispatch' && inputs.rebuild && '--rebuild' || '' }}
       - name: Commit data
         run: |
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
-          git add public/data/congress.json public/data/congress-overview.json public/data/congress data/congress-seen.json
+          git add public/data/congress.json public/data/congress-overview.json public/data/congress-trades.json public/data/congress data/congress-seen.json
           git diff --cached --quiet && { echo "Nothing to commit"; exit 0; }
           git commit -m "data: congress trades $(date -u +%F)"
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
           exit 1
+      # Devices following a member hear about their newly disclosed trades.
+      - name: Alerts for followed members
+        run: CONGRESS_NEW_OUT="$RUNNER_TEMP/congress-new.json" node scripts/congress-alerts.mjs
