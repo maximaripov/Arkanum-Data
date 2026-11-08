@@ -584,3 +584,6 @@ h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
   .foot-top { flex-direction: column; align-items: flex-start; }
   .foot-links { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1.5rem; width: 100%; }
 }
+
+/* Jumps to a section (#data, #privacy) stop below the sticky header. */
+section[id] { scroll-margin-top: 5rem; }
