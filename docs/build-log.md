@@ -507,3 +507,7 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - **Amazon free cash flow (-$46.9B):** not a calculation error but a mislabelled period. Amazon's 10-Q gives a rolling 12-month cash flow (Oct 2025 to Sep 2026: $168.3B operating, $215.2B capital spending), which SEC's frames file as "CY2026"; the script took it as the latest year while the page says "last fiscal year". Cash flow and dividends now come from the same fiscal year as revenue (`fiscalAt`): Amazon 2025 free cash flow $7.7B, margin 1.1%. Companies with an FCF margin: 2,973.
 - **Not fixable from SEC data:** ConocoPhillips, Phillips 66, NextEra, Alibaba and PDD report capital spending only under their own (extension) labels, which SEC's companyfacts and frames APIs leave out; Valero only tags segment additions. They show "—", which is correct.
 - Diagnostics added: `scripts/diagnose/capex.mjs` (every capex-like label a company uses), `scripts/diagnose/fcf.mjs` (one company's yearly frames as the screener sees them).
+
+## Round 58: footer (2026-11-08)
+
+- Footer redone to read like a real site's: a rule above it; the mark and "Arkanum Data" on the left; a link row ABOUT · DATA SOURCES · PRIVACY · RESEARCH · TERMS (small capitals, no underline, green with a thin rule on hover/focus; a two-column grid on phones); the disclaimer and data credits in small grey text; "(c) year Arkanum Data. Independent; not affiliated with the SEC." "Data sources" and "Privacy" link to new anchors on About (`#data`, `#privacy`). Owner approved the mock.

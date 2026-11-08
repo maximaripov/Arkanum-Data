@@ -570,3 +570,17 @@ h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
 .side.down { background: transparent !important; border: 1px solid var(--down); color: var(--down); }
 .linkbtn::before { content: "> "; }
 
+
+/* Footer: brand and link row over a rule, then the small print. */
+.site-footer { color: var(--muted); font-size: .8rem; border-top: 1px solid var(--line); margin-top: 2rem; padding-top: 1.4rem; }
+.foot-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
+.foot-brand { display: inline-flex; align-items: center; gap: .5rem; color: var(--text) !important; text-decoration: none !important; font-weight: 600; letter-spacing: .02em; }
+.foot-links { display: flex; flex-wrap: wrap; gap: .4rem 1.6rem; }
+.foot-links a { color: var(--text) !important; text-decoration: none !important; text-transform: uppercase; letter-spacing: .08em; font-size: .74rem; padding: .2rem 0; border-bottom: 1px solid transparent; }
+.foot-links a:hover, .foot-links a:focus-visible { border-bottom-color: var(--accent); color: var(--accent) !important; }
+.foot-legal { margin: 1.1rem 0 .4rem; line-height: 1.6; max-width: 70ch; }
+.foot-copy { margin: 0; font-size: .74rem; }
+@media (max-width: 640px) {
+  .foot-top { flex-direction: column; align-items: flex-start; }
+  .foot-links { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1.5rem; width: 100%; }
+}

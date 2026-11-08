@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Nav, TabBar } from "@/components/Nav";
@@ -40,8 +41,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <Ticker />
         <main>{children}</main>
-        <footer className="muted small">
-          Not investment advice. Filings and fundamentals from SEC EDGAR; Market quotes and stock charts by TradingView (stocks delayed 15 min). Bitcoin, gold and Treasury figures from the Federal Reserve via FRED and CoinGecko. <Link href="/about">About, data &amp; privacy</Link> · <Link href="/research/insider-buys">Research findings</Link> · <Link href="/terms">Terms</Link>
+        <footer className="site-footer">
+          <div className="foot-top">
+            <Link href="/" className="foot-brand"><LogoMark size={20} /><span>Arkanum Data</span></Link>
+            <nav className="foot-links" aria-label="About this site">
+              <Link href="/about">About</Link>
+              <Link href="/about#data">Data sources</Link>
+              <Link href="/about#privacy">Privacy</Link>
+              <Link href="/research/insider-buys">Research</Link>
+              <Link href="/terms">Terms</Link>
+            </nav>
+          </div>
+          <p className="foot-legal">Not investment advice. Filings and fundamentals from SEC EDGAR. Market quotes and stock charts by TradingView (stocks delayed 15 minutes). Bitcoin, gold and Treasury figures from the Federal Reserve (FRED) and CoinGecko.</p>
+          <p className="foot-copy">&copy; {new Date().getFullYear()} Arkanum Data. Independent; not affiliated with the SEC.</p>
         </footer>
         <TabBar />
       </body>

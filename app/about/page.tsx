@@ -16,7 +16,7 @@ export default function About() {
         <p>Everything here is for information and education only. It is not a recommendation to buy or sell any security, and nothing on Arkanum considers your personal situation. Data can be delayed, incomplete or wrong. Do your own research and consider a licensed adviser before making investment decisions. Arkanum is provided as is, without warranty of any kind.</p>
       </section>
 
-      <section className="card">
+      <section className="card" id="data">
         <h2>Where the data comes from</h2>
         <ul>
           <li><strong>Stock price charts and the Markets quotes (S&amp;P 500, Nasdaq 100, bitcoin, gold, 10-year yield):</strong> embedded from <a href="https://www.tradingview.com/" target="_blank" rel="noopener nofollow">TradingView</a>; stock prices are delayed 15 minutes. Exchanges and index owners license these prices for display, so Arkanum shows them only through TradingView.</li>
@@ -30,7 +30,7 @@ export default function About() {
         </ul>
       </section>
 
-      <section className="card">
+      <section className="card" id="privacy">
         <h2>Privacy</h2>
         <ul>
           <li><strong>No accounts.</strong> We never ask for your name, email or phone number.</li>
