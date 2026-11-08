@@ -511,3 +511,10 @@ The owner asked to show market data in Foresight's own design rather than embedd
 ## Round 58: footer (2026-11-08)
 
 - Footer redone to read like a real site's: a rule above it; the mark and "Arkanum Data" on the left; a link row ABOUT · DATA SOURCES · PRIVACY · RESEARCH · TERMS (small capitals, no underline, green with a thin rule on hover/focus; a two-column grid on phones); the disclaimer and data credits in small grey text; "(c) year Arkanum Data. Independent; not affiliated with the SEC." "Data sources" and "Privacy" link to new anchors on About (`#data`, `#privacy`). Owner approved the mock.
+
+## Round 59: the research write-up as a paper (2026-11-08)
+
+- `/research/insider-buys` is now a five-page working paper (`app/research/insider-buys/paper.tsx`; pages `/method`, `/results`, `/market`, `/appendix` via `[section]`): journal-style front matter, numbered contents with the current page marked, abstract with keywords, numbered sections, 5 figures, 6 tables (A1-A3 in the appendix cover all 28 groups against each benchmark), references (Seyhun 1986; Lakonishok and Lee 2001; Jeng, Metrick and Zeckhauser 2003; Cohen, Malloy and Pomorski 2012; SEC data sets), page N of 5 with previous/next, a "Cite as" line.
+- Every number is read from `docs/backtest/results.json` at build time (`lib/research.ts`), so text and data can't drift.
+- Charts (`components/research/Charts.tsx`): plain server-rendered SVG (diverging bars, dot plots against 50%, small-multiple columns), hover titles; a wide layout and a phone layout (labels above bars) switched by CSS. Direction shown by position and a signed label as well as colour: the light-mode green/red fail the colour-blind separation check (deutan dE 3.0), so colour is never the only cue. Axis limits even so gridlines sit on whole percentages.
+- Sitemap lists all five pages. Owner approved the mock.

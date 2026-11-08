@@ -12,7 +12,7 @@ export const revalidate = 86400;
 // each insider page reads their filings from SEC, so crawling thousands would hit its limits.)
 // Plus the well-known insiders list (up to 100) and every past digest.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = ["", "/congress", "/research/insider-buys", "/markets", "/stakes", "/briefing", "/briefing/archive", "/about", "/terms"].map((p) => ({ url: SITE + p, changeFrequency: (p === "/about" || p === "/terms" || p.startsWith("/research") ? "monthly" : "daily") as "monthly" | "daily" }));
+  const pages = ["", "/congress", "/research/insider-buys", "/research/insider-buys/method", "/research/insider-buys/results", "/research/insider-buys/market", "/research/insider-buys/appendix", "/markets", "/stakes", "/briefing", "/briefing/archive", "/about", "/terms"].map((p) => ({ url: SITE + p, changeFrequency: (p === "/about" || p === "/terms" || p.startsWith("/research") ? "monthly" : "daily") as "monthly" | "daily" }));
   const d = await loadInsiders(SITE, { next: { revalidate: 86400 } }).catch(() => null);
   const shown = (d?.trades ?? []).filter((t) => t.code === "P" || (t.code === "S" && isExecOrDirector(t)));
   const stocks = [...new Set(shown.map((t) => t.symbol))].map((s) => ({ url: `${SITE}/stock/${encodeURIComponent(s)}`, changeFrequency: "weekly" as const }));
