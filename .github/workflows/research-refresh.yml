@@ -1,8 +1,9 @@
 name: Research refresh
-# Monthly: reruns the out-of-sample test in working paper no. 1 (insider purchases filed since
-# January 2026) through the latest SEC quarter, so the 2026 figures grow as new filings and
-# six-month returns come in. Published only while the paper's written conclusions still hold
-# (scripts/research-check.mjs, lib/oosClaims.mjs); otherwise nothing changes and the owner is told.
+# Monthly: reruns each working paper's out-of-sample test (filings since January 2026) through
+# the latest SEC quarter, so those figures grow as new filings and six-month returns come in.
+# A paper's file is published only while its written conclusions still hold
+# (scripts/research-check.mjs, lib/researchClaims.mjs); otherwise it keeps last month's figures
+# and the owner is told. One job per paper, so one failing doesn't hold up the other.
 on:
   schedule:
     - cron: "23 13 5 * *" # the 5th of each month, about 9 AM New York time
@@ -15,6 +16,16 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - paper: buys # working paper no. 1
+            file: docs/backtest/oos-2026.json
+            run: node scripts/backtest.mjs --from 2026q1 --to "$TO" --history-from 2021q1 --out /tmp/out && cp /tmp/out/results.json /tmp/new.json
+          - paper: sales # working paper no. 2
+            file: docs/backtest/sales-2026.json
+            run: node scripts/diagnose/sales-study.mjs 2026q1 "$TO" 2025q4 /tmp/new.json
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       SITE_URL: https://arkanumdata.vercel.app
@@ -23,26 +34,26 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Rerun the 2026 test
+      - name: Rerun the test
         run: |
-          to="$(date -u +%Y)q$(( ($(date -u +%-m) - 1) / 3 + 1 ))" # quarters SEC hasn't published yet are skipped
-          node scripts/backtest.mjs --from 2026q1 --to "$to" --history-from 2021q1 --out /tmp/oos
+          export TO="$(date -u +%Y)q$(( ($(date -u +%-m) - 1) / 3 + 1 ))" # quarters SEC hasn't published yet are skipped
+          ${{ matrix.run }}
       - name: Check the paper's claims still hold
-        run: node scripts/research-check.mjs /tmp/oos/results.json docs/backtest/oos-2026.json /tmp/research-reason.txt
+        run: node scripts/research-check.mjs ${{ matrix.paper }} /tmp/new.json /tmp/research-reason.txt
       - name: Commit
         run: |
-          cp /tmp/oos/results.json docs/backtest/oos-2026.json
+          cp /tmp/new.json ${{ matrix.file }}
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
-          git add docs/backtest/oos-2026.json
+          git add ${{ matrix.file }}
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
-          git commit -m "data: research paper 2026 check $(date -u +%F)"
-          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
+          git commit -m "data: research refresh (${{ matrix.paper }}) $(date -u +%F)"
+          for i in 1 2 3 4 5; do git pull --rebase -X theirs origin main && git push && exit 0; sleep $((i * 10)); done
           exit 1
       - name: Notify on failure
         if: failure()
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          reason="$(cat /tmp/research-reason.txt 2>/dev/null || echo "The job failed before the check. The paper keeps last month's figures.")"
+          reason="$(cat /tmp/research-reason.txt 2>/dev/null || echo "The ${{ matrix.paper }} paper's refresh failed before its check. It keeps last month's figures.")"
           node scripts/notify.mjs "Arkanum: research paper refresh" "$reason" "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

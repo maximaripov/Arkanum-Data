@@ -3,7 +3,7 @@
 import results from "../docs/backtest/results.json";
 import oos from "../docs/backtest/oos-2026.json";
 import sales from "../docs/backtest/sales.json";
-import { oosSpan } from "./oosClaims.mjs";
+import { oosSpan } from "./researchClaims.mjs";
 
 export type Stat = { n: number; mean: number; median: number; hit: number; t: number };
 export type Horizon = "1 month" | "3 months" | "6 months";
