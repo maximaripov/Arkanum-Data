@@ -532,7 +532,7 @@ html[data-theme="light"] .party.r { color: #b91c1c; } html[data-theme="light"] .
 .cpick { padding: .75rem 1rem; }
 .cpick .picker { margin: 0; max-width: 34rem; }
 @media (max-width: 760px) { .tabbar a { min-width: 0; flex: 1; font-size: .66rem; } }
-.ttable td.cstock { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+.ttable td.cstock { max-width: 13rem; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 761px) and (max-width: 1299px) { .ttable td.cstock .muted { display: none; } }
 
 /* ---- Retro terminal (round 42) -------------------------------------------------------
