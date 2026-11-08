@@ -533,3 +533,9 @@ A read-only audit of the data files (owner-approved fixes):
 - **Impossible margins:** net income over 10x revenue at a $100M+ company is mis-scaled (Medline showed $1.16 trillion), and a margin over 150% there means partial revenue (Fifth Third's revenue was fees only): both blanked by `cleanRow`. 23 rows cleaned.
 - Research scripts on the session branch only: `scripts/diagnose/sales-study.mjs`, `oos-2026.mjs`, `quarters.mjs`.
 - **Paper, section 4.5 (out of sample):** the unchanged buy test rerun on 6,172 purchases filed January to September 2026 (`scripts/diagnose/oos-2026.mjs`, results in `docs/backtest/oos-2026.json`, read by `lib/research.ts`). New Figure 5 and Table 4 (2023-2025 vs 2026); the market chart is now Figure 6; abstract, limits and conclusion mention it. Findings held (score no help; CEO and $1M+ worse; directors better); 3+ insiders buying reversed (+5.0%, 57%) on one quarter of data, flagged as not yet reliable. Signed figures use the rounded value's sign (no "+0.0%").
+
+## Round 62: working paper no. 2, insider sales (2026-11-08)
+
+- `/research/insider-sales`, four pages (abstract and introduction, method, results, discussion with appendix tables A1 to A3). Numbers read at build time from `docs/backtest/sales.json` (the sales study run through diagnose.yml) via `saleStat`/`saleGroups`/`saleName` in `lib/research.ts`.
+- Finding: Arkanum's notable-sale rule, and every trait behind it, was followed by the same returns as other sales (6-month median about 0% against same-month sales, 50% worse). Only cheap stocks (under $5) fell, as after purchases. The paper says the label describes and does not predict; no site changes were made from it.
+- `/research` index lists both papers; the footer's Research link points there; the two papers link to each other; sitemap updated. `Paper` takes `no`; `DotPlot` takes `verb` and `invert`.

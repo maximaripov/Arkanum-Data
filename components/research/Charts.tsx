@@ -69,7 +69,8 @@ export function DivergingBars({ rows, label = "Median 6-month return vs the mont
 }
 
 /** One dot per row on a 35–60% scale, with a reference line (50% = a coin flip). */
-export function DotPlot({ rows, refValue = 50, label = "Share that beat the benchmark" }: { rows: Row[]; refValue?: number; label?: string }) {
+/** `verb` words the hover ("beat it"); `invert` colours above the line red (for sales, more doing worse is bad for the stock). */
+export function DotPlot({ rows, refValue = 50, label = "Share that beat the benchmark", verb = "beat it", invert = false }: { rows: Row[]; refValue?: number; label?: string; verb?: string; invert?: boolean }) {
   const lo = 35, hi = 60;
   return <Both draw={(narrow) => {
     const L = narrow ? LAYOUT.narrow : LAYOUT.wide, top = 8, bottom = 26;
@@ -88,11 +89,11 @@ export function DotPlot({ rows, refValue = 50, label = "Share that beat the benc
           const g = rowGeom(narrow, i, top);
           return (
             <g key={r.label}>
-              <title>{`${r.label}: ${r.value.toFixed(1)}% beat it${r.n ? ` (${r.n.toLocaleString("en-US")} purchases)` : ""}`}</title>
+              <title>{`${r.label}: ${r.value.toFixed(1)}% ${verb}${r.n ? ` (${r.n.toLocaleString("en-US")} purchases)` : ""}`}</title>
               <rect x={0} y={g.y} width={L.W} height={L.rowH} fill="transparent" />
               <text x={g.labelX} y={g.labelY} textAnchor={g.anchor} className="paper-label">{r.label}</text>
               <line x1={x(refValue)} x2={x(r.value)} y1={g.mid} y2={g.mid} stroke="var(--line)" strokeWidth={2} />
-              <circle cx={x(r.value)} cy={g.mid} r={5} fill={tone(r.value - refValue)} stroke="var(--card)" strokeWidth={2} />
+              <circle cx={x(r.value)} cy={g.mid} r={5} fill={tone(invert ? refValue - r.value : r.value - refValue)} stroke="var(--card)" strokeWidth={2} />
               <text x={L.W - 4} y={g.valueY} textAnchor="end" className="paper-value">{r.value.toFixed(1)}%</text>
             </g>
           );

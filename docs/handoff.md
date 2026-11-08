@@ -49,6 +49,7 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 - Backtest (`docs/backtest/`, public at `/research/insider-buys`): 22,969 officer/director buys 2023–2025; the score doesn't pick better buys; $1M+ and CEO buys did worse; only the pre-planned penalty holds up; insider buys trailed small caps.
 
 ## Decisions
+- Research: two working papers at /research (insider buys no. 1, insider sales no. 2). The Bloomberg-terminal look and the restrained redesign were both rejected; keep the current design.
 - Senate trades impossible (Akamai blocks automation). No AI assistant (paid). No custom domain yet (costs money; buy it when search traffic shows up or ads start). Monetization waits for traction.
 
 ## Ideas not started

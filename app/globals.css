@@ -634,6 +634,13 @@ section[id] { scroll-margin-top: 5rem; }
 .paper-pager a:hover { border-bottom-color: var(--up); color: var(--up); }
 .paper-pageno { color: var(--muted); white-space: nowrap; }
 .paper-cite { color: var(--muted); font-size: .72rem; margin: 1rem 0 0; }
+.research-list { list-style: none; margin: 0; padding: 0; }
+.research-list li { padding: 1.2rem 0; border-bottom: 1px solid var(--line); }
+.research-list li:last-child { border-bottom: 0; }
+.research-list .paper-series { margin: 0 0 .4rem; }
+.research-title { color: var(--text); font-weight: 600; font-size: 1.05rem; text-decoration: none; line-height: 1.35; }
+.research-title:hover { color: var(--up); }
+.research-list p:last-child { color: var(--muted); font-size: .9rem; margin: .5rem 0 0; }
 @media (max-width: 640px) {
   .paper { padding: 1.4rem 1rem 1rem; border-left: 0; border-right: 0; }
   .paper-title { font-size: 1.2rem; }

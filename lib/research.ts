@@ -2,6 +2,7 @@
 // at build time, so the paper and the data can't drift apart.
 import results from "../docs/backtest/results.json";
 import oos from "../docs/backtest/oos-2026.json";
+import sales from "../docs/backtest/sales.json";
 
 export type Stat = { n: number; mean: number; median: number; hit: number; t: number };
 export type Horizon = "1 month" | "3 months" | "6 months";
@@ -44,3 +45,24 @@ export function oosStat(group: string, h: Horizon): Stat {
   if (!row) throw new Error(`No 2026 group "${group}"`);
   return row[1][h];
 }
+
+// ---- Working paper no. 2: insider sales (docs/backtest/sales.json) ----------------------------
+/** "below": the share of sales followed by a worse return than the benchmark. */
+export type SaleStat = { n: number; mean: number; median: number; below: number; t: number };
+type SaleTable = [string, Record<Horizon, SaleStat>][];
+const saleTables = sales.tables as unknown as Record<Bench, SaleTable>;
+export const SALES = { tested: sales.tested, kept: sales.kept, mismatched: sales.mismatched, noPrices: sales.noPrices, symbols: sales.symbols, from: sales.from, to: sales.to, generated: sales.generated };
+export function saleStat(bench: Bench, group: string, h: Horizon): SaleStat {
+  const row = saleTables[bench].find(([g]) => g === group);
+  if (!row) throw new Error(`No sales group "${group}"`);
+  return row[1][h];
+}
+export const saleGroups = () => saleTables.month.map(([g]) => g);
+const SALE_NAME: Record<string, string> = {
+  "All officer/director sales": "All officer and director sales", "Notable (site rule)": "Notable (Arkanum's rule)",
+  "Pre-planned (10b5-1)": "Pre-planned (Rule 10b5-1)", "Top executive": "CEO, CFO, President or Chair", "Other officer": "Other officers",
+  "Director only": "Directors only", "Top exec, not pre-planned": "Top executive, not pre-planned",
+  "Value $1M+": "$1M or more", "Value $100K–1M": "$100K to $1M", "Value under $100K": "Under $100K",
+  "Alone": "Only insider selling", "Price $5+": "Share price $5+", "Price under $5": "Share price under $5",
+};
+export const saleName = (g: string) => SALE_NAME[g] ?? g;

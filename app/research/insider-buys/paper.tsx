@@ -223,6 +223,8 @@ function Page4() {
       <h3>Notes on the statistics</h3>
       <p>Means are winsorized at the 1st and 99th percentiles. t-statistics for each cell are in the project&apos;s results file; they assume independent purchases, which these are not (purchases overlap in time and cluster in the same stocks), so they overstate confidence. Results were generated on {SAMPLE.generated.slice(0, 10)}.</p>
 
+      <p>A companion paper runs the same test on insider sales: <Link href="/research/insider-sales">Do insider stock sales predict anything?</Link> (working paper no. 2).</p>
+
       <h2>References</h2>
       <ol className="paper-refs">
         <li>Cohen, L., Malloy, C. and Pomorski, L. (2012). Decoding inside information. <em>Journal of Finance</em>, 67(3), 1009–1043.</li>
