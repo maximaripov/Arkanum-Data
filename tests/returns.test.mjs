@@ -29,3 +29,13 @@ test("summary: medians and the share that beat the S&P", () => {
   assert.equal(summarize([null]), null);
   assert.equal(median([]), null);
 });
+
+test("a price paid far from that day's close (a reused ticker) gives no returns", () => {
+  const withRaw = stock.map(([d, a]) => [d, a, a]);
+  assert.notEqual(tradeReturns(withRaw, spy, { traded: "2026-01-02", filed: "2026-01-05", paid: 10.5 }).trade, null);
+  assert.deepEqual(tradeReturns(withRaw, spy, { traded: "2026-01-02", filed: "2026-01-05", paid: 40 }), { trade: null, pub: null });
+});
+
+test("history that starts long after the trade (a later listing) gives no returns", () => {
+  assert.deepEqual(tradeReturns(stock, spy, { traded: "2025-06-01", filed: "2025-06-03" }), { trade: null, pub: null });
+});
