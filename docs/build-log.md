@@ -518,3 +518,7 @@ The owner asked to show market data in Foresight's own design rather than embedd
 - Every number is read from `docs/backtest/results.json` at build time (`lib/research.ts`), so text and data can't drift.
 - Charts (`components/research/Charts.tsx`): plain server-rendered SVG (diverging bars, dot plots against 50%, small-multiple columns), hover titles; a wide layout and a phone layout (labels above bars) switched by CSS. Direction shown by position and a signed label as well as colour: the light-mode green/red fail the colour-blind separation check (deutan dE 3.0), so colour is never the only cue. Axis limits even so gridlines sit on whole percentages.
 - Sitemap lists all five pages. Owner approved the mock.
+
+## Round 60: redesign mocked and turned down (2026-11-08)
+
+- The owner asked how to make the site look less generated. A mock removed the round-42 ornaments (heading prompts, tab brackets, glow, cursor, double borders), replaced boxed cards with rules, made badges plain text, showed the lead story on desktop, let names wrap, dropped instruction text and hid stake changes over +1,000%. The owner chose to keep the current site as is; nothing shipped. Don't propose it again unless asked.
