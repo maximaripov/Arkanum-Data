@@ -72,7 +72,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
           hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
         }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
         <InsiderStrip trades={insiders} range={range} />
-        <p className="muted small">Prices are delayed 15 minutes. Drag across the chart to see past prices.</p>
+        <p className="muted small">Prices delayed 15 minutes.</p>
       </section>
 
       {fund ? (

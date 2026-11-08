@@ -45,7 +45,7 @@ export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null;
         {shown ? (
           <><span className={shown.buy ? "up" : "down"}>{shown.buy ? "Bought" : "Sold"} ${fmtBig(shown.value)}</span>{shown.trades.length > 1 ? ` · ${shown.trades.length} trades` : ""} · {who(shown)} · {full(at(shown.date))}{shown.trades.length === 1 && shown.trades[0].price ? ` at $${shown.trades[0].price.toFixed(2)}` : ""}</>
         ) : marks.length ? (
-          <span className="muted">Insider buys <span className="up">▲</span> and sales <span className="down">▼</span> by executives and directors · tap one</span>
+          <span className="muted">Insider buys <span className="up">▲</span> and sales <span className="down">▼</span> by executives and directors</span>
         ) : (
           <span className="muted">No buys or sales by executives or directors in this period{partial ? " (in the filings loaded)" : ""}.</span>
         )}
@@ -63,7 +63,7 @@ export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null;
       </div>
       <div className="istrip-axis muted small">
         <span>{axis(start, days > 200)}</span>
-        {partial ? <span>filings loaded go back to {full(at(oldest!))}</span> : null}
+        {partial ? <span>filings since {full(at(oldest!))}</span> : null}
         <span>Today</span>
       </div>
     </div>

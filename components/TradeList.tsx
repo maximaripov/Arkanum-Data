@@ -1,6 +1,7 @@
 "use client";
 // Insider trades as plain sentences ("James Healy (Director) bought 10,000 shares at $25.10"),
 // grouped by the day they became public. Used on the Insiders page and stock pages.
+import { plausibleReason } from "@/lib/insider";
 import { useState } from "react";
 import Link from "next/link";
 import type { InsiderTrade } from "@/lib/sec";
@@ -22,7 +23,7 @@ const dayLabel = (d: string) => {
 
 /** Buy label plus the reasons behind it ("CEO · Stake +40% · First buy in 3 years"). */
 export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["conv"]>; compact?: boolean }) {
-  const reasons = compact ? c.reasons.filter((r) => !r.neg).slice(0, 3) : c.reasons;
+  const reasons = (compact ? c.reasons.filter((r) => !r.neg) : c.reasons).filter(plausibleReason).slice(0, compact ? 3 : undefined);
   return (
     <div className="signal">
       <span className={`tier tier-${c.tier}`} title={`Score ${c.score}/100: how unusual this buy is (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction of returns.`}>{TIER_LABEL[c.tier]}</span>
