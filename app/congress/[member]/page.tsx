@@ -12,7 +12,7 @@ const get = async <T,>(path: string): Promise<T | null> => {
   const r = await fetch(SITE + path, { next: { revalidate: 3600 } }).catch(() => null);
   return r?.ok ? ((await r.json()) as T) : null;
 };
-const load = (slug: string) => /^[a-z0-9-]+$/.test(slug) ? get<{ member: Member; trades: CTrade[] }>(`/data/congress/${slug}.json`) : Promise.resolve(null);
+const load = (slug: string) => /^[a-z0-9-]+$/.test(slug) ? get<{ member: Member; trades: CTrade[]; returnsAsOf?: string | null }>(`/data/congress/${slug}.json`) : Promise.resolve(null);
 
 export async function generateMetadata({ params }: { params: Promise<{ member: string }> }): Promise<Metadata> {
   const slug = (await params).member;
@@ -29,5 +29,5 @@ export default async function Page({ params }: { params: Promise<{ member: strin
   const slug = (await params).member;
   const [d, o] = await Promise.all([load(slug), get<Overview>("/data/congress-overview.json")]);
   if (!d) notFound();
-  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n }) => ({ m, p, sd, n }))} skipped={o?.stats.scannedSkipped ?? 0} />;
+  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n, usd }) => ({ m, p, sd, n, usd }))} skipped={o?.stats.scannedSkipped ?? 0} returnsAsOf={d.returnsAsOf} />;
 }

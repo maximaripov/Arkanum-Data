@@ -8,6 +8,8 @@
 //   node scripts/build-congress.mjs [--max N] [--rebuild]   (--rebuild re-reads every report)
 import { execFileSync } from "node:child_process";
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parsePtr, stateDistrict } from "./lib/congress.mjs";
 import { writeSummaries } from "./lib/congress-summary.mjs";
 
@@ -74,6 +76,7 @@ const seen = REBUILD ? {} : await read("data/congress-seen.json", {});
 const prev = REBUILD ? { trades: [] } : await read("public/data/congress.json", { trades: [] });
 const trades = prev.trades;
 let fetched = 0, scanned = 0;
+const fresh = []; // trades from reports read for the first time this run (for congress-alerts.mjs)
 for (const f of filings.sort((a, b) => b.filed.localeCompare(a.filed))) {
   if (seen[f.doc] && seen[f.doc] !== "error") continue;
   if (fetched >= MAX) break;
@@ -88,7 +91,7 @@ for (const f of filings.sort((a, b) => b.filed.localeCompare(a.filed))) {
     const w = who(f);
     // A trade can't come after its own report: the row's date was misread (usually the
     // notification date, or the wrong year). Keep the trade, dated by the report, and say so.
-    for (const r of rows) trades.push({ doc: f.doc, ...w, filed: f.filed, ...r, ...(r.date > f.filed ? { date: f.filed, dateUnclear: true } : {}), url });
+    for (const r of rows) { const t = { doc: f.doc, ...w, filed: f.filed, ...r, ...(r.date > f.filed ? { date: f.filed, dateUnclear: true } : {}), url }; trades.push(t); fresh.push(t); }
     seen[f.doc] = rows.length ? "ok" : "empty";
   } catch (e) { seen[f.doc] = "error"; console.warn(`${f.doc}: ${e.message}`); }
   await sleep(300);
@@ -105,4 +108,6 @@ await rm(TMP, { recursive: true, force: true });
 
 // 5. The Congress page's summary and one small file per member (the full file is only read by the server for lookups).
 await writeSummaries(keep, Object.values(seen).filter((s) => s === "scanned").length);
+// A rebuild re-reads every report: nothing in it is new, so there's nothing to alert.
+if (!REBUILD) await writeFile(process.env.CONGRESS_NEW_OUT || join(tmpdir(), "congress-new.json"), JSON.stringify(fresh.filter((t) => t.ticker)));
 console.log(`read ${fetched} new reports (${scanned} scanned skipped); congress.json: ${keep.length} trades, ${keep.filter((t) => t.ticker).length} with a ticker`);

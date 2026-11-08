@@ -19,7 +19,7 @@ export type Device = {
   watchlist: string[];
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
   instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
-  following?: string[]; // SEC IDs of insiders this device follows
+  following?: string[]; // SEC IDs of insiders this device follows, and "house:<slug>" for House members
   added: string;
   seen: string;
 };
@@ -190,7 +190,8 @@ export function sanitizeWatchlist(w: unknown): string[] | undefined {
 /** SEC IDs of followed insiders: digits only, at most 100. */
 export function sanitizeFollowing(f: unknown): string[] | undefined {
   if (!Array.isArray(f)) return undefined;
-  return [...new Set(f.map((x) => String(Number(x) || "")).filter((x) => /^\d{1,10}$/.test(x)))].slice(0, 100);
+  const id = (x: unknown) => { const v = String(x ?? ""); return /^house:[a-z0-9-]{1,80}$/.test(v) ? v : String(Number(v) || ""); };
+  return [...new Set(f.map(id).filter((x) => /^\d{1,10}$/.test(x) || x.startsWith("house:")))].slice(0, 100);
 }
 export function sanitizeSub(s: any): PushSubscription | null {
   if (!s?.endpoint || !s?.keys?.p256dh || !s?.keys?.auth) return null;

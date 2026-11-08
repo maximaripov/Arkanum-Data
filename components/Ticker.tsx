@@ -67,6 +67,8 @@ export function Ticker() {
     .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
     .slice(0, 24);
   if (!d || !items.length) return null;
+  // On Saturdays and Sundays (New York time) nothing new is filed, so the tape is the week's trades, not live.
+  const weekend = ["Sat", "Sun"].includes(new Date().toLocaleDateString("en-US", { weekday: "short", timeZone: "America/New_York" }));
   // Rolls right to left like an exchange tape: the list is drawn twice and slides by one
   // copy's width, so the loop has no seam. A short list is repeated first so a copy is
   // wider than the screen. Speed stays the same whatever the length (~3.5 s per trade).
@@ -78,7 +80,7 @@ export function Ticker() {
   );
   return (
     <div className="ticker" aria-label="Today's insider trades">
-      <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>
+      {weekend ? <span className="ticker-live">This week</span> : <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>}
       <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
         onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
         <div className="ticker-run" ref={runRef} style={{ animationDuration: `${run.length * 3.5}s` }}>

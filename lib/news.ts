@@ -11,7 +11,7 @@ const ITEMS: Record<string, string> = {
   "3.01": "Listing rule notice or delisting", "3.02": "Sold unregistered shares", "3.03": "Shareholder rights changed",
   "4.01": "Changed auditor", "4.02": "Past financial statements can't be relied on", "5.01": "Change in control",
   "5.02": "Executive or board change", "5.03": "Amended charter or bylaws", "5.07": "Shareholder vote results",
-  "7.01": "Investor presentation or update", "8.01": "Other announcement",
+  "7.01": "Investor presentation or update",
 };
 
 export async function announcements(symbol: string, limit = 10): Promise<Announcement[]> {
@@ -22,10 +22,17 @@ export async function announcements(symbol: string, limit = 10): Promise<Announc
   const out: Announcement[] = [];
   for (let i = 0; i < r.form.length && out.length < limit; i++) {
     if (r.form[i] !== "8-K") continue;
-    const items = String(r.items[i] ?? "").split(",").map((s: string) => s.trim()).filter((s: string) => s && s !== "9.01");
+    // 9.01 is just the attached exhibits. 8.01 ("other events") says nothing about what happened,
+    // so it is shown only when the filing has nothing more specific, and such filings are skipped.
+    const codes = String(r.items[i] ?? "").split(",").map((s: string) => s.trim()).filter((s: string) => s && s !== "9.01" && s !== "8.01");
+    if (!codes.length) continue;
+    const items = codes.map((s: string) => ITEMS[s] ?? `Item ${s}`);
+    // The same kind of announcement again within a week (a correction, a follow-up) is one entry.
+    const prev = out.at(-1);
+    if (prev && Math.abs(Date.parse(prev.date) - Date.parse(r.filingDate[i])) <= 7 * 86_400_000 && items.every((x: string) => prev.items.includes(x))) continue;
     out.push({
       date: r.filingDate[i],
-      items: items.map((s: string) => ITEMS[s] ?? `Item ${s}`),
+      items,
       link: `https://www.sec.gov/Archives/edgar/data/${c.cik}/${r.accessionNumber[i].replace(/-/g, "")}/${r.primaryDocument[i]}`,
     });
   }

@@ -10,6 +10,8 @@ import { personName, roleLabel } from "@/lib/people.mjs";
 import { fmtBig } from "@/lib/format";
 import type { InsiderTrade } from "@/lib/sec";
 import { companyName } from "@/lib/people.mjs";
+import { closesFor, dailyCloses, tradeReturns, summarize } from "@/lib/returns.mjs";
+import { ReturnsSummary, type RetSide } from "@/components/Returns";
 
 // One insider across every company they report for, from their own SEC filings.
 // Built on first visit, then cached and rebuilt at most every 6 hours; search engines get
@@ -38,11 +40,24 @@ export async function generateMetadata({ params }: { params: Promise<{ cik: stri
   return { title, description, alternates: { canonical: `/insider/${cik}` }, openGraph: { title: `${title} · Arkanum Data`, description, url: `/insider/${cik}` } };
 }
 
+/** Adds each buy's and sale's returns (stock and S&P 500); prices are cached for 12 hours. Returns the latest close's date. */
+async function withReturns(trades: InsiderTrade[]): Promise<string | null> {
+  if (!trades.length) return null;
+  const from = trades.reduce((a, t) => (t.date && t.date < a ? t.date : a), trades[0].date || trades[0].filed);
+  const init = { next: { revalidate: 43200 } };
+  const [spy, px] = await Promise.all([dailyCloses("SPY", from, { init }), closesFor(trades.map((t) => t.symbol), from, { init })]).catch(() => [null, new Map()] as const);
+  if (!spy) return null;
+  for (const t of trades) { const s = px.get(t.symbol); if (s) t.ret = tradeReturns(s, spy, { traded: t.date, filed: t.filed }); }
+  return spy.at(-1)?.[0] ?? null;
+}
+const side = (list: InsiderTrade[]): RetSide => ({ trade: summarize(list.map((t) => t.ret?.trade)), pub: summarize(list.map((t) => t.ret?.pub)) });
+
 export default async function InsiderPage({ params }: { params: Promise<{ cik: string }> }) {
   const { cik } = await params;
   const d = await load(cik);
   if (!d) notFound();
   const market = d.trades.filter((t) => t.code === "P" || t.code === "S");
+  const asOf = await withReturns(market);
   const sum = (code: string) => market.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
   const companies = new Map<string, InsiderTrade>();
   for (const t of d.trades) if (!companies.has(t.symbol)) companies.set(t.symbol, t); // newest first
@@ -71,6 +86,8 @@ export default async function InsiderPage({ params }: { params: Promise<{ cik: s
           ))}</ul>
         </section>
       ) : null}
+
+      {asOf ? <ReturnsSummary buys={side(market.filter((t) => t.code === "P"))} sells={side(market.filter((t) => t.code === "S"))} asOf={asOf} /> : null}
 
       <section className="card">
         <h2>Buys and sales</h2>

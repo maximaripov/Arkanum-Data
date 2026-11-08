@@ -546,3 +546,14 @@ A read-only audit of the data files (owner-approved fixes):
 - Section 4.5's sentences are hand-written, so a refresh is committed only while they still hold: `lib/oosClaims.mjs` lists the five claims (score 60+ no better than under 40; CEO-level, $1M+ and pre-planned worse; directors better), `scripts/research-check.mjs` checks them plus a shrinking-sample guard. On failure nothing is committed and the owner gets a phone alert (`notify.mjs`, issue fallback); the paper keeps the last good figures.
 - Wording that would go stale is now derived from the data: date span, months covered, purchases with six months of returns, "last updated", the Table 4 column year, and the three-or-more-insiders paragraph (written for each outcome).
 - `backtest.mjs` now records the last quarter it actually read as `to`, not the one requested.
+
+## Round 64: first-visit review fixes, returns after trades, Congress filters and follows (2026-11-08)
+
+- Welcome popup names Congress (House only, "not the Senate yet"); wording tightened so it fits an iPhone 13 screen.
+- Ticker: on Saturdays and Sundays (New York time) the label reads "This week" instead of "Live · N h ago".
+- Congress lists rank by estimated dollars: each trade counts as its reported range's midpoint (`estAmount` in lib/congress.mjs; the open top range counts as its floor), labelled "~$" and "estimated $". Members, most bought and most sold.
+- Phones: member names on their own line (no more "Josh Got..."); most-active list puts counts on the left so names don't wrap letter by letter. Desktop trades table scrolls inside its card rather than being cut.
+- "Watchlist" without "Your"; company announcements drop SEC item 8.01 ("Other announcement") and merge a repeat of the same kind within a week; SEC's dropped apostrophes restored (O'Reilly, Lowe's, Macy's...); stake jumps past +200% read "Stake 160× bigger".
+- Returns after trades (lib/returns.mjs, components/Returns.tsx): stock and S&P 500 change since the trade date and since it became public (first close after filing), adjusted closes to the latest close, from Yahoo; only the returns are published. Congress: computed by the daily job for every trade (member files, overview summaries); member pages show a summary (median, share that beat the S&P) and two columns. Insider pages: computed when the page is built (prices cached 12 h).
+- Congress trades: filters (size, party, date traded, state) and sorting (newest disclosed, newest trade, largest); the full list (`public/data/congress-trades.json`, ~140 KB compressed) loads on first use.
+- Follow a House member: stored as "house:<slug>" with the followed insiders; `sanitizeFollowing` accepts it. `build-congress.mjs` writes the trades from reports read for the first time to $CONGRESS_NEW_OUT; `congress-alerts.mjs` (new step in congress.yml, which now has id-token and issues permissions) alerts devices following those members.
