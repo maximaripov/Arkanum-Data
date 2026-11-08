@@ -577,3 +577,8 @@ A read-only audit of the data files (owner-approved fixes):
 ## Round 68: AI training crawlers blocked in robots.txt (2026-11-08)
 
 - `app/robots.ts` disallows the whole site for crawlers that collect pages to train AI models (GPTBot, ClaudeBot, CCBot, Google-Extended, Applebot-Extended, Bytespider, Meta, Amazonbot, Cohere, Diffbot and others): each visit to a stock page can rebuild it on the server and spend the Hobby plan's 4 h of Active CPU. Google, Bing and AI search engines that link back (OAI-SearchBot, PerplexityBot) are still allowed. robots.txt is a request: Bytespider in particular is known to ignore it.
+
+## Round 69: alert sign-up can't be spammed (2026-11-08)
+
+- `/api/alerts/register` takes no login, and each call wrote the device file to Vercel Blob (an advanced operation, 2,000 a month on Hobby). A script could have spent the month's writes (breaking sign-ups and the held 5 PM digest) or filled the 5,000-device cap. Now: a subscription must point at a browser push service (Google, Apple, Mozilla, Microsoft; `PUSH_HOST` in lib/alerts.ts) or the request is refused; a request without one, for a device that isn't on, returns after a plain read with no write; `updateDevices` skips the write when nothing changed; `seen` moves at most once a day.
+- Repo growth (#2 of the usage review) measured instead of guessed: 6.5 MB on GitHub after 7 days (git compresses the daily JSON rewrites), so about 0.35 GB a year. Moving data out of git was not done; the daily check watches the size.

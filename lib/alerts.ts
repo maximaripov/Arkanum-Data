@@ -66,7 +66,9 @@ export async function updateDevices<T>(fn: (s: Store) => T): Promise<T> {
       continue;
     }
     const store = data ?? { devices: {} };
+    const before = JSON.stringify(store);
     const result = fn(store);
+    if (data && JSON.stringify(store) === before) return result; // nothing changed: no write
     try {
       await writeJson(DEVICES, store, tag);
       return result;
@@ -193,9 +195,14 @@ export function sanitizeFollowing(f: unknown): string[] | undefined {
   const id = (x: unknown) => { const v = String(x ?? ""); return /^house:[a-z0-9-]{1,80}$/.test(v) ? v : String(Number(v) || ""); };
   return [...new Set(f.map(id).filter((x) => /^\d{1,10}$/.test(x) || x.startsWith("house:")))].slice(0, 100);
 }
+/** Browsers' push services (Chrome/Edge/Android via Google, Safari/iPhone via Apple, Firefox
+ *  via Mozilla, Windows via Microsoft). Anything else isn't a real browser subscription:
+ *  refusing it stops scripts filling the device list or spending storage writes. */
+export const PUSH_HOST = /^(fcm\.googleapis\.com|android\.googleapis\.com|web\.push\.apple\.com|[a-z0-9-]+\.push\.apple\.com|updates\.push\.services\.mozilla\.com|[a-z0-9-]+\.notify\.windows\.com)$/;
 export function sanitizeSub(s: any): PushSubscription | null {
   if (!s?.endpoint || !s?.keys?.p256dh || !s?.keys?.auth) return null;
   const endpoint = String(s.endpoint);
   if (!/^https:\/\//.test(endpoint) || endpoint.length > 600) return null;
+  try { if (!PUSH_HOST.test(new URL(endpoint).hostname)) return null; } catch { return null; }
   return { endpoint, keys: { p256dh: String(s.keys.p256dh).slice(0, 200), auth: String(s.keys.auth).slice(0, 100) } };
 }
