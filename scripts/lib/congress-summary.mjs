@@ -9,7 +9,7 @@ import { memberSlug } from "../../lib/congress.mjs";
 const DIR = "public/data/congress";
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 const seat = (t) => `${t.state}${t.district ? "-" + t.district : ""}`;
-const slim = (t) => ({ m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, lo: t.min, hi: t.max, u: t.url });
+const slim = (t) => ({ m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, du: t.dateUnclear || undefined, lo: t.min, hi: t.max, u: t.url });
 const rank = (list, type) => {
   const by = new Map();
   for (const t of list.filter((x) => x.type === type)) { const r = by.get(t.ticker) ?? { t: t.ticker, a: t.asset, members: new Set(), n: 0 }; r.members.add(t.member); r.n++; by.set(t.ticker, r); }
@@ -33,7 +33,7 @@ export async function writeSummaries(keep, scannedSkipped) {
     if (bySlug.has(m.s)) throw new Error(`Two members share the page address ${m.s}: ${bySlug.get(m.s)} and ${m.m}`);
     bySlug.set(m.s, m.m);
   }
-  const lag = stocks.filter((t) => t.filed >= daysAgo(365)).map((t) => (Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000).sort((a, b) => a - b);
+  const lag = stocks.filter((t) => t.filed >= daysAgo(365) && !t.dateUnclear).map((t) => (Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000).sort((a, b) => a - b);
   const last30 = stocks.filter((t) => t.filed >= daysAgo(30));
   const list = [...members.values()].sort((a, b) => b.n - a.n);
   await writeFile("public/data/congress-overview.json", JSON.stringify({

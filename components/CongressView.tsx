@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { memberSlug, amountRange } from "@/lib/congress.mjs";
 import { Picker, type PickerItem } from "@/components/Picker";
 
-export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string };
+export type CTrade = { m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean };
 export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; last: string };
 /** What the member dropdown needs. */
 export type PickerMember = Pick<Member, "m" | "p" | "sd" | "n">;
@@ -22,6 +22,7 @@ export type Overview = {
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
 const range = amountRange;
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
+const traded = (t: CTrade) => (t.du ? "date unclear" : day(t.d));
 const delay = (t: CTrade) => Math.round((Date.parse(t.f) - Date.parse(t.d)) / 86_400_000);
 export const Party = ({ p, sd }: { p: string | null; sd: string }) => <span className={`party${p === "R" ? " r" : p === "D" ? " d" : ""}`}>{p ? `${p}-` : ""}{sd}</span>;
 
@@ -39,14 +40,14 @@ export function CongressTrades({ trades, showMember = true, showStock = true }: 
             {showStock ? <td className="cstock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></Link></td> : null}
             <td><span className={`side ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span></td>
             <td className="mono r">{range(t.lo, t.hi)}{OWNER[t.o] ? <div className="muted small">{OWNER[t.o]}</div> : null}</td>
-            <td className="mono muted r">{day(t.d)}<div className="small">reported {delay(t)} days later</div></td>
+            <td className="mono muted r">{traded(t)}{t.du ? null : <div className="small">reported {delay(t)} days later</div>}</td>
           </tr>
         ))}</tbody>
       </table>
       <ul className="lrows m-only">{trades.slice(0, 40).map((t, i) => (
         <li key={t.u + t.t + t.d + i}><Link href={`/stock/${t.t}`}>
           <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
-          <span className="lrow-main"><span><strong>{t.t}</strong>{showMember ? <span className="muted"> · {t.m}</span> : null}</span><span className="muted small">{showMember ? <Party p={t.p} sd={t.sd} /> : null} traded {day(t.d)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
+          <span className="lrow-main"><span><strong>{t.t}</strong>{showMember ? <span className="muted"> · {t.m}</span> : null}</span><span className="muted small">{showMember ? <Party p={t.p} sd={t.sd} /> : null} traded {traded(t)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
           <span className="lrow-v"><span className="mono">{range(t.lo, t.hi)}</span><span className="muted small">disclosed {day(t.f)}</span></span>
         </Link></li>
       ))}</ul>
@@ -172,7 +173,7 @@ function CongressTradesLinked({ trades }: { trades: CTrade[] }) {
     <ul className="lrows">{trades.map((t, i) => (
       <li key={t.u + t.d + i}><Link href={`/congress/${memberSlug(t.m)}`}>
         <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
-        <span className="lrow-main"><span><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {day(t.d)} · disclosed {day(t.f)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
+        <span className="lrow-main"><span><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {traded(t)} · disclosed {day(t.f)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
         <span className="lrow-v mono">{range(t.lo, t.hi)}</span>
       </Link></li>
     ))}</ul>

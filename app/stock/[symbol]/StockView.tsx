@@ -24,6 +24,12 @@ const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateS
 /** Data the server already loaded (so the page arrives filled in and search engines can read it). */
 export type StockInitial = { co: Company | null; fund: Record<string, any> | null; insiders: InsiderTrade[] | null; news: Announcement[] | null };
 
+/** True when the figures' period ended more than 15 months ago ("Fiscal year to Dec 2023"). */
+const staleBasis = (basis?: string | null) => {
+  const m = /to (\w{3}) (\d{4})/.exec(basis ?? "");
+  return !!m && Date.parse(`1 ${m[1]} ${m[2]}`) < Date.now() - 456 * 86_400_000;
+};
+
 export function StockView({ symbol, initial }: { symbol: string; initial?: StockInitial }) {
   const [co, setCo] = useState<Company | null>(initial?.co ?? null);
   const [fund, setFund] = useState<Record<string, any> | null>(initial?.fund ?? null);
@@ -79,7 +85,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
         <section className="card">
           <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
           <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
-          <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses.</p>
+          <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p>
         </section>
       ) : null}
 

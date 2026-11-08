@@ -86,7 +86,9 @@ for (const f of filings.sort((a, b) => b.filed.localeCompare(a.filed))) {
     await writeFile(`${TMP}/r.pdf`, pdf);
     const rows = parsePtr(execFileSync("pdftotext", ["-layout", `${TMP}/r.pdf`, "-"], { encoding: "utf8" }));
     const w = who(f);
-    for (const r of rows) trades.push({ doc: f.doc, ...w, filed: f.filed, ...r, url });
+    // A trade can't come after its own report: the row's date was misread (usually the
+    // notification date, or the wrong year). Keep the trade, dated by the report, and say so.
+    for (const r of rows) trades.push({ doc: f.doc, ...w, filed: f.filed, ...r, ...(r.date > f.filed ? { date: f.filed, dateUnclear: true } : {}), url });
     seen[f.doc] = rows.length ? "ok" : "empty";
   } catch (e) { seen[f.doc] = "error"; console.warn(`${f.doc}: ${e.message}`); }
   await sleep(300);

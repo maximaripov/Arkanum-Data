@@ -522,3 +522,13 @@ The owner asked to show market data in Foresight's own design rather than embedd
 ## Round 60: redesign mocked and turned down (2026-11-08)
 
 - The owner asked how to make the site look less generated. A mock removed the round-42 ornaments (heading prompts, tab brackets, glow, cursor, double borders), replaced boxed cards with rules, made badges plain text, showed the lead story on desktop, let names wrap, dropped instruction text and hid stake changes over +1,000%. The owner chose to keep the current site as is; nothing shipped. Don't propose it again unless asked.
+
+## Round 61: data audit fixes (2026-11-08)
+
+A read-only audit of the data files (owner-approved fixes):
+- **Stale fundamentals:** FedEx's 2025 fiscal-calendar change left overlapping quarters, so the four-quarter chain stopped at May 2025. A full fiscal year newer than the last linked quarters now wins (`build-screener.mjs`), and a stock page whose figures end over 15 months ago says so (`staleBasis` in StockView). 97 companies had figures over 18 months old.
+- **Congress dates:** 6 trades had a date after their own report (the parser took the notification date, or the wrong year; e.g. Sony "Dec 26, 2026"). Such rows are now dated by the report and marked `dateUnclear` (shown as "date unclear", left out of the days-to-disclose median); existing data fixed and summaries rebuilt.
+- **Tickers:** `cleanSymbol()` in `lib/form4.mjs` strips exchange prefixes and placeholders ("NYSE:FLG" to FLG; "NYSE:", "[NONE]", "N/A" to none); `cleanTrades()` applies it to saved trades.
+- **Sectors:** car rental/leasing (7510-7519) and repair services (7600-7699) and legal services (8111) to Industrials; auto repair/parking (7500-7549) and child care (8351) to Consumer Discretionary. 19 companies had none.
+- **Impossible margins:** net income over 10x revenue at a $100M+ company is mis-scaled (Medline showed $1.16 trillion), and a margin over 150% there means partial revenue (Fifth Third's revenue was fees only): both blanked by `cleanRow`. 23 rows cleaned.
+- Research scripts on the session branch only: `scripts/diagnose/sales-study.mjs`, `oos-2026.mjs`, `quarters.mjs`.

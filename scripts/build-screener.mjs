@@ -244,7 +244,9 @@ for (const u of list) {
   seenCik.add(u.cik);
   // Prefer the last four quarters; fall back to the last full fiscal year.
   const rT = ttm(revQ, u.cik), nT = ttm(niQ, u.cik);
-  const useTtm = rT && nT && rT.end === nT.end;
+  // A full year newer than the last four linked quarters wins (FedEx's 2025 calendar change broke the quarter chain).
+  const rF0 = fiscal(revQ, u.cik);
+  const useTtm = rT && nT && rT.end === nT.end && !(rF0 && rF0.end > rT.end);
   const rF = fiscal(revQ, u.cik), nF = fiscal(niQ, u.cik);
   const R = useTtm ? rT.value : rF?.value, Rp = useTtm ? rT.prior : rF?.prior;
   const N = useTtm ? nT.value : nF?.value;
