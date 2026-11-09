@@ -680,3 +680,8 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Paper no. 4** (`/research/house-trades`): 8,897 House trades (Nov 2024 on). Six months from disclosure vs equal-weighted S&P 500: buys −2.4%, sales −1.7%; members' own buys −1.5%. No group clearly above zero.
 - **Search:** schema.org WebSite + Organization JSON-LD in `app/layout.tsx`; Google Search Console verified (URL-prefix property, HTML tag in `metadata.verification`). Live test: page available to Google (Bot Protection lets Googlebot through). Sitemap submitted by the owner.
 - `diagnose.yml` runs `npm ci` (the 13F study needs fast-xml-parser).
+
+## Round 83: working paper no. 5, copying 13F funds (2026-11-09)
+
+- `/research/fund-copying`: the 13 funds Arkanum tracks, 194 13F-HR reports for quarters from 2022-12-31, 69,789 position changes (69,126 priced), via `scripts/diagnose/funds-study.mjs` on `diagnose.yml` (35 min). Six months after the report, vs the equal-weighted S&P 500 (RSP): new or added −2.3%, sold entirely −2.9% (ranges overlap); new positions of 1%+ of the fund +2.8% (range −2.2% to +7.9%). Copying each fund's top ten until the next report: median quarter +1.1% vs RSP, +0.1% vs the S&P 500 (the fairer comparison for large-company lists); both ranges include zero. Wide gaps between funds (Duquesne +104% vs RSP compounded, Icahn −38%).
+- Numbers in `docs/backtest/funds.json`. Every directional sentence in the paper is computed from it.

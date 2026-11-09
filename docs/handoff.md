@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 82. Full history: `docs/build-log.md` (rounds 1-82); add new rounds there.
+Updated 2026-11-09, after round 83. Full history: `docs/build-log.md` (rounds 1-83); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.

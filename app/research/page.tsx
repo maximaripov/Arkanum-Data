@@ -7,8 +7,11 @@ import { findings } from "@/lib/findings";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TITLE as HOUSE_TITLE } from "./house-trades/paper";
 import { TITLE as DELAY_TITLE } from "./filing-delay/paper";
+import { TITLE as FUNDS_TITLE } from "./fund-copying/paper";
 
 const PAPERS = [
+  { no: 5, href: "/research/fund-copying", title: FUNDS_TITLE, date: "November 2026",
+    summary: "What happened after 13 well-known funds reported their holdings each quarter: buying what they bought, avoiding what they sold, and copying their ten largest holdings." },
   { no: 4, href: "/research/house-trades", title: HOUSE_TITLE, date: "November 2026",
     summary: "Stock trades disclosed by members of the U.S. House, measured from the day each became public and from the member's own trade date: what they bought did no better than what they sold." },
   { no: 3, href: "/research/filing-delay", title: DELAY_TITLE, date: "November 2026",
