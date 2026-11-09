@@ -1,4 +1,5 @@
 "use client";
+import { SectionIntro } from "@/components/SectionIntro";
 import { useEffect, useState } from "react";
 import { deviceId, notificationsOn, register } from "@/lib/device";
 import { DigestView, PastDigests, isDigest, type Digest } from "@/components/DigestView";
@@ -118,9 +119,14 @@ export default function DigestPage() {
 
   return (
     <div className="stack">
+      <SectionIntro title="Daily digest"
+        lead="One notification each weekday at 5:00 PM ET with the day's biggest insider buys, groups of insiders buying and big-fund moves, and a week in review on Saturdays. Every digest is archived here."
+        source="SEC Form 4 and 13F filings, the same data as the rest of the site."
+        research={<>The digest lists what was filed, not tips: in our research, the most unusual buys did no better than routine ones.</>}
+        researchHref="/research" />
       {d === null ? <section className="card"><p className="muted">Loading…</p></section> : d === "none" ? (
-        <section className="card"><h1>Daily digest</h1><p className="muted">The first digest arrives at 5:00 PM ET on the next weekday.</p></section>
-      ) : <DigestView d={d} />}
+        <section className="card"><p className="muted">The first digest arrives at 5:00 PM ET on the next weekday.</p></section>
+      ) : <DigestView d={d} latest />}
       <PastDigests list={past.filter((x) => x.date !== shown)} />
       <Notifications />
     </div>

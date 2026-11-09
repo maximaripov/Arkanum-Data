@@ -8,6 +8,7 @@ import { fmtBig } from "@/lib/format";
 import { TIER_LABEL } from "@/lib/conviction.mjs";
 import { personName, roleLabel, companyName } from "@/lib/people.mjs";
 import { ReturnLine } from "@/components/Returns";
+import { EvidenceLine } from "@/components/Evidence";
 
 export { personName, roleLabel };
 
@@ -26,7 +27,7 @@ export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["co
   const reasons = compact ? c.reasons.filter((r) => !r.neg).slice(0, 3) : c.reasons;
   return (
     <div className="signal">
-      <span className={`tier tier-${c.tier}`} title={`Score ${c.score}/100: how unusual this buy is (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction of returns.`}>{TIER_LABEL[c.tier]}</span>
+      <span className={`tier tier-${c.tier}`} title={`How unusual: ${c.score}/100 (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction: in our research, the most unusual buys did no better than routine ones.`}>{TIER_LABEL[c.tier]}</span>
       {reasons.map((r) => <span key={r.text} className={`why${r.neg ? " neg" : ""}`}>{r.text}</span>)}
     </div>
   );
@@ -48,7 +49,7 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
         {t.conv ? <Signal c={t.conv} /> : null}
         {t.sale && (t.sale.notable || t.sale.flags.some((f) => f.text !== "Not pre-planned")) ? (
           <div className="signal">
-            {t.sale.notable ? <span className="tier tier-sale" title="Not under a pre-set trading plan, and either a top executive selling a large share or $1M+, or anyone selling half or more of the holding.">Notable sale</span> : null}
+            {t.sale.notable ? <span className="tier tier-sale" title="Not under a pre-set trading plan, and either a top executive selling a large share or $1M+, or anyone selling half or more of the holding. A description, not a warning: see the evidence line below.">Large unplanned sale</span> : null}
             {t.sale.flags.map((f) => <span key={f.text} className="why">{f.text}</span>)}
           </div>
         ) : null}
@@ -60,6 +61,7 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
           <a href={t.url} target="_blank" rel="noreferrer">SEC filing ↗</a>
         </div>
         {t.ret && (buy || sell) ? <ReturnLine trade={t.ret.trade} pub={t.ret.pub} sale={sell} /> : null}
+        <EvidenceLine t={t} />
       </div>
       <div className={`trade-value mono ${buy ? "up" : sell ? "down" : "muted"}`}>{t.value ? "$" + fmtBig(t.value) : "—"}</div>
     </li>

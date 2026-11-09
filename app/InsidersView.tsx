@@ -191,32 +191,23 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
   const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); scrollTo({ top: 0 }); };
   return (
     <>
-      <h1 className="sr-only">What insiders are buying</h1>
+      <h2 className="sr-only">What insiders are buying</h2>
       {!o ? <section className="card"><p className="muted">{err ? <span className="down">Couldn&apos;t load the data: {err}</span> : "Loading…"}</p></section> : null}
       {o ? (
         <div className="ov">
-          {o.hero ? (
-            <Link href={`/stock/${o.hero.t.symbol}`} className="hero m-only">
-              <span className="hero-tag">{o.hero.recent ? "Most unusual buy this week" : "Most unusual buy, last 30 days"}</span>
-              <span className="hero-big mono">${fmtBig(o.hero.t.value ?? 0)}</span>
-              <span className="hero-sym"><strong>{o.hero.t.symbol}</strong> · {titleCase(o.hero.t.issuer, o.hero.t.symbol)}</span>
-              <span className="muted">{personName(o.hero.t.owner)}, {roleLabel(o.hero.t.role)} · {shortDay(o.hero.t.date)}{o.hero.t.price ? ` · $${o.hero.t.price.toFixed(2)}/share` : ""}</span>
-              {o.hero.t.conv ? <span className="hero-chips"><span>Score {o.hero.t.conv.score}</span>{o.hero.t.conv.reasons.filter((r) => !r.neg).slice(0, 3).map((r) => <span key={r.text}>{r.text}</span>)}</span> : null}
-            </Link>
-          ) : null}
 
           <section className="kpis">
             <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(o.totals.value)}</span><em>{o.totals.buys.toLocaleString()} buys</em></div>
             <div className="kpi"><small>Insiders buying</small><span className="mono">{o.totals.people}</span><em>officers &amp; directors</em></div>
-            <div className="kpi"><small>Unusual buys</small><span className="mono up">{o.totals.strong}</span><em>score 60+</em></div>
+            <div className="kpi"><small>Unusual buys</small><span className="mono up">{o.totals.strong}</span><em>how unusual 60+ (not a forecast)</em></div>
             <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(o.totals.salesValue)}</span><em>{o.totals.sales.toLocaleString()} sales of $250K+</em></div>
             <div className="kpi d-only"><small>Companies</small><span className="mono">{o.totals.cos}</span><em>with insider buys</em></div>
           </section>
 
           <section className="card flush span8">
-            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
+            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days · unusual describes the trade, not the outlook (<Link href="/research/insider-buys/results">research</Link>)</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
             <table className="ttable d-only">
-              <thead><tr><th>Stock</th><th>Insider</th><th>Score</th><th>Why</th><th className="r">Value</th></tr></thead>
+              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">How unusual</th><th>Why</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
                 <tr key={t.accession}>
                   <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
@@ -265,7 +256,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
 
           {o.notableSales.length ? (
             <section className="card flush">
-              <div className="card-title"><h2>Notable sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
+              <div className="card-title"><h2>Large unplanned sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
               <table className="ttable d-only">
                 <thead><tr><th>Stock</th><th>Insider</th><th>What stands out</th><th className="r">Value</th></tr></thead>
                 <tbody>{o.notableSales.map((t) => (
@@ -294,11 +285,11 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
 
 /** The buy score as ten small bars (desktop tables). */
 function Meter({ score }: { score: number }) {
-  return <span className="meter" aria-label={`Score ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
+  return <span className="meter" aria-label={`How unusual: ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
 }
 /** The buy score as a ring with the score inside (phone lists). */
 function Ring({ score }: { score: number }) {
-  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`Score ${score} of 100`}><b className="mono">{score}</b></span>;
+  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`How unusual: ${score} of 100`}><b className="mono">{score}</b></span>;
 }
 
 export default function InsidersView() {

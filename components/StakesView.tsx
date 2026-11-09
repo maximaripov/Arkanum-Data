@@ -2,6 +2,7 @@
 // Company stakes: what listed companies (NVIDIA, Amazon, Alphabet…) own in other companies.
 // Public companies from their SEC filings (public/data/stakes.json, scripts/build-stakes.mjs);
 // private startups from press releases (public/data/private.json, scripts/build-private.mjs).
+import { SectionIntro } from "@/components/SectionIntro";
 import { useEffect, useMemo, useState } from "react";
 import { Picker } from "@/components/Picker";
 import Link from "next/link";
@@ -66,14 +67,17 @@ export function StakesView() {
   const largest = useMemo(() => [...(data ?? [])].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 8).map((x) => x.cik), [data]);
 
   if (data === null) return <section className="card"><p className="muted">Loading…</p></section>;
-  if (!data.length) return <section className="card"><h1>Company stakes</h1><p className="muted">The first update is running.</p></section>;
+  if (!data.length) return <section className="card"><h1>Company holdings</h1><p className="muted">The first update is running.</p></section>;
   const c = data.find((x) => x.cik === sel) ?? data[0];
   const own = deals.filter((d) => d.investor === c.ticker);
   const side = c.top?.length ? "span4" : "span12";
   return (
     <div className="ov">
+      <SectionIntro title="Company holdings"
+        lead="What listed companies own in other companies: their quarterly holdings of public stocks, their 5%+ stakes, and private funding rounds they took part in."
+        source="SEC 13F holdings reports and 13D/13G ownership filings, read each weekday morning; private rounds from company press releases, not verified. Every stake links to its filing." />
       <section className="card">
-        <h1>Company stakes</h1>
+        <h2>Pick a company</h2>
         <Picker label="Company" items={pickerItems} value={c.cik} onChange={choose} featured={largest} featuredTitle="Largest holdings" placeholder="Search company or ticker" />
         <div className="fund-head">
           <div>

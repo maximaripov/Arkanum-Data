@@ -663,3 +663,50 @@ section[id] { scroll-margin-top: 5rem; }
 /* A wide trades table scrolls inside its card instead of being cut at the edge. */
 .tscroll { overflow-x: auto; }
 .span8 .ttable td.cstock { max-width: 11rem; }
+/* "Trades like this": research context under a buy or sale (components/Evidence.tsx) */
+.evline { margin-top: .3rem; line-height: 1.45; }
+.evtag { display: inline-block; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--line); padding: 0 .35rem; margin-right: .2rem; color: var(--text); }
+.evlink { white-space: nowrap; }
+/* A row that links somewhere, with the source filing as its own link beside it. */
+.lrows li.lrow-split { display: flex; align-items: stretch; }
+.lrows li.lrow-split > a:first-child { flex: 1; min-width: 0; }
+.lrow-doc { display: flex; align-items: center; padding: 0 .9rem 0 .2rem; font-size: .72rem; color: var(--muted); white-space: nowrap; }
+.lrow-doc:hover { color: var(--text); }
+
+/* Homepage top (components/HomeIntro.tsx): what Arkanum is, search, three research findings. */
+.home-intro { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; margin-bottom: 14px; }
+.hi-top, .hi-findings { border: 1px solid var(--line); border-radius: 14px; padding: 1.3rem 1.3rem 1.1rem; background: var(--card); min-width: 0; }
+.hi-top { display: grid; gap: .8rem; align-content: start; }
+.hi-title { font-size: 1.75rem; line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+.hi-lead { margin: 0; color: var(--muted); line-height: 1.55; font-size: .95rem; }
+.hi-search .search { width: 100%; max-width: none; }
+.hi-search .search input { width: 100%; font-size: 1rem; padding: .75rem .9rem; }
+.hi-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+.hi-links a { border: 1px solid var(--line); padding: .3rem .65rem; font-size: .8rem; color: var(--text); text-decoration: none; border-radius: 999px; }
+.hi-links a:hover { border-color: var(--text); }
+.hi-findings { display: grid; gap: .8rem; align-content: start; }
+.hi-kicker { margin: 0; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.hi-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hi-card { display: grid; gap: .3rem; align-content: start; border: 1px solid var(--line); padding: .9rem; color: var(--text); text-decoration: none; background: var(--card2); border-radius: 10px; }
+.hi-card:hover { border-color: var(--text); }
+.hi-fig { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.hi-fignote { margin-bottom: .3rem; }
+.hi-findings > .linkbtn { justify-self: start; }
+@media (max-width: 900px) { .home-intro { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .hi-cards { grid-template-columns: minmax(0, 1fr); } .hi-title { font-size: 1.4rem; } .hi-top, .hi-findings { padding: 1rem; } }
+
+/* Section intro (components/SectionIntro.tsx): the same opening on every section. */
+.intro h1 { margin: 0 0 .35rem; font-size: 1.35rem; }
+.intro-lead { margin: 0 0 .8rem; color: var(--muted); line-height: 1.5; max-width: 70ch; }
+.intro-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem 1.4rem; margin: 0; border-top: 1px solid var(--line); padding-top: .7rem; }
+.intro-meta div { min-width: 0; }
+.intro-meta dt { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .15rem; }
+.intro-meta dd { margin: 0; font-size: .85rem; line-height: 1.45; }
+@media (max-width: 640px) { .intro-meta { grid-template-columns: minmax(0, 1fr); } }
+/* Research index: key findings, one per row with its figure. */
+.findings { list-style: none; padding: 0; margin: .4rem 0 1.4rem; display: grid; gap: .2rem; }
+.findings li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; padding: .8rem 0; border-bottom: 1px solid var(--line); align-items: start; }
+.findings li:last-child { border-bottom: 0; }
+.find-fig { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
+.findings p { margin: .25rem 0 0 !important; }
+@media (max-width: 640px) { .findings li { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }

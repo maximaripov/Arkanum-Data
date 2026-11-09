@@ -1,6 +1,14 @@
 import InsidersView from "./InsidersView";
+import { HomeIntro } from "@/components/HomeIntro";
 
 export const metadata = { alternates: { canonical: "/" } };
 
-// The homepage is the insider signal: what executives and directors are buying.
-export default function Home() { return <InsidersView />; }
+// The homepage: what Arkanum is and what its research found, then the insider overview.
+export default function Home() {
+  return (
+    <>
+      <HomeIntro />
+      <InsidersView />
+    </>
+  );
+}

@@ -66,7 +66,15 @@ export function FundsView() {
   const [funds, setFunds] = useState<Fund[] | null>(null);
   const [sel, setSel] = useState(0);
   const [part, setPart] = useState<"popular" | "fund">("popular");
-  useEffect(() => { fetch("/data/funds.json").then((r) => r.json()).then((d) => setFunds(d.funds)).catch(() => setFunds([])); }, []);
+  useEffect(() => {
+    fetch("/data/funds.json").then((r) => r.json()).then((d) => {
+      setFunds(d.funds);
+      // From search: /?view=funds&fund=<SEC ID> opens that fund.
+      const want = new URLSearchParams(location.search).get("fund");
+      const i = want ? (d.funds as Fund[]).findIndex((x) => String(x.cik) === want) : -1;
+      if (i >= 0) { setSel(i); setPart("fund"); }
+    }).catch(() => setFunds([]));
+  }, []);
 
   // Across all tracked funds: which stocks were bought or sold by the most funds.
   const consensus = useMemo(() => {

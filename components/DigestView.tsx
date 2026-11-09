@@ -20,13 +20,14 @@ const short = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-U
 const counts = (c: Digest["funds"][number]["counts"]) =>
   [c.new && `${c.new} new`, c.added && `${c.added} added`, c.cut && `${c.cut} cut`, c.sold && `${c.sold} sold out`].filter(Boolean).join(", ");
 
-export function DigestView({ d }: { d: Digest }) {
+/** latest: shown under the Digest page's intro (a section heading); otherwise the page's own title. */
+export function DigestView({ d, latest = false }: { d: Digest; latest?: boolean }) {
   const week = d.kind === "weekly";
   const when = week ? "this week" : d.when ?? "today";
   return (
     <>
       <section className="card">
-        <h1>{week ? "Week in review" : "Daily digest"}</h1>
+        {latest ? <h2>{week ? "Week in review" : "Latest digest"}</h2> : <h1>{week ? "Week in review" : "Daily digest"}</h1>}
         <p className="muted small">{week ? `${longDay(d.from)} to ${longDay(dayBefore(d.date))}` : longDay(d.date)} · filings by company executives and directors</p>
         <h2 className="subhead">In 30 seconds</h2>
         <ul className="summary">{d.summary.map((s) => <li key={s}>{s}</li>)}</ul>

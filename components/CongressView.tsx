@@ -11,6 +11,7 @@ import { Picker, type PickerItem } from "@/components/Picker";
 import { fmtBig } from "@/lib/format";
 import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from "@/components/Returns";
 import { FollowButton } from "@/components/FollowButton";
+import { SectionIntro } from "@/components/SectionIntro";
 
 export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean };
 /** usd, buyUsd, sellUsd: estimated dollars traded (midpoints of the reported ranges). */
@@ -52,14 +53,14 @@ export function CongressTrades({ trades, showMember = true, showStock = true, sh
         ))}</tbody>
       </table></div>
       <ul className="lrows m-only">{trades.slice(0, phoneMax).map((t, i) => (
-        <li key={t.u + t.t + t.d + i}><Link href={`/stock/${t.t}`}>
+        <li key={t.u + t.t + t.d + i} className="lrow-split"><Link href={`/stock/${t.t}`}>
           <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
           <span className="lrow-main">{showMember
             ? <><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small"><strong style={{ color: "var(--text)" }}>{t.t}</strong> · traded {traded(t)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></>
             : <><span><strong>{t.t}</strong></span><span className="muted small">traded {traded(t)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></>}
             {showReturns ? <span className="wraps"><ReturnLine trade={pairs(t)[0]} pub={pairs(t)[1]} sale={t.y !== "P"} /></span> : null}</span>
           <span className="lrow-v"><span className="mono">{range(t.lo, t.hi)}</span><span className="muted small">disclosed {day(t.f)}</span></span>
-        </Link></li>
+        </Link><a className="lrow-doc" href={t.u} target="_blank" rel="noreferrer" title="The member's disclosure report (PDF), from the House Clerk">Filing ↗</a></li>
       ))}</ul>
     </>
   );
@@ -170,7 +171,7 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
   const s = o.stats;
   return (
     <div className="ov">
-      <h1 className="sr-only">Congress stock trades</h1>
+      <CongressIntro o={o} />
       <MemberPicker members={o.members} />
       <section className="kpis">
         <div className="kpi"><small>Trades · 30d</small><span className="mono">{s.trades30}</span><em>disclosed</em></div>
@@ -214,6 +215,20 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
   );
 }
 
+/** The section's opening: what it is, the source, and what the returns show for the biggest traders. */
+function CongressIntro({ o }: { o: Overview }) {
+  const top = [...o.members].sort((a, b) => (b.usd ?? 0) - (a.usd ?? 0)).slice(0, 10).filter((m) => m.ret?.buys?.trade);
+  const lagged = top.filter((m) => m.ret!.buys.trade!.stock < m.ret!.buys.trade!.spy).length;
+  const updated = o.updated;
+  return (
+    <SectionIntro title="Congress trades"
+      lead="Stock trades that members of the House report under the STOCK Act, how late they reported them, and how the stocks did afterwards against the S&P 500. Sort and filter by size, party, date or state."
+      source={<>U.S. House Clerk disclosures, checked each weekday evening{updated ? `; updated ${new Date(updated).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}. Every trade links to the member&apos;s filing. The Senate isn&apos;t included yet.</>}
+      research={top.length ? <>Our papers cover company insiders, not Congress. What the returns show: for {lagged} of the {top.length} members who traded the most, the S&amp;P 500 beat their median buy since the trade.</> : "Our papers cover company insiders, not Congress; each member's page shows how their own trades did."}
+      researchHref="/research" />
+  );
+}
+
 /** "Congress trades in X" on stock pages. */
 export function CongressFor({ symbol }: { symbol: string }) {
   const [rows, setRows] = useState<CTrade[] | null>(null);
@@ -230,11 +245,11 @@ export function CongressFor({ symbol }: { symbol: string }) {
 function CongressTradesLinked({ trades }: { trades: CTrade[] }) {
   return (
     <ul className="lrows">{trades.map((t, i) => (
-      <li key={t.u + t.d + i}><Link href={`/congress/${memberSlug(t.m)}`}>
+      <li key={t.u + t.d + i} className="lrow-split"><Link href={`/congress/${memberSlug(t.m)}`}>
         <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
         <span className="lrow-main"><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {traded(t)} · disclosed {day(t.f)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
         <span className="lrow-v mono">{range(t.lo, t.hi)}</span>
-      </Link></li>
+      </Link><a className="lrow-doc" href={t.u} target="_blank" rel="noreferrer" title="The member's disclosure report (PDF), from the House Clerk">Filing ↗</a></li>
     ))}</ul>
   );
 }

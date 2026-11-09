@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 
 type Hit = { symbol: string; name: string; type: string; exchange: string; href?: string };
 
-export function Search({ onDone }: { onDone?: () => void }) {
+const KIND: Record<string, string> = { Insider: "Insider", Congress: "Congress", Fund: "Fund", Stock: "Stock" };
+
+/** One search for stocks, insiders, House members and funds. */
+export function Search({ onDone, placeholder = "Search stocks, people, funds" }: { onDone?: () => void; placeholder?: string }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
@@ -33,15 +36,15 @@ export function Search({ onDone }: { onDone?: () => void }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && q.trim()) go(hits[0]?.symbol ?? q.trim().toUpperCase(), hits[0]?.href); }}
-        placeholder="Search stocks or insiders by name"
-        aria-label="Search stocks or insiders"
+        placeholder={placeholder}
+        aria-label="Search stocks, insiders, politicians and funds"
       />
       {open && hits.length > 0 ? (
         <ul className="hits">
           {hits.map((h) => (
             <li key={h.href ?? h.symbol}>
               <button onClick={() => go(h.symbol, h.href)}>
-                {h.href ? <><strong>{h.name}</strong> <span className="muted small">Insider · {h.exchange}</span></>
+                {h.href ? <><strong>{h.name}</strong> <span className="muted small">{KIND[h.type] ?? h.type} · {h.exchange}</span></>
                   : <><strong>{h.symbol}</strong> <span>{h.name}</span> <span className="muted small">{h.type} · {h.exchange}</span></>}
               </button>
             </li>

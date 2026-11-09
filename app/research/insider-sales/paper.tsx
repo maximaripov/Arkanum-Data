@@ -82,7 +82,7 @@ function Page1() {
       <h3>3.1 The notable-sale rule</h3>
       <p>Each sale was labelled with exactly the rule Arkanum uses on its pages.</p>
       <table className="ttable fit paper-table">
-        <caption><strong>Table 2.</strong> When a sale counts as notable</caption>
+        <caption><strong>Table 2.</strong> When a sale counts as notable (on the site this label now reads &ldquo;Large unplanned sale&rdquo;)</caption>
         <thead><tr><th>Condition</th><th>Rule</th></tr></thead>
         <tbody>
           <tr><td>Not pre-planned</td><td>Not made under a Rule 10b5-1 trading plan</td></tr>

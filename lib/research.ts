@@ -70,7 +70,7 @@ export function saleOosStat(group: string, h: Horizon): SaleStat {
   return row[1][h];
 }
 const SALE_NAME: Record<string, string> = {
-  "All officer/director sales": "All officer and director sales", "Notable (site rule)": "Notable (Arkanum's rule)",
+  "All officer/director sales": "All officer and director sales", "Notable (site rule)": "Large unplanned sales (Arkanum's rule)",
   "Pre-planned (10b5-1)": "Pre-planned (Rule 10b5-1)", "Top executive": "CEO, CFO, President or Chair", "Other officer": "Other officers",
   "Director only": "Directors only", "Top exec, not pre-planned": "Top executive, not pre-planned",
   "Value $1M+": "$1M or more", "Value $100K–1M": "$100K to $1M", "Value under $100K": "Under $100K",
