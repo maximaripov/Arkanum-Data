@@ -12,6 +12,7 @@
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from "./lib/form345.mjs";
 import { conviction, roleKind } from "../lib/conviction.mjs";
+import { monthBootstrap } from "../lib/bootstrap.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const FROM = arg("from", "2023q1"), TO = arg("to", "2025q1"), HIST = arg("history-from", "2020q1");
@@ -163,7 +164,14 @@ function stats(list, bench, label) {
   if (xs.length < 20) return { n: xs.length };
   const w = winsor(xs), mean = w.reduce((a, b) => a + b, 0) / w.length;
   const sd = Math.sqrt(w.reduce((a, b) => a + (b - mean) ** 2, 0) / (w.length - 1));
-  return { n: xs.length, mean, median: median(xs), hit: xs.filter((x) => x > 0).length / xs.length, t: mean / (sd / Math.sqrt(w.length)) };
+  const out = { n: xs.length, mean, median: median(xs), hit: xs.filter((x) => x > 0).length / xs.length, t: mean / (sd / Math.sqrt(w.length)) };
+  // Six months only (what the report card uses): a 90% range for the median, resampling whole filing months.
+  if (label === "6 months") {
+    const kept = list.filter((r) => r[bench][label] != null);
+    const ci = monthBootstrap(kept.map((r) => r[bench][label]), kept.map((r) => r.filed.slice(0, 7)));
+    if (ci) Object.assign(out, { lo: ci.lo, hi: ci.hi, months: ci.months });
+  }
+  return out;
 }
 const groups = {
   "All officer/director buys": () => true,
