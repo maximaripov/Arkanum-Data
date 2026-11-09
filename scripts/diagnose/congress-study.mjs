@@ -47,10 +47,11 @@ for (const t of trades) {
   const i0 = at(s, t.date), j = at(s, t.filed, true);
   if (i0 < 0 || j < 0) { noPrice++; continue; }
   if (Date.parse(s[i0][0]) - Date.parse(t.date) > 10 * 86_400_000) { laterListing++; continue; }
-  const member = {}, follower = {};
-  for (const [l, h] of HORIZONS) { member[l] = excess(s, i0, h); follower[l] = excess(s, j, h); }
+  // mine: from the member's trade date; follow: from the first close after the disclosure.
+  const mine = {}, follow = {};
+  for (const [l, h] of HORIZONS) { mine[l] = excess(s, i0, h); follow[l] = excess(s, j, h); }
   const lagDays = Math.round((Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000);
-  rows.push({ ...t, mid: t.min != null && t.max != null ? (t.min + t.max) / 2 : t.min, lagDays, head: excess(s, i0, Math.max(0, j - i0)) ?? (j === i0 ? 0 : null), member, follower });
+  rows.push({ ...t, mid: t.min != null && t.max != null ? (t.min + t.max) / 2 : t.min, lagDays, head: excess(s, i0, Math.max(0, j - i0)) ?? (j === i0 ? 0 : null), mine, follow });
 }
 console.log(`${rows.length} trades kept; ${noPrice} without prices, ${laterListing} whose ticker now belongs to a later listing`);
 
@@ -87,10 +88,10 @@ const side = (type) => Object.entries(GROUPS).map(([name, f]) => {
   const g = rows.filter((r) => r.type === type && f(r));
   return [name, {
     n: g.length,
-    member: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.member[l])])),
-    follower: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.follower[l])])),
+    member: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.mine[l])])),
+    follower: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.follow[l])])),
     head: stat(g, (r) => r.head),
-    weighted6: { member: weighted(g, (r) => r.member["6 months"]), follower: weighted(g, (r) => r.follower["6 months"]) },
+    weighted6: { member: weighted(g, (r) => r.mine["6 months"]), follower: weighted(g, (r) => r.follow["6 months"]) },
   }];
 });
 const lags = rows.map((r) => r.lagDays).sort((a, b) => a - b);
