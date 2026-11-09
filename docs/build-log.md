@@ -611,3 +611,5 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 ## Round 72: AI-crawler block off, temporarily (2026-11-09)
 
 - At the owner's request, `app/robots.ts` no longer turns away AI training crawlers (`BLOCK_AI_TRAINING = false`); every crawler may read every page except /api/. Set it back to true to restore the block from round 68.
+
+- Re-enabled the same day at the owner's request (`BLOCK_AI_TRAINING = true`).
