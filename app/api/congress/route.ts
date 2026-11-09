@@ -6,7 +6,9 @@ export async function GET(req: Request) {
   const u = new URL(req.url);
   const symbol = u.searchParams.get("symbol")?.trim().toUpperCase();
   if (!symbol) return Response.json({ trades: [] });
-  const r = await fetch(new URL("/data/congress.json", req.url), { next: { revalidate: 3600 } });
+  // Our own data file, read fresh: the CDN already caches this response (s-maxage), and
+  // copying a multi-MB file into Vercel's runtime cache each hour used up its free writes.
+  const r = await fetch(new URL("/data/congress.json", req.url), { cache: "no-store" });
   if (!r.ok) return Response.json({ trades: [] });
   const { trades } = (await r.json()) as { trades: Trade[] };
   const hit = trades.filter((t) => t.ticker && t.type !== "E" && t.ticker === symbol).slice(0, 30);

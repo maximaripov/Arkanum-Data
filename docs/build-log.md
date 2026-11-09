@@ -628,3 +628,11 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - Digest page: past digests removed from it; they live on /briefing/archive, linked from a small "Past digests" line on the digest page and from the footer.
 - No mention of GitHub anywhere on the site (About contact, Open data). Contact is the owner's email; research tables are "available on request".
 - Copyright: footer reads "All rights reserved"; Terms has a Copyright section (quotes and Open data files with credit; filings themselves not claimed).
+
+## Round 75: runtime cache writes, security headers, Vercel token (2026-11-09)
+
+- **Vercel token works.** Re-saved through the session's credential form (header Authorization, prefix Bearer). Project `prj_Y2wu1SJDKK4fcbwNXcI2wvPhh1LK`, team `team_mx8WiIrxvt7w6bBT2jvL8t6q`. Usage: `GET /v2/usage?teamId=…&type=data_cache|requests&from=2026-11-01T00:00:00.000Z&to=…` (ISO with milliseconds; add `granularity=hour` for hourly).
+- **Runtime cache writes at 75% of the free allowance.** Usage showed writes ("received bytes") rising from ~47 MB/day (Nov 2) to ~320 MB/day (Nov 8), tracking deployments and stock-page views rather than visitors. Causes: our own multi-MB data files (`congress.json` 4.4 MB, `insiders.json`, `screener.json`, `funds.json`) copied into the fetch cache by route handlers and rewritten every hour, and SEC Form 4 files rewritten daily though a filing never changes.
+- Fixes: `/api/congress`, `/api/watch`, `/feeds/congress.xml`, `/feeds/insider-buys.xml` read the data files with `cache: "no-store"` (the CDN caches their responses via s-maxage; feeds are now per-request with `dynamic = "force-dynamic"`). Form 4 `index.json` and XML are cached with `revalidate: false`. SEC company submissions: 900 s -> 1800 s, matching the stock page.
+- **Security headers** on every response (`next.config.mjs`): X-Frame-Options DENY and CSP `frame-ancestors 'none'`, nosniff, strict-origin-when-cross-origin referrer, Permissions-Policy off for camera, mic, location and payment. No full CSP, on purpose (TradingView embeds).
+- Security review, no change needed: alerts auth (timing-safe secrets, GitHub OIDC pinned to owner ID and main), push endpoints allow-listed to real push services, device cap, workflows use env vars for inputs and read-only `pull_request`, `npm audit` clean.

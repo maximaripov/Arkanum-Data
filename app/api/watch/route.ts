@@ -18,8 +18,10 @@ export type WatchItem = {
 export async function GET(req: Request) {
   const list = (new URL(req.url).searchParams.get("symbols") ?? "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean).slice(0, 60);
   if (!list.length) return Response.json([]);
-  const get = (f: string) => fetch(new URL(`/data/${f}`, req.url), { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  const [sc, ins, fu] = await Promise.all([get("screener.json"), loadInsiders(new URL(req.url).origin, { next: { revalidate: 900 } }), get("funds.json")]);
+  // Our own data file, read fresh: the CDN already caches this response (s-maxage), and
+  // copying a multi-MB file into Vercel's runtime cache each hour used up its free writes.
+  const get = (f: string) => fetch(new URL(`/data/${f}`, req.url), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const [sc, ins, fu] = await Promise.all([get("screener.json"), loadInsiders(new URL(req.url).origin, { cache: "no-store" }), get("funds.json")]);
   const rows = new Map<string, Record<string, any>>();
   if (sc) for (const r of sc.rows) rows.set(r[0], Object.fromEntries(sc.fields.map((f: string, i: number) => [f, r[i]])));
   const out: WatchItem[] = await Promise.all(list.map(async (t) => {

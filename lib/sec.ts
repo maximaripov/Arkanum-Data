@@ -18,7 +18,7 @@ async function gate<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-async function secFetch(url: string, revalidate: number, as: "json" | "text" = "json") {
+async function secFetch(url: string, revalidate: number | false, as: "json" | "text" = "json") {
   return gate(async () => {
     const res = await fetch(url, { headers: { "User-Agent": UA }, next: { revalidate } });
     if (!res.ok) throw new Error(`SEC ${res.status} for ${url}`);
@@ -26,7 +26,7 @@ async function secFetch(url: string, revalidate: number, as: "json" | "text" = "
   });
 }
 
-export const secJson = (url: string, revalidate: number) => secFetch(url, revalidate, "json");
+export const secJson = (url: string, revalidate: number | false) => secFetch(url, revalidate, "json");
 
 export type Company = { cik: number; name: string; ticker: string; exchange: string | null };
 let tickerMap: { at: number; map: Map<string, Company>; list: Company[] } | null = null;
@@ -95,11 +95,11 @@ async function fetchForm4(cik: number, accession: string, filed: string, primary
   const folder = `https://www.sec.gov/Archives/edgar/data/${cik}/${accession.replace(/-/g, "")}`;
   let file = primaryDoc?.split("/").pop(); // primaryDocument points at the XSL-rendered copy; the raw XML has the same name
   if (!file) {
-    const idx = await secFetch(`${folder}/index.json`, 86400);
+    const idx = await secFetch(`${folder}/index.json`, false); // a filing never changes: cache it once, never rewrite it
     file = idx.directory?.item?.map((i: any) => i.name).find((n: string) => n.endsWith(".xml"));
   }
   if (!file) return [];
-  const xml = await secFetch(`${folder}/${file}`, 86400, "text");
+  const xml = await secFetch(`${folder}/${file}`, false, "text");
   return parseForm4(xml as string, { accession, filed, url: `${folder}/${accession}-index.htm` });
 }
 
@@ -107,7 +107,7 @@ async function fetchForm4(cik: number, accession: string, filed: string, primary
 export async function insidersForTicker(ticker: string, limit = 25): Promise<InsiderTrade[]> {
   const c = await cikForTicker(ticker);
   if (!c) return [];
-  const sub = await secFetch(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, "0")}.json`, 900);
+  const sub = await secFetch(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, "0")}.json`, 1800); // as often as the stock page itself rebuilds
   const r = sub.filings.recent;
   const picks: number[] = [];
   for (let i = 0; i < r.form.length && picks.length < limit; i++) if (r.form[i] === "4" || r.form[i] === "4/A") picks.push(i);

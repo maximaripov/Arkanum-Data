@@ -3,7 +3,9 @@
 import { memberSlug, amountRange } from "@/lib/congress.mjs";
 import { rss, esc, type FeedItem } from "@/lib/rss";
 
-export const revalidate = 3600;
+// Built per request and cached by the CDN for an hour (Cache-Control in lib/rss.ts), so the
+// data file never goes into Vercel's runtime cache (its free writes are limited).
+export const dynamic = "force-dynamic";
 const SITE = "https://arkanumdata.vercel.app";
 type Trade = { member: string; party: string | null; state: string; district: number; filed: string; date: string; owner: string; ticker: string | null; asset: string; assetType: string | null; type: string; min: number | null; max: number | null; url: string };
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
@@ -11,7 +13,7 @@ const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US"
 const asset = (a: string) => a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "");
 
 export async function GET() {
-  const r = await fetch(`${SITE}/data/congress.json`, { next: { revalidate: 3600 } }).catch(() => null);
+  const r = await fetch(`${SITE}/data/congress.json`, { cache: "no-store" }).catch(() => null);
   const { trades = [] } = r?.ok ? ((await r.json()) as { trades: Trade[] }) : {};
   const reports = new Map<string, Trade[]>();
   for (const t of trades) {

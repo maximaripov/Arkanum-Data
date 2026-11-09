@@ -6,13 +6,15 @@ import { fmtBig } from "@/lib/format";
 import { rss, esc, type FeedItem } from "@/lib/rss";
 import type { InsiderTrade } from "@/lib/sec";
 
-export const revalidate = 3600;
+// Built per request and cached by the CDN for an hour (Cache-Control in lib/rss.ts), so the
+// data file never goes into Vercel's runtime cache (its free writes are limited).
+export const dynamic = "force-dynamic";
 const SITE = "https://arkanumdata.vercel.app";
 type Scored = InsiderTrade & { conv?: { score: number; tier: string; reasons: { text: string }[] } | null };
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export async function GET() {
-  const data = await loadInsiders(SITE, { next: { revalidate: 1800 } }).catch(() => null);
+  const data = await loadInsiders(SITE, { cache: "no-store" }).catch(() => null);
   const top = ((data?.trades ?? []) as Scored[]).filter((t) => t.code === "P" && t.value && isExecOrDirector(t) && (t.conv?.score ?? 0) >= 60);
   // A filing can list several purchases; one item each, with the amounts added up.
   const filings = new Map<string, { t: Scored; value: number; shares: number }>();

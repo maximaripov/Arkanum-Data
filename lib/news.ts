@@ -17,7 +17,7 @@ const ITEMS: Record<string, string> = {
 export async function announcements(symbol: string, limit = 10): Promise<Announcement[]> {
   const c = await cikForTicker(symbol);
   if (!c) return [];
-  const sub = await secJson(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, "0")}.json`, 900);
+  const sub = await secJson(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, "0")}.json`, 1800); // same entry as the stock page's insider list
   const r = sub.filings.recent;
   const out: Announcement[] = [];
   for (let i = 0; i < r.form.length && out.length < limit; i++) {

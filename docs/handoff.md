@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 74. Full history: `docs/build-log.md` (rounds 1-74); add new rounds there.
+Updated 2026-11-09, after round 75. Full history: `docs/build-log.md` (rounds 1-75); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -119,12 +119,11 @@ Updated 2026-11-09, after round 74. Full history: `docs/build-log.md` (rounds 1-
   - Usage check: 7:37 PM ET (`trig_01E5A35A5tgeZXtuvtMvqfSj`).
   - Content check: 8:34 PM ET (`trig_014ngq1ztgL5aJVRk9BKYxXQ`).
 - A one-off "Check Monday Daily Digest" task (`trig_0183hKbFgkaW5iU519nzWBuY`) fires 2026-11-09 22:15 UTC into the previous session.
-- **Vercel API token:** saved as a network secret for api.vercel.com but not being injected. The owner is re-checking the entry: header `Authorization`, prefix `Bearer`, value without the word Bearer. Until it works, Functions storage and CPU can't be read automatically.
+- **Vercel API token:** works (re-saved 2026-11-09, round 75). Usage API: `GET https://api.vercel.com/v2/usage?teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q&type=data_cache` (or `requests`) with ISO `from`/`to` including milliseconds; `granularity=hour` for hourly.
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
 - **Waiting on the owner:**
-  - fix the Vercel token entry;
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**
   - a plain email on the site attracts spam (a site-only address would help);
