@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: "Arkanum Data", title: OG_TITLE, description: DESCRIPTION, url: "/" },
   twitter: { card: "summary_large_image", title: OG_TITLE, description: DESCRIPTION },
   appleWebApp: { capable: true, title: "Arkanum", statusBarStyle: "black-translucent" },
+  // Google Search Console ownership check (public by design; added 2026-11-09).
+  verification: { google: "QRlmVAnWNVxmrBY8SJ7-C6ybqE2Y4C1I1ksyUTIRLJs" },
   // Lets feed readers find the RSS feeds (pages that set their own canonical link drop this).
   alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Arkanum Data: unusual insider buys" }, { url: "/feeds/congress.xml", title: "Arkanum Data: Congress stock trades" }] } },
 };
