@@ -11,16 +11,18 @@ if (!PAPERS[paper]) throw new Error(`Unknown paper "${paper}"`);
 const fresh = JSON.parse(await readFile(newPath, "utf8"));
 const old = JSON.parse(await readFile(PAPERS[paper].file, "utf8"));
 
+const P = PAPERS[paper];
+const size = P.size ?? ((r) => r.kept), span = P.span ?? ((r) => oosSpan(r).text);
 const problems = [];
 // A sample that shrinks means a data source failed part-way (prices or a quarter), not new evidence.
-if (fresh.kept < old.kept * 0.95) problems.push(`the sample shrank from ${old.kept} to ${fresh.kept}, so some data probably failed to load`);
-if (fresh.from !== old.from) problems.push(`the start date changed from ${old.from} to ${fresh.from}`);
+if (size(fresh) < size(old) * (P.shrinkTolerance ?? 0.95)) problems.push(`the sample shrank from ${size(old)} to ${size(fresh)}, so some data probably failed to load`);
+if (P.sameStart ? !P.sameStart(old, fresh) : P.check ? false : fresh.from !== old.from) problems.push("the test's start date changed");
 if (!problems.length) {
   try { for (const c of failedClaims(paper, fresh)) problems.push(`no longer true: ${c.text}`); }
   catch (e) { problems.push(e.message); }
 }
 
-console.log(`${PAPERS[paper].title}: ${fresh.kept} trades, ${oosSpan(fresh).text} (was ${old.kept}, ${oosSpan(old).text}).`);
+console.log(`${P.title}: ${size(fresh)}, ${span(fresh)} (was ${size(old)}, ${span(old)}).`);
 if (!problems.length) { console.log("All claims still hold."); process.exit(0); }
 const reason = `${PAPERS[paper].title} not updated: ${problems.join("; ")}. It keeps last month's figures until the text is rewritten.`;
 console.log(reason);

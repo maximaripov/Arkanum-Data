@@ -30,6 +30,7 @@ const size = (x?: number) => `${Math.abs(pc(x)).toFixed(1)}%`; // magnitude, whe
 const share = (x: number) => `${Math.round(x * 100)}%`;
 const n = (x: number) => x.toLocaleString("en-US");
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+const LAST = study.pricesThrough.slice(0, 4);
 const six = (h: H) => h["6 months"];
 const overlap = (a: S, b: S) => a.lo != null && b.lo != null && a.lo <= (b.hi ?? 0) && b.lo <= (a.hi ?? 0);
 
@@ -63,7 +64,7 @@ function Page0() {
       <h2>3. Method</h2>
       <p><strong>Following the changes.</strong> Each change is measured from the first close after the report was filed, the earliest a reader could act, for one, three and six months (21, 63 and 126 trading days), using daily closes adjusted for splits and dividends.</p>
       <p><strong>Copying the portfolio.</strong> For each report we also hold the fund&apos;s ten largest positions in equal amounts, from the first close after the report to the first close after the next one, about one quarter, and compare that with the index over the same days.</p>
-      <p><strong>Benchmarks.</strong> We report results against the equal-weighted S&amp;P 500 (RSP), in which every company counts the same, and give the ordinary S&amp;P 500 alongside. In 2023 to 2026 a few very large companies drove the ordinary index, so almost any list of individual stocks trailed it. Comparing what the funds bought with what they sold doesn&apos;t depend on the benchmark.</p>
+      <p><strong>Benchmarks.</strong> We report results against the equal-weighted S&amp;P 500 (RSP), in which every company counts the same, and give the ordinary S&amp;P 500 alongside. Over this period a few very large companies drove the ordinary index, so almost any list of individual stocks trailed it. Comparing what the funds bought with what they sold doesn&apos;t depend on the benchmark.</p>
       <p><strong>Statistics.</strong> Medians, the share that beat the benchmark, and a 90% range for each median from a bootstrap that resamples whole filing months (400 resamples). 13F reports cluster in four filing seasons a year, so these ranges rest on fewer independent months than the insider papers and are wider.</p>
       <p className="muted small">Not investment advice.</p>
     </>
@@ -87,7 +88,7 @@ function Page1() {
       </Figure>
 
       <h3>4.2 Fund by fund</h3>
-      <p>Figure 2 shows each fund&apos;s new and added positions over six months. Funds with thousands of small positions, like Renaissance Technologies, behave like the market; concentrated funds swing more, and their ranges are wide because each rests on a few dozen changes.</p>
+      <p>Figure 2 shows each fund&apos;s new and added positions over six months. Funds with thousands of small positions, like Renaissance Technologies, make up most of the changes; concentrated funds swing more, and their ranges are wide because each rests on a few dozen changes.</p>
       <Figure n={2} title="Each fund's new and added positions: median six-month return after the report, against the equal-weighted S&P 500.">
         <DivergingBars rows={PER_FUND.map(([f, h]) => ({ label: f, value: pc(six(h).median), n: six(h).n })).sort((a, b) => a.value - b.value)} label="Median 6-month return vs the equal-weighted S&P 500" unit="changes" />
       </Figure>
@@ -117,7 +118,7 @@ function Page1() {
       </div>
 
       <h2>5. Discussion</h2>
-      <p>13F reports show what a fund held weeks earlier, and only its U.S. stock positions: not short sales, most derivatives or cash, and not why it traded. By the time a report is public, the changes in it carried no consistent edge in 2023 to 2026. Academic work has found that managers&apos; largest, highest-conviction holdings tend to do better than the rest of their portfolios (Cohen, Polk and Silli, 2010); here, read only once the reports were public, copying the funds&apos; ten largest holdings did not reliably beat the market. Arkanum shows the funds&apos; changes as information about what large investors did, not as a list of stocks to buy.</p>
+      <p>13F reports show what a fund held weeks earlier, and only its U.S. stock positions: not short sales, most derivatives or cash, and not why it traded. By the time a report is public, the changes in it carried no consistent edge from 2023 to {LAST}. Academic work has found that managers&apos; largest, highest-conviction holdings tend to do better than the rest of their portfolios (Cohen, Polk and Silli, 2010); here, read only once the reports were public, copying the funds&apos; ten largest holdings did not reliably beat the market. Arkanum shows the funds&apos; changes as information about what large investors did, not as a list of stocks to buy.</p>
 
       <h2>6. Limits of the test</h2>
       <ul>
@@ -128,12 +129,12 @@ function Page1() {
       </ul>
 
       <h2>7. Conclusion</h2>
-      <p>Acting on famous funds&apos; 13F reports once they were public would not have beaten the market on average in 2023 to 2026: what they bought did about as well as what they sold, and copying their largest holdings matched the market overall, with winners and losers that only hindsight can name.</p>
+      <p>Acting on famous funds&apos; 13F reports once they were public would not have beaten the market on average from 2023 to {LAST}: what they bought did about as well as what they sold, and copying their largest holdings matched the market overall, with winners and losers that only hindsight can name.</p>
 
       <h2>References</h2>
       <ol className="paper-refs">
         <li>Cohen, R. B., Polk, C. and Silli, B. (2010). Best ideas. Working paper, Harvard Business School and London School of Economics.</li>
-        <li>U.S. Securities and Exchange Commission. Form 13F-HR filings, 2023–2026; OpenFIGI (Bloomberg) security identifiers.</li>
+        <li>U.S. Securities and Exchange Commission. Form 13F-HR filings, 2023–{LAST}; OpenFIGI (Bloomberg) security identifiers.</li>
       </ol>
       <p className="muted small">Not investment advice.</p>
     </>

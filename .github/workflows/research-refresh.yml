@@ -1,6 +1,9 @@
 name: Research refresh
 # Monthly: reruns each working paper's out-of-sample test (filings since January 2026) through
 # the latest SEC quarter, so those figures grow as new filings and six-month returns come in.
+# Papers no. 4 (House trades, a rolling two years) and no. 5 (13F funds, every report since
+# late 2022) rerun their whole test; paper no. 3 reads the delay tables the buys and sales
+# jobs already write.
 # A paper's file is published only while its written conclusions still hold
 # (scripts/research-check.mjs, lib/researchClaims.mjs); otherwise it keeps last month's figures
 # and the owner is told. One job per paper, so one failing doesn't hold up the other.
@@ -26,14 +29,23 @@ jobs:
           - paper: sales # working paper no. 2
             file: docs/backtest/sales-2026.json
             run: node scripts/diagnose/sales-study.mjs 2026q1 "$TO" 2025q4 /tmp/new.json
+          - paper: house # working paper no. 4 (no SEC: reads the site's Congress file)
+            file: docs/backtest/congress.json
+            run: node scripts/diagnose/congress-study.mjs /tmp/new.json
+          - paper: funds # working paper no. 5 (about 35 minutes)
+            file: docs/backtest/funds.json
+            run: node scripts/diagnose/funds-study.mjs /tmp/new.json
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }} # price fallback when Yahoo fails
       SITE_URL: https://arkanumdata.vercel.app
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci # the 13F study needs fast-xml-parser
       - name: Rerun the test
         run: |
           export TO="$(date -u +%Y)q$(( ($(date -u +%-m) - 1) / 3 + 1 ))" # quarters SEC hasn't published yet are skipped

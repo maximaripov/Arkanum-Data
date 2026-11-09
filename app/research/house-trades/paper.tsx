@@ -25,6 +25,9 @@ const pc = (x?: number) => (x == null ? 0 : Math.round(x * 1000) / 10);
 const signed = (x?: number) => { const v = pc(x); return `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}%`; };
 const range = (s: S) => (s.lo == null ? "" : ` (90% range ${signed(s.lo)} to ${signed(s.hi)})`);
 const n = (x: number) => x.toLocaleString("en-US");
+const yr = (d: string) => d.slice(0, 4);
+const monthYear = (d: string) => new Date(d.slice(0, 10) + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+const PERIOD = `${yr(study.tradedFrom)} to ${yr(study.pricesThrough)}`;
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 const F6 = (g: G) => g.followerEq["6 months"], M6 = (g: G) => g.memberEq["6 months"];
 const GROUPS = Object.keys(BUYS).filter((g) => g !== "All" && g !== "Disclosed after the 45-day deadline");
@@ -32,7 +35,7 @@ const GROUPS = Object.keys(BUYS).filter((g) => g !== "All" && g !== "Disclosed a
 const clearlyAbove = (side: Record<string, G>, get: (g: G) => S) => Object.entries(side).filter(([, g]) => (get(g).lo ?? -1) > 0).map(([k]) => k);
 
 const DESCRIPTIONS = [
-  `Arkanum tested ${n(study.kept)} stock trades disclosed by members of the U.S. House from late 2024 to 2026 against the S&P 500, from the trade date and from the day each trade became public.`,
+  `Arkanum tested ${n(study.kept)} stock trades disclosed by members of the U.S. House from ${monthYear(study.tradedFrom)} to ${monthYear(study.pricesThrough)} against the S&P 500, from the trade date and from the day each trade became public.`,
   "House members' buys trailed the market about as much as the stocks they sold, by party, size, account and how late the trade was disclosed. Charts and numbers at 1, 3 and 6 months.",
 ];
 export function paperMetadata(i: number): Metadata {
@@ -60,7 +63,7 @@ function Page0() {
 
       <h2>3. Method</h2>
       <p><strong>Two starting points.</strong> For each trade we measure the stock from the close on the trade date (what the member got) and from the first close after the report was filed (what a reader could get). Returns run one, three and six months (21, 63 and 126 trading days), using daily closes adjusted for splits and dividends.</p>
-      <p><strong>Two benchmarks.</strong> Each return is compared with the S&amp;P 500 over the same days, and with the equal-weighted S&amp;P 500 (RSP). In 2025 and 2026 a handful of very large companies drove the ordinary index, so most individual stocks trailed it; the equal-weighted index removes that, and is the fairer test of stock picking. We report the equal-weighted results first.</p>
+      <p><strong>Two benchmarks.</strong> Each return is compared with the S&amp;P 500 over the same days, and with the equal-weighted S&amp;P 500 (RSP). Over this period a handful of very large companies drove the ordinary index, so most individual stocks trailed it; the equal-weighted index removes that, and is the fairer test of stock picking. We report the equal-weighted results first.</p>
       <p><strong>Purchases against sales.</strong> If members knew something, the stocks they bought should do better than the stocks they sold. Comparing the two is a test that doesn&apos;t depend on the benchmark at all.</p>
       <p><strong>Statistics.</strong> We report medians, since a few large moves dominate averages, and the share of trades that beat the benchmark. Trades disclosed in the same month share the same market, so they are not independent: each six-month median carries a 90% range from a bootstrap that resamples whole disclosure months (400 resamples), as in the insider papers. Report amounts are given only as ranges ($1,001–15,000 and up), so each trade counts once, whatever its size; a dollar-weighted view is in the appendix table.</p>
       <p className="muted small">Not investment advice.</p>
@@ -93,11 +96,11 @@ function Page1() {
       </Figure>
 
       <h2>5. Discussion</h2>
-      <p>Over these two years, House members&apos; disclosed trades were not a source of better stock picks, for followers or for the members themselves. That matches more recent academic work, which found little or no edge in members&apos; portfolios from 2004 to 2008 (Eggers and Hainmueller, 2013) and after the STOCK Act (Belmont et al., 2022), and contrasts with an older study of senators&apos; trades in the 1990s that found a large one (Ziobrowski et al., 2004). It does not show that no member ever trades on what they know: a few well-timed trades can hide inside thousands of ordinary ones, and this test looks at the typical trade, not the best one.</p>
+      <p>Over this period, House members&apos; disclosed trades were not a source of better stock picks, for followers or for the members themselves. That matches more recent academic work, which found little or no edge in members&apos; portfolios from 2004 to 2008 (Eggers and Hainmueller, 2013) and after the STOCK Act (Belmont et al., 2022), and contrasts with an older study of senators&apos; trades in the 1990s that found a large one (Ziobrowski et al., 2004). It does not show that no member ever trades on what they know: a few well-timed trades can hide inside thousands of ordinary ones, and this test looks at the typical trade, not the best one.</p>
 
       <h2>6. Limits of the test</h2>
       <ul>
-        <li><strong>A short period.</strong> Trades from late 2024 to 2026, so six-month results cover only about {F6(b).months ?? 0} disclosure months. A different period could look different.</li>
+        <li><strong>A short period.</strong> Trades from {monthYear(study.tradedFrom)} on (the site keeps a rolling two years), so six-month results cover only about {F6(b).months ?? 0} disclosure months. A different period could look different.</li>
         <li><strong>House only.</strong> The Senate&apos;s disclosure site blocks automated access.</li>
         <li><strong>Amounts are ranges.</strong> Every trade counts once; most are in the smallest range ($1,001–15,000).</li>
         <li><strong>Accounts.</strong> Many trades are a spouse&apos;s or a child&apos;s, or made by a manager the member may not direct; Figure 1 separates the member&apos;s own account.</li>
@@ -105,7 +108,7 @@ function Page1() {
       </ul>
 
       <h2>7. Conclusion</h2>
-      <p>Copying House members&apos; disclosed stock trades would not have beaten the market in 2025 and 2026, and the members&apos; own purchases did no better than the stocks they sold. Arkanum shows these trades because they are public and newsworthy, not as a list of stocks to buy.</p>
+      <p>Copying House members&apos; disclosed stock trades would not have beaten the market from {PERIOD}, and the members&apos; own purchases did no better than the stocks they sold. Arkanum shows these trades because they are public and newsworthy, not as a list of stocks to buy.</p>
 
       <h2>Appendix: all groups</h2>
       <div className="table-wrap">
@@ -129,7 +132,7 @@ function Page1() {
         <li>Belmont, W., Sacerdote, B., Sehgal, R. and Van Hoek, I. (2022). Do senators and house members beat the stock market? Evidence from the STOCK Act. <em>Journal of Public Economics</em>, 207, 104602.</li>
         <li>Eggers, A. C. and Hainmueller, J. (2013). Capitol losses: the mediocre performance of congressional stock portfolios. <em>Journal of Politics</em>, 75(2), 535–551.</li>
         <li>Ziobrowski, A. J., Cheng, P., Boyd, J. W. and Ziobrowski, B. J. (2004). Abnormal returns from the common stock investments of the U.S. Senate. <em>Journal of Financial and Quantitative Analysis</em>, 39(4), 661–676.</li>
-        <li>U.S. House of Representatives, Office of the Clerk. Financial disclosure reports: Periodic Transaction Reports, 2024–2026.</li>
+        <li>U.S. House of Representatives, Office of the Clerk. Financial disclosure reports: Periodic Transaction Reports, {yr(study.tradedFrom)}–{yr(study.pricesThrough)}.</li>
       </ol>
       <p className="muted small">Not investment advice.</p>
     </>

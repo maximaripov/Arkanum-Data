@@ -4,8 +4,9 @@
 // consecutive reports, and returns from the first close after each report was filed. Two
 // tests: (1) the moves: new, added, reduced and sold positions; (2) cloning: the ten largest
 // holdings, equal-weighted, held until the next report. Read-only; runs on GitHub (SEC).
-// Prints JSON between RESULT_JSON_START and RESULT_JSON_END.
-import { readFile } from "node:fs/promises";
+// Prints JSON between RESULT_JSON_START and RESULT_JSON_END, and writes it to the path given
+// as the first argument (the monthly research refresh does this).
+import { readFile, writeFile } from "node:fs/promises";
 import { getJson } from "../lib/sec.mjs";
 import { holdings, addTickers } from "../lib/thirteenf.mjs";
 import { closesFor, dailyCloses } from "../../lib/returns.mjs";
@@ -116,4 +117,5 @@ const out = {
   moveTable: moveTable(moves), moveTableEq: moveTable(moves, "eq"), perFund,
   clone: { all: stat(clones, (c) => c.excess), allEq: stat(clones, (c) => c.eq), beatEq: clones.filter((c) => c.eq > 0).length / clones.length, quarters: clones.length, beat: clones.filter((c) => c.excess > 0).length / clones.length, byFund: cloneByFund },
 };
+if (process.argv[2]) await writeFile(process.argv[2], JSON.stringify(out, null, 1));
 console.log("RESULT_JSON_START"); console.log(JSON.stringify(out)); console.log("RESULT_JSON_END");

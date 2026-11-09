@@ -44,3 +44,25 @@ test("research-check blocks a shrunken sample and a contradicted claim, passes a
   assert.equal(flipped.status, 1);
   assert.match(readFileSync(reason, "utf8"), /\$1M or more/);
 });
+
+// Papers no. 4 and 5: whole-test reruns, checked against their own data files.
+const load = (f) => JSON.parse(readFileSync(new URL(`../docs/backtest/${f}`, import.meta.url)));
+const six = (rows, name, key) => rows.find(([g]) => g === name)[1][key]["6 months"];
+
+test("House paper: published data passes; a clear member edge fails", () => {
+  const r = load("congress.json");
+  assert.deepEqual(failedClaims("house", r).map((c) => c.text), []);
+  Object.assign(six(r.buys, "All", "memberEq"), { median: 0.06, lo: 0.03, hi: 0.09 });
+  assert.ok(failedClaims("house", r).some((c) => /Members' own purchases/.test(c.text)));
+});
+
+test("Funds paper: published data passes; bought clearly beating sold fails", () => {
+  const r = load("funds.json");
+  assert.deepEqual(failedClaims("funds", r).map((c) => c.text), []);
+  const eq = r.moveTableEq;
+  Object.assign(eq.find(([g]) => g === "New or added")[1]["6 months"], { median: 0.05, lo: 0.03, hi: 0.07 });
+  Object.assign(eq.find(([g]) => g === "Sold entirely")[1]["6 months"], { median: -0.05, lo: -0.07, hi: -0.03 });
+  const failed = failedClaims("funds", r).map((c) => c.text);
+  assert.ok(failed.some((t) => /bought did no better/.test(t)));
+  assert.ok(failed.some((t) => /no clear edge/.test(t)));
+});

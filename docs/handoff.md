@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 83. Full history: `docs/build-log.md` (rounds 1-83); add new rounds there.
+Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-84); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -107,6 +107,7 @@ Updated 2026-11-09, after round 83. Full history: `docs/build-log.md` (rounds 1-
   - Papers branch on it: `oosState()` (early / warns / same) in the sales paper, `early()` in the buys paper.
   - Never add a 2026 claim that bypasses this rule.
 - **Watch item:** notable sales (the site rule) filed in 2026 have a range of −5.8% to −1.7%, against −0.3% to +1.4% for 2023-25 (both after the split fix, 2026-11-09). The ranges don't overlap, but 2026 only has 5 months. If it holds, then around spring 2027 the verdict flips by itself to "Changed: now more of a warning". Paper no. 2's discussion would then need rewriting by hand.
+- **Monthly refresh of papers 3-5 (round 84):** `research-refresh.yml` (5th of each month) now also reruns paper no. 4 (`congress-study.mjs`, rolling two years of House trades) and no. 5 (`funds-study.mjs`, ~35 min, every 13F since 2022-12-31). Each publishes only while its fixed sentences still hold (`PAPERS.house` / `PAPERS.funds` in `lib/researchClaims.mjs`, checked by `scripts/research-check.mjs`); otherwise it keeps last month's file and the owner gets an alert to rewrite the text. Paper no. 3's 2023-25 results are fixed; its section 4.5 reads the `delay` tables the buys and sales 2026 jobs already write, with the same `judge()` verdict rule. Dates in papers 4 and 5 come from the data.
 - **Reruns:**
   - `backtest.yml`: inputs from 2023q1, to 2025q4, history 2020q1.
   - `diagnose.yml` running `sales-study.mjs` with args `2023q1 2025q4 2022q1`. It prints JSON between RESULT_JSON_START and RESULT_JSON_END in the log, which you copy into `sales.json`.

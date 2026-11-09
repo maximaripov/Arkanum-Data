@@ -8,12 +8,18 @@ import { PaperPrint } from "@/components/research/PaperPrint";
 import { DivergingBars, Figure } from "@/components/research/Charts";
 import buys from "@/docs/backtest/results.json";
 import sales from "@/docs/backtest/sales.json";
+import oosBuys from "@/docs/backtest/oos-2026.json";
+import oosSales from "@/docs/backtest/sales-2026.json";
+import { MIN_MONTHS, OOS, SALES_OOS, judge, type Verdict } from "@/lib/research";
 
 type S = { n: number; median?: number; up?: number; lo?: number; hi?: number; months?: number };
 type D = { n: number; lagMedian: number | null; lagP90: number | null; pre: S; ins6: S; fol6: S; gap: S };
 const table = (x: { groups: unknown; lags: unknown }) => ({ groups: Object.fromEntries(x.groups as [string, D][]), lags: x.lags as [string, D][] });
 const B = table(buys.delay), SL = table(sales.delay);
 const allB = B.groups["All officer/director buys"], allS = SL.groups["All officer/director sales"];
+// The same measurement on trades filed since January 2026 (refreshed monthly by research-refresh.yml).
+const OB = table(oosBuys.delay), OS = table(oosSales.delay);
+const newB = OB.groups["All officer/director buys"], newS = OS.groups["All officer/director sales"];
 
 export const BASE = "/research/filing-delay";
 const N = (Math.floor((allB.n + allS.n) / 1000) * 1000).toLocaleString("en-US");
@@ -116,6 +122,9 @@ function Page1() {
       <h3>4.4 Sales: nothing to miss</h3>
       <p>Before a sale was public, the median stock moved {signed(allS.pre.median)} against the market, and {signed(notable.pre.median)} for sales Arkanum flags as notable. The cost of waiting was {signed(allS.gap.median)}: a reader of sale filings misses almost nothing, consistent with paper no. 2, where sales predicted little at all.</p>
 
+      <h3>4.5 Filed since January 2026</h3>
+      <p><Since2026 /></p>
+
       <h3>Table 1. Purchases</h3>
       <Table rows={ORDER_B.map((g) => [g, B.groups[g]] as [string, D])} />
       <h3>Table 2. Sales</h3>
@@ -146,6 +155,16 @@ function Page1() {
       <p className="muted small">Not investment advice.</p>
     </>
   );
+}
+
+/** One clause on 2026 against 2023–25, written for each verdict (lib/research.ts judge()). */
+function verdictText(v: Verdict, what: string, main: S, now: S) {
+  if (v === "early") return `${what} has been ${signed(now.median)} so far (2023 to 2025: ${signed(main.median)}), but that rests on ${now.months ?? 0} filing months, too few to read; it is judged once ${MIN_MONTHS} months are in.`;
+  if (v === "holds") return `${what} was ${signed(now.median)}${range(now)}, within the 2023 to 2025 range.`;
+  return `${what} was clearly ${v === "higher" ? "larger" : "smaller"} than in 2023 to 2025: ${signed(now.median)}${range(now)}, against ${signed(main.median)}${range(main)}.`;
+}
+function Since2026() {
+  return <>Every month the measurement is repeated on trades filed since January 2026, which this paper&apos;s 2023 to 2025 results never saw ({n(newB.n)} purchases filed {OOS.span.text}; {n(newS.n)} sales filed {SALES_OOS.span.text}). For purchases, {verdictText(judge(allB.pre, newB.pre), "the head start", allB.pre, newB.pre)} For sales, {verdictText(judge(allS.pre, newS.pre), "the move before the filing", allS.pre, newS.pre)}</>;
 }
 
 const BODIES = [Page0, Page1];
