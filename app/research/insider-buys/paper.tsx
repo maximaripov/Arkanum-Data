@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { Paper, type PaperPage } from "@/components/research/Paper";
 import { PaperPrint } from "@/components/research/PaperPrint";
 import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/research/Charts";
-import { BENCH, HORIZONS, OOS, SAMPLE, groups, nameOf, oosStat, p, stat, type Bench } from "@/lib/research";
+import { BENCH, HORIZONS, MIN_MONTHS, OOS, SAMPLE, groups, nameOf, oosMonths, oosStat, p, stat, type Bench } from "@/lib/research";
 
 export const BASE = "/research/insider-buys";
 export const TITLE = "Do insider stock purchases beat the market? A test of 23,000 buys";
@@ -20,7 +20,7 @@ export const PAGES: PaperPage[] = [
 const DESCRIPTIONS = [
   "Arkanum scored 22,969 officer and director purchases from 2023 to 2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.",
   "How the 22,969 purchases were chosen, how each was scored, and how returns were measured against other insider buys, small-company stocks and the S&P 500.",
-  "Higher scores didn't pick better purchases; $1M+ and pre-planned purchases did worst; directors did slightly better than CEOs; the same held for purchases filed since January 2026. Charts and numbers at 1, 3 and 6 months.",
+  "Higher scores didn't pick better purchases; $1M+ and pre-planned purchases did worst; directors did slightly better than CEOs; purchases filed since January 2026 point the same way so far. Charts and numbers at 1, 3 and 6 months.",
   "Insider buying as a whole trailed small-company stocks and the S&P 500 in 2023 to 2025. What Arkanum changed, and the limits of the test.",
   "Full results for all 28 groups against each benchmark, notes on the statistics, and references.",
 ];
@@ -50,7 +50,7 @@ function Page0() {
     <>
       <section className="paper-abstract">
         <h2>Abstract</h2>
-        <p>Insider-trading websites rank company insiders&apos; share purchases with the same rules of thumb: a CEO buying matters more than a director, a big purchase more than a small one, a first purchase in years and several insiders buying together are strong signs, and pre-planned purchases count for less. We scored {n(SAMPLE.kept)} open-market purchases by officers and directors filed with the SEC from January 2023 to December 2025 with exactly the formula Arkanum used, and measured each purchase&apos;s return from the first close after it became public. The rules did not pick better purchases. Over six months the highest-scored purchases did no better than the lowest-scored ones; purchases of $1 million or more and CEO purchases did worse than average; only the penalty for pre-planned purchases held up. Insider purchases as a whole trailed small-company stocks over the period. Repeating the test on {n(OOS.kept)} purchases filed since January 2026, data the score was never examined on, gave the same answers.</p>
+        <p>Insider-trading websites rank company insiders&apos; share purchases with the same rules of thumb: a CEO buying matters more than a director, a big purchase more than a small one, a first purchase in years and several insiders buying together are strong signs, and pre-planned purchases count for less. We scored {n(SAMPLE.kept)} open-market purchases by officers and directors filed with the SEC from January 2023 to December 2025 with exactly the formula Arkanum used, and measured each purchase&apos;s return from the first close after it became public. The rules did not pick better purchases. Over six months the highest-scored purchases did no better than the lowest-scored ones; purchases of $1 million or more and CEO purchases did worse than average; only the penalty for pre-planned purchases held up. Insider purchases as a whole trailed small-company stocks over the period. Repeating the test on {n(OOS.kept)} purchases filed since January 2026, data the score was never examined on, {early() ? <>points the same way so far, but covers too few months to confirm the results.</> : <>gave the same answers.</>}</p>
         <p className="paper-keywords"><strong>Keywords:</strong> insider trading, Form 4, event study, signal evaluation, small-cap stocks</p>
       </section>
 
@@ -146,7 +146,7 @@ function Page2() {
 
       <h3>4.5 Out of sample: purchases filed since January 2026</h3>
       <p>A test run on the same years the score was built and discussed in can flatter or mislead. So the whole test was repeated, unchanged, on the {n(OOS.kept)} purchases filed from {OOS.span.text}, which no part of this paper had looked at. Only {n(oos6.n)} of them have six months of returns so far, so these figures are less certain than the main ones. This section is rerun every month as new filings and returns come in; it was last updated in {updated}.</p>
-      <p>The main findings held (Figure 5, Table 4). The score still did not pick better purchases: scores of 60 and over had a median of {signed(oosStat("Strong (60+)", "6 months").median)}, against {signed(oosStat("Routine (<40)", "6 months").median)} for scores under 40. Purchases by a CEO, CFO, President or Chair ({signed(oosStat("Top executive (CEO/CFO/President/Chair)", "6 months").median)}) and purchases of $1 million or more ({signed(oosStat("Value $1M+", "6 months").median)}) again did worse than the month&apos;s typical insider purchase, and directors again did better.{" "}<ThreeInsiders /></p>
+      <p>{early() ? <>So far the figures point the same way as the main ones (Figure 5, Table 4), but that is too early to say the findings held: the purchases with six months of returns were filed in only {oosMonths(oos6)} months, and trades filed in the same few months rise and fall together. The check can confirm or overturn the results once it covers {MIN_MONTHS} filing months.</> : <>The main findings held (Figure 5, Table 4).</>} The score still did not pick better purchases: scores of 60 and over had a median of {signed(oosStat("Strong (60+)", "6 months").median)}, against {signed(oosStat("Routine (<40)", "6 months").median)} for scores under 40. Purchases by a CEO, CFO, President or Chair ({signed(oosStat("Top executive (CEO/CFO/President/Chair)", "6 months").median)}) and purchases of $1 million or more ({signed(oosStat("Value $1M+", "6 months").median)}) again did worse than the month&apos;s typical insider purchase, and directors again did better.{" "}<ThreeInsiders /></p>
       <Figure n={5} title="Median six-month return by group for purchases filed since January 2026, against the month's typical insider purchase." note={`Only the ${n(oos6.n)} purchases with six months of returns so far.`}>
         <DivergingBars rows={OOS_GROUPS.map((g) => ({ label: nameOf(g), value: p(oosStat(g, "6 months").median), n: oosStat(g, "6 months").n }))} />
       </Figure>
@@ -163,6 +163,8 @@ function Page2() {
 
 // Section 4.5 is refreshed monthly (research-refresh.yml), so its wording follows the numbers.
 const oos6 = oosStat("All officer/director buys", "6 months");
+/** Too early for 2026 to confirm the results: fewer than MIN_MONTHS filing months with six-month returns. */
+const early = () => oosMonths(oos6) < MIN_MONTHS;
 const updated = new Date(OOS.generated).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 function ThreeInsiders() {
   const now = oosStat("3+ insiders buying", "6 months"), before = stat("month", "3+ insiders buying", "6 months");
@@ -198,14 +200,14 @@ function Page3() {
 
       <h2>7. Limits of the test</h2>
       <ul>
-        <li><strong>A short history.</strong> Older studies found insider purchases did beat the market, with the edge shrinking over time. The out-of-sample check (section 4.5) supports these results, but it covers only {OOS.span.months} months of filings, and {n(oos6.n)} purchases with six months of returns.</li>
+        <li><strong>A short history.</strong> Older studies found insider purchases did beat the market, with the edge shrinking over time. The out-of-sample check (section 4.5) points the same way so far, but it covers only {OOS.span.months} months of filings, and {n(oos6.n)} purchases with six months of returns.</li>
         <li><strong>Delisted stocks.</strong> 654 stocks had no price history, mostly delisted companies. Delistings usually mean losses, so the true results are probably a little worse, not better.</li>
         <li><strong>Overlapping purchases.</strong> Many purchases overlap in time and cluster in the same stocks, so the evidence is less certain than {n(SAMPLE.kept)} purchases makes it sound.</li>
         <li><strong>One formula.</strong> A different combination of factors might work. Arkanum hasn&apos;t tested a reweighted score on data it wasn&apos;t built from, and won&apos;t claim one works until it has.</li>
       </ul>
 
       <h2>8. Conclusion</h2>
-      <p>A score built from the usual insider-buying rules did not pick purchases that did better over one, three or six months in 2023 to 2025, the same was true of purchases filed since January 2026, and insider purchases as a whole trailed the market. Arkanum now describes purchases as unusual or routine rather than as signals, and treats the filings as information to read, not a list of stocks to buy.</p>
+      <p>A score built from the usual insider-buying rules did not pick purchases that did better over one, three or six months in 2023 to 2025, purchases filed since January 2026 point the same way so far, and insider purchases as a whole trailed the market. Arkanum now describes purchases as unusual or routine rather than as signals, and treats the filings as information to read, not a list of stocks to buy.</p>
     </>
   );
 }

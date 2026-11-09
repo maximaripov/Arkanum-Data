@@ -245,7 +245,7 @@ function CongressIntro({ o }: { o: Overview }) {
   const lagged = top.filter((m) => m.ret!.buys.trade!.stock < m.ret!.buys.trade!.spy).length;
   const updated = o.updated;
   return (
-    <SectionIntro title="Congress trades"
+    <SectionIntro title="Congress trades (House)"
       lead="Stock trades that members of the House report under the STOCK Act, how late they reported them, and how the stocks did afterwards against the S&P 500. Sort and filter by size, party, date or state."
       source={<>U.S. House Clerk disclosures, checked each weekday evening{updated ? `; updated ${new Date(updated).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}. Every trade links to the member&apos;s filing. The Senate isn&apos;t included yet.</>}
       research={top.length ? <>Our papers cover company insiders, not Congress. What the returns show: for {lagged} of the {top.length} members who traded the most, the S&amp;P 500 beat their median buy since the trade.</> : "Our papers cover company insiders, not Congress; each member's page shows how their own trades did."}

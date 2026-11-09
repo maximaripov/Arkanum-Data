@@ -13,13 +13,14 @@ import "./globals.css";
 const sans = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono" });
 
-const DESCRIPTION = "See what company insiders and big funds are buying, in plain English, from official SEC filings. Free, no account.";
+const DESCRIPTION = "Insider and Congress stock trades from official SEC and House filings, next to tested evidence of how trades like them have actually done. Free, no account.";
+const OG_TITLE = "Arkanum Data: insider trades, tested";
 export const metadata: Metadata = {
   metadataBase: new URL("https://arkanumdata.vercel.app"),
-  title: { default: "Arkanum Data: what insiders are buying", template: "%s · Arkanum Data" },
+  title: { default: "Arkanum Data: insider and Congress trades, tested", template: "%s · Arkanum Data" },
   description: DESCRIPTION,
-  openGraph: { type: "website", siteName: "Arkanum Data", title: "Arkanum Data: what insiders are buying", description: DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: "Arkanum Data: what insiders are buying", description: DESCRIPTION },
+  openGraph: { type: "website", siteName: "Arkanum Data", title: OG_TITLE, description: DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: OG_TITLE, description: DESCRIPTION },
   appleWebApp: { capable: true, title: "Arkanum", statusBarStyle: "black-translucent" },
   // Lets feed readers find the RSS feeds (pages that set their own canonical link drop this).
   alternates: { types: { "application/rss+xml": [{ url: "/feeds/insider-buys.xml", title: "Arkanum Data: unusual insider buys" }, { url: "/feeds/congress.xml", title: "Arkanum Data: Congress stock trades" }] } },

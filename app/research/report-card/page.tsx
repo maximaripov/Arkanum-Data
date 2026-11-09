@@ -3,7 +3,7 @@
 // monthly), with a plain verdict. Built from the same results as the papers.
 import Link from "next/link";
 import type { Metadata } from "next";
-import { OOS, SALES_OOS, nameOf, oosStat, p, saleName, saleOosStat, saleStat, stat } from "@/lib/research";
+import { MIN_MONTHS, OOS, SALES_OOS, judge, nameOf, oosMonths, oosStat, p, saleName, saleOosStat, saleStat, stat, type Range } from "@/lib/research";
 
 export const metadata: Metadata = {
   title: "Report card",
@@ -11,17 +11,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/research/report-card" },
 };
 
-type Res = { median: number; share: number; n: number };
+type Res = { median: number; share: number; n: number } & Range;
 type Row = { label: string; says: string; main: Res; oos: Res };
-const MIN_N = 300; // fewer six-month returns than this since 2026: too early to judge
 
-/** Better / no difference / worse than the month's typical trade, with a one-point dead band. */
-const band = (m: number) => (p(m) > 1 ? 1 : p(m) < -1 ? -1 : 0);
-const WORD = { 1: "better", 0: "no different", [-1]: "worse" } as Record<number, string>;
-function verdict(r: Row): { text: string; tone: string } {
-  if (r.oos.n < MIN_N) return { text: "Too early", tone: "muted" };
-  const a = band(r.main.median), b = band(r.oos.median);
-  return a === b ? { text: "Holds", tone: "" } : { text: `Changed: now ${WORD[b]}`, tone: "level" };
+/** Too early until 2026 has 12 filing months with returns; Changed only when the 90% ranges separate. */
+function verdict(r: Row, sale: boolean): { text: string; tone: string } {
+  const v = judge(r.main, r.oos);
+  if (v === "early") return { text: "Too early", tone: "muted" };
+  if (v === "holds") return { text: "Holds", tone: "" };
+  // For buys a higher return is better; for sales a lower return means the sale was a warning.
+  const word = v === "higher" ? (sale ? "now less of a warning" : "now better") : (sale ? "now more of a warning" : "now worse");
+  return { text: `Changed: ${word}`, tone: "level" };
 }
 const signed = (x: number) => { const v = p(x); return `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}%`; };
 
@@ -41,7 +41,7 @@ function buys(): Row[] {
   ];
   return G.map(([g, says]) => {
     const a = stat("month", g, "6 months"), b = oosStat(g, "6 months");
-    return { label: LABEL[g] ?? nameOf(g), says, main: { median: a.median, share: a.hit, n: a.n }, oos: { median: b.median, share: b.hit, n: b.n } };
+    return { label: LABEL[g] ?? nameOf(g), says, main: { ...a, share: a.hit }, oos: { ...b, share: b.hit } };
   });
 }
 function sales(): Row[] {
@@ -56,8 +56,13 @@ function sales(): Row[] {
   ];
   return G.map(([g, says]) => {
     const a = saleStat("month", g, "6 months"), b = saleOosStat(g, "6 months");
-    return { label: saleName(g), says, main: { median: a.median, share: a.below, n: a.n }, oos: { median: b.median, share: b.below, n: b.n } };
+    return { label: saleName(g), says, main: { ...a, share: a.below }, oos: { ...b, share: b.below } };
   });
+}
+
+/** The 90% range under the median, once the research has computed it. */
+function Spread({ r }: { r: Range }) {
+  return r.lo == null || r.hi == null ? null : <div className="muted small">range {signed(r.lo)} to {signed(r.hi)}</div>;
 }
 
 function Table({ rows, sale }: { rows: Row[]; sale: boolean }) {
@@ -67,12 +72,12 @@ function Table({ rows, sale }: { rows: Row[]; sale: boolean }) {
       <table className="ttable fit paper-table">
         <thead><tr><th>Label</th><th className="r">2023–2025</th><th className="r">Since Jan 2026</th><th>Verdict</th></tr></thead>
         <tbody>{rows.map((r) => {
-          const v = verdict(r);
+          const v = verdict(r, sale);
           return (
             <tr key={r.label}>
               <td><strong>{r.label}</strong><div className="muted small">{r.says}</div></td>
-              <td className="mono r">{signed(r.main.median)}<div className="muted small">{p(r.main.share).toFixed(0)}% {share} · {r.main.n.toLocaleString("en-US")}</div></td>
-              <td className="mono r">{signed(r.oos.median)}<div className="muted small">{p(r.oos.share).toFixed(0)}% {share} · {r.oos.n.toLocaleString("en-US")}</div></td>
+              <td className="mono r">{signed(r.main.median)}<Spread r={r.main} /><div className="muted small">{p(r.main.share).toFixed(0)}% {share} · {r.main.n.toLocaleString("en-US")}</div></td>
+              <td className="mono r">{signed(r.oos.median)}<Spread r={r.oos} /><div className="muted small">{p(r.oos.share).toFixed(0)}% {share} · {r.oos.n.toLocaleString("en-US")} · {oosMonths(r.oos)} of {MIN_MONTHS} months</div></td>
               <td className={v.tone}>{v.text}</td>
             </tr>
           );
@@ -92,8 +97,8 @@ export default function ReportCard() {
         <p className="paper-authors">Every label on the site, what trades carrying it were followed by, and whether that has held on new filings</p>
       </header>
       <section className="paper-body">
-        <p>Each number is the median six-month return after the filing, against the typical insider trade filed the same month (0% means no different), with the share of trades that did better (buys) or worse (sales) and how many there were. The first column is the period the papers studied; the second is everything filed since January 2026, which none of the labels were tuned on, rerun every month.</p>
-        <p>The verdict compares the two: better, no different (within one point) or worse. <strong>Holds</strong> means 2026 points the same way as 2023–2025; <strong>Changed</strong> means it doesn&apos;t; <strong>Too early</strong> means fewer than {MIN_N} trades have six months of returns yet. None of this is a forecast.</p>
+        <p>Each number is the median six-month return after the filing, against the typical insider trade filed the same month: 0% means no different from other insider trades, not from the market. Under it is a 90% range, found by resampling whole filing months (trades filed in the same month rise and fall together, so counting trades overstates certainty), then the share of trades that did better (buys) or worse (sales) and how many there were. The first column is the period the papers studied; the second is everything filed since January 2026, which none of the labels were tuned on, rerun every month.</p>
+        <p><strong>Too early</strong> means 2026 has fewer than {MIN_MONTHS} filing months with six months of returns; many trades from a few months are still one stretch of market. After that, <strong>Changed</strong> means the 2026 range and the 2023–2025 range don&apos;t overlap, and <strong>Holds</strong> means they do. None of this is a forecast.</p>
         <h2>Buys</h2>
         <Table rows={buys()} sale={false} />
         <p className="muted small">Filed {OOS.span.text} for the second column. <Link href="/research/insider-buys">Working paper no. 1 ›</Link></p>

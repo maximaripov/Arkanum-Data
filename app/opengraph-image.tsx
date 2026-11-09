@@ -1,7 +1,7 @@
 // The picture shown when an Arkanum link is shared (messages, X, Reddit, Slack…).
 import { ImageResponse } from "next/og";
 
-export const alt = "Arkanum Data: what insiders are buying";
+export const alt = "Arkanum Data: other sites sell you insider signals. We test them.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -17,8 +17,8 @@ export default function Image() {
             arkanum
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, maxWidth: 640 }}>What insiders are buying</div>
-            <div style={{ fontSize: 30, color: "#8c8c8c", maxWidth: 620, lineHeight: 1.35 }}>Executives, directors and big funds, from official SEC filings, in plain English.</div>
+            <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, maxWidth: 640 }}>Insider trades, tested</div>
+            <div style={{ fontSize: 30, color: "#8c8c8c", maxWidth: 620, lineHeight: 1.35 }}>Other sites sell you insider signals. We test them, on every SEC and House filing.</div>
           </div>
           <div style={{ fontSize: 24, color: "#8c8c8c" }}>Free · no account · arkanumdata.vercel.app</div>
         </div>

@@ -4,9 +4,13 @@ import results from "../docs/backtest/results.json";
 import oos from "../docs/backtest/oos-2026.json";
 import sales from "../docs/backtest/sales.json";
 import salesOos from "../docs/backtest/sales-2026.json";
-import { oosSpan } from "./researchClaims.mjs";
+import { MIN_MONTHS, oosSpan } from "./researchClaims.mjs";
+export { MIN_MONTHS };
 
-export type Stat = { n: number; mean: number; median: number; hit: number; t: number };
+/** lo/hi: 90% range for the six-month median, resampled by filing month (lib/bootstrap.mjs);
+ * months: filing months behind it. Only on six-month stats. */
+export type Range = { lo?: number; hi?: number; months?: number };
+export type Stat = { n: number; mean: number; median: number; hit: number; t: number } & Range;
 export type Horizon = "1 month" | "3 months" | "6 months";
 export const HORIZONS: Horizon[] = ["1 month", "3 months", "6 months"];
 type Table = [string, Record<Horizon, Stat>][];
@@ -51,7 +55,7 @@ export function oosStat(group: string, h: Horizon): Stat {
 
 // ---- Working paper no. 2: insider sales (docs/backtest/sales.json) ----------------------------
 /** "below": the share of sales followed by a worse return than the benchmark. */
-export type SaleStat = { n: number; mean: number; median: number; below: number; t: number };
+export type SaleStat = { n: number; mean: number; median: number; below: number; t: number } & Range;
 type SaleTable = [string, Record<Horizon, SaleStat>][];
 const saleTables = sales.tables as unknown as Record<Bench, SaleTable>;
 export const SALES = { tested: sales.tested, kept: sales.kept, mismatched: sales.mismatched, noPrices: sales.noPrices, symbols: sales.symbols, from: sales.from, to: sales.to, generated: sales.generated };
@@ -77,3 +81,19 @@ const SALE_NAME: Record<string, string> = {
   "Alone": "Only insider selling", "Price $5+": "Share price $5+", "Price under $5": "Share price under $5",
 };
 export const saleName = (g: string) => SALE_NAME[g] ?? g;
+
+// ---- Judging the 2026 check ------------------------------------------------------------------
+export type Verdict = "early" | "holds" | "higher" | "lower";
+/**
+ * 2026 against 2023–2025 for one group at six months. "early" until 2026 has MIN_MONTHS filing
+ * months with returns; then "higher"/"lower" only when the two 90% ranges don't overlap,
+ * otherwise "holds". A trade count alone never settles it: trades in one month move together.
+ */
+export function judge(main: Range, oos: Range): Verdict {
+  if (!oos.months || oos.months < MIN_MONTHS || oos.lo == null || oos.hi == null || main.lo == null || main.hi == null) return "early";
+  if (oos.lo > main.hi) return "higher";
+  if (oos.hi < main.lo) return "lower";
+  return "holds";
+}
+/** Filing months of 2026 with six-month returns so far (0 before the ranges were computed). */
+export const oosMonths = (s: Range) => s.months ?? 0;

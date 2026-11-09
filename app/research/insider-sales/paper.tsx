@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { Paper, type PaperPage } from "@/components/research/Paper";
 import { PaperPrint } from "@/components/research/PaperPrint";
 import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/research/Charts";
-import { BENCH, HORIZONS, SALES, SALES_OOS, p, saleGroups, saleName, saleOosStat, saleStat, type Bench } from "@/lib/research";
+import { BENCH, HORIZONS, MIN_MONTHS, SALES, SALES_OOS, judge, oosMonths, p, saleGroups, saleName, saleOosStat, saleStat, type Bench } from "@/lib/research";
 
 export const BASE = "/research/insider-sales";
 export const TITLE = "Do insider stock sales predict anything? A test of 84,000 sales";
@@ -165,19 +165,29 @@ function Page2() {
 const OOS_GROUPS = ["Notable (site rule)", "Not notable", "Not pre-planned", "Top exec, not pre-planned", "Value $1M+", "Sold 50%+ of stake", "Sold entire stake", "Price under $5"];
 const oosAll = saleOosStat("All officer/director sales", "6 months");
 const oosUpdated = new Date(SALES_OOS.generated).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-/** Notable sales since 2026 followed by clearly worse returns: a median 2+ points below the month and 53%+ doing worse. */
-export const oosWarns = () => { const s = saleOosStat("Notable (site rule)", "6 months"); return p(s.median) <= -2 && p(s.below) >= 53; };
+/**
+ * What 2026 says about notable sales so far: "early" until it has MIN_MONTHS filing months with
+ * six-month returns; then "warns" only if its 90% range sits wholly below 2023–2025's, else "same".
+ */
+export type OosState = "early" | "warns" | "same";
+export const oosState = (): OosState => {
+  const v = judge(six("Notable (site rule)"), saleOosStat("Notable (site rule)", "6 months"));
+  return v === "early" ? "early" : v === "lower" ? "warns" : "same";
+};
 function NotableOos() {
   const now = saleOosStat("Notable (site rule)", "6 months"), then = six("Notable (site rule)");
   const was = `(2023 to 2025: ${signed(then.median)}, ${p(then.below).toFixed(0)}% did worse)`;
-  if (oosWarns()) return <>Unlike 2023 to 2025, notable sales were followed by worse returns: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}. The mean was {signed(now.mean)}, so the typical notable sale&apos;s stock lagged while a few rose enough to cancel that out. Sales of half or all of a stake show the same pattern (Table 4). It rests on {n(now.n)} notable sales with six months of returns, all filed in the first months of the year, and could be one period&apos;s luck; it needs more filings before the label can be read as a warning.</>;
-  if (Math.abs(p(now.median)) < 1) return <>As in 2023 to 2025, notable sales were followed by much the same returns as other sales: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}.</>;
-  return <>Notable sales were followed by a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}. It rests on {n(now.n)} notable sales with six months of returns, too few to change the main finding.</>;
+  const st = oosState();
+  if (st === "early") return <>So far notable sales have been followed by a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}. That is too early to read either way: the {n(now.n)} notable sales with six months of returns were filed in only {oosMonths(now)} months, and trades filed in the same few months rise and fall together. The 2026 check can confirm or overturn the main finding once it covers {MIN_MONTHS} filing months.</>;
+  if (st === "warns") return <>Unlike 2023 to 2025, notable sales were followed by worse returns: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}, and the two 90% ranges don&apos;t overlap. It rests on {n(now.n)} notable sales filed over {oosMonths(now)} months.</>;
+  return <>As in 2023 to 2025, notable sales were followed by much the same returns as other sales: a median of {signed(now.median)} against the month&apos;s typical sale, with {p(now.below).toFixed(0)}% doing worse {was}, within the main result&apos;s range.</>;
 }
 function OosAbstract() {
-  return oosWarns()
-    ? <>Sales filed in 2026, which the test was not built on, are the exception so far: notable sales were followed by worse returns by the median, though not by the mean, on a few months of data.</>
-    : <>Repeating the test on sales filed in 2026, which it was not built on, gave the same answer so far.</>;
+  const st = oosState();
+  if (st === "early") return <>The test is being repeated every month on sales filed since January 2026, which it was not built on; it is too early for those to confirm or overturn this result.</>;
+  return st === "warns"
+    ? <>Sales filed since January 2026, which the test was not built on, are an exception: notable sales were followed by clearly worse returns.</>
+    : <>Repeating the test on sales filed since January 2026, which it was not built on, gave the same answer.</>;
 }
 
 function Page3() {
@@ -187,7 +197,7 @@ function Page3() {
       <h2>5. Discussion</h2>
       <p>The results fit the usual explanation for insider sales: they are mostly about the seller&apos;s own finances, not the company&apos;s prospects. Even the sales built to look most like a warning (a top executive selling much of their stake, outside a pre-planned plan) were followed by returns within a point of other sales. The test does not rule out that a handful of sales carry real information; it shows that the simple rules websites use can&apos;t find them.</p>
       <h3>5.1 What this means for Arkanum&apos;s label</h3>
-      <p>Arkanum&apos;s &ldquo;notable&rdquo; label should be read as a description, not a prediction: it marks sales that are out of the ordinary in size or share of a stake, which is worth knowing about a company, but it does not mean the stock is more likely to fall. The same is true of the labels on purchases (<Link href="/research/insider-buys">working paper no. 1</Link>).{oosWarns() ? <> Sales filed in 2026 so far point the other way (section 4.5); if that holds as more filings come in, this section will need rewriting.</> : null}</p>
+      <p>Arkanum&apos;s &ldquo;notable&rdquo; label should be read as a description, not a prediction: it marks sales that are out of the ordinary in size or share of a stake, which is worth knowing about a company, but it does not mean the stock is more likely to fall. The same is true of the labels on purchases (<Link href="/research/insider-buys">working paper no. 1</Link>).{oosState() === "warns" ? <> Sales filed since 2026 point the other way (section 4.5), so this section will need rewriting.</> : null}</p>
 
       <h2>6. Limits of the test</h2>
       <ul>
@@ -198,7 +208,7 @@ function Page3() {
       </ul>
 
       <h2>7. Conclusion</h2>
-      <p>Across {n(SALES.kept)} sales by company officers and directors in 2023 to 2025, neither Arkanum&apos;s notable-sale rule nor any of the usual warning signs picked out sales followed by worse returns. Insider sales are worth knowing about, but not as a signal to sell{oosWarns() ? ", though sales filed in 2026 so far are a reason to keep checking (section 4.5)" : ""}.</p>
+      <p>Across {n(SALES.kept)} sales by company officers and directors in 2023 to 2025, neither Arkanum&apos;s notable-sale rule nor any of the usual warning signs picked out sales followed by worse returns. Insider sales are worth knowing about, but not as a signal to sell{oosState() === "warns" ? ", though sales filed since 2026 point the other way (section 4.5)" : ""}.</p>
 
       <h2>Appendix</h2>
       <p>Each cell: median return after the sale against the benchmark · share of sales followed by a worse return. Sales counted at six months.</p>

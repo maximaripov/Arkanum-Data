@@ -11,7 +11,7 @@ import { isExecOrDirector } from "@/lib/insider";
 import type { InsiderTrade } from "@/lib/sec";
 import { buildOverview } from "@/lib/overview.mjs";
 
-type Overview = {
+export type Overview = {
   updated: string | null;
   totals: { value: number; buys: number; people: number; cos: number; strong: number; sales: number; salesValue: number; notableSales: number };
   hero: { t: InsiderTrade; recent: boolean } | null;
@@ -63,7 +63,7 @@ function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; previe
   );
 }
 
-function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; go: (v: View) => void }) {
+function InsiderTrades({ view, go, initial }: { view: Exclude<View, "funds" | "famous">; go: (v: View) => void; initial?: Overview | null }) {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [err, setErr] = useState("");
   const [updated, setUpdated] = useState("");
@@ -102,9 +102,12 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
 
   // The overview comes from the small overview.json; the full 30-day file loads only for
   // the trade lists (or if overview.json is unavailable).
-  const [ov, setOv] = useState<Overview | null | undefined>(undefined);
+  // The homepage server-renders it (initial), so crawlers and first paint see the lists; the
+  // browser still fetches the file, which is newer when the cached page is a few minutes old.
+  const [ov, setOv] = useState<Overview | null | undefined>(initial ?? undefined);
   useEffect(() => {
-    fetch("/data/overview.json").then((r) => (r.ok ? r.json() : null)).then((d) => setOv(d?.totals ? d : null)).catch(() => setOv(null));
+    const keep = (d: Overview | null) => setOv((cur) => (d?.totals ? d : cur ?? null));
+    fetch("/data/overview.json").then((r) => (r.ok ? r.json() : null)).then(keep).catch(() => keep(null));
   }, []);
   const needFull = view !== "overview" || ov === null;
   const loadedFrom = useRef<string | null>(null);
@@ -205,7 +208,8 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
           </section>
 
           <section className="card flush span8">
-            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days · unusual describes the trade, not the outlook (<Link href="/research/insider-buys/results">research</Link>)</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
+            <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
+            <p className="muted small card-note">How unusual (0 to 100) rates how far a buy is from routine: its size, who bought, a first buy in years, others buying at once. It describes the trade, not the outlook: in our tests high scores did no better (<Link href="/research/insider-buys/results">research</Link>).</p>
             <div className="tscroll d-only"><table className="ttable ut">
               <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">How unusual</th><th>Why</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
@@ -307,7 +311,7 @@ function Ring({ score }: { score: number }) {
   return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`How unusual: ${score} of 100`}><b className="mono">{score}</b></span>;
 }
 
-export default function InsidersView() {
+export default function InsidersView({ initial }: { initial?: Overview | null } = {}) {
   const [view, setView] = useState<View>("overview");
   useEffect(() => {
     const p = new URLSearchParams(location.search);
@@ -321,7 +325,7 @@ export default function InsidersView() {
       <div className="tabs wrap-tabs" role="tablist">
         {VIEWS.map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
       </div>
-      {view === "funds" ? <FundsView /> : view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} />}
+      {view === "funds" ? <FundsView /> : view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} initial={initial} />}
     </div>
   );
 }

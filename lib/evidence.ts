@@ -5,7 +5,7 @@ import ev from "./evidence.json";
 import { roleKind } from "./conviction.mjs";
 import type { InsiderTrade } from "./sec";
 
-type Row = [median: number, share: number, n: number];
+type Row = [median: number, share: number, n: number, months?: number];
 const E = ev as unknown as { buys: Side; sales: Side };
 type Side = { main: Record<string, Row>; oos: Record<string, Row>; oosFrom: string; oosTo: string };
 

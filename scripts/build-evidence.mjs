@@ -15,13 +15,13 @@ function pick(file, share) {
   for (const [group, h] of file.tables.month) {
     const s = h["6 months"];
     if (s?.median == null) continue;
-    out[group] = [r(s.median), r(s[share]), s.n];
+    out[group] = [r(s.median), r(s[share]), s.n, s.months ?? 0];
   }
   return out;
 }
 
 const evidence = {
-  // [median %, share %, count]; buys: share that beat the month's typical buy; sales: share followed by a worse return.
+  // [median %, share %, count, filing months with six-month returns]; buys: share that beat the month's typical buy; sales: share followed by a worse return.
   buys: { main: pick(buys, "hit"), oos: pick(buys26, "hit"), oosFrom: buys26.from, oosTo: buys26.to },
   sales: { main: pick(sales, "below"), oos: pick(sales26, "below"), oosFrom: sales26.from, oosTo: sales26.to },
 };

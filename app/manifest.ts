@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Arkanum Data",
     short_name: "Arkanum",
-    description: "What company insiders and big funds are buying, in plain English",
+    description: "Insider and Congress trades from official filings, with tested evidence",
     start_url: "/",
     display: "standalone",
     background_color: "#000000",
