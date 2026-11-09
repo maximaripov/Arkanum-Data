@@ -14,12 +14,14 @@ on:
         default: ""
 permissions:
   contents: read
+  id-token: write # lets price-fallback.mjs prove to the site that it is this repo's job
 jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

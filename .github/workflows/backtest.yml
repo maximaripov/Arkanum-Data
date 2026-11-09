@@ -7,6 +7,7 @@ on:
       from: { description: "First quarter scored", default: "2023q1" }
       to: { description: "Last quarter scored", default: "2025q4" }
       history: { description: "History starts (for 'first buy in N years')", default: "2020q1" }
+      publish: { description: "Commit the results (they feed the site). Off: results only in the run log.", type: boolean, default: true }
 permissions:
   contents: write
 jobs:
@@ -21,8 +22,14 @@ jobs:
         with:
           node-version: 22
       - name: Backtest
-        run: node scripts/backtest.mjs --from "${{ inputs.from }}" --to "${{ inputs.to }}" --history-from "${{ inputs.history }}"
+        run: node scripts/backtest.mjs --from "${{ inputs.from }}" --to "${{ inputs.to }}" --history-from "${{ inputs.history }}" ${{ !inputs.publish && '--out /tmp/out' || '' }}
+      - name: Results to the log (not published)
+        if: ${{ !inputs.publish }}
+        run: |
+          cat /tmp/out/results.md
+          echo RESULT_JSON_START; cat /tmp/out/results.json; echo; echo RESULT_JSON_END
       - name: Commit results
+        if: ${{ inputs.publish }}
         run: |
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"

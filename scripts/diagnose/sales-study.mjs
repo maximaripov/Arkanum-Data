@@ -12,6 +12,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from "../lib/form345.mjs";
 import { roleKind, saleFlags } from "../../lib/conviction.mjs";
 import { monthBootstrap } from "../../lib/bootstrap.mjs";
+import { unsplit } from "../../lib/returns.mjs";
 
 const [FROM = "2023q1", TO = "2025q4", HIST = "2022q1", OUT = null] = process.argv.slice(2);
 const UA = process.env.SEC_USER_AGENT;
@@ -85,7 +86,8 @@ async function closes(symbol) {
       if (r.status === 429) { await sleep(5000 * (i + 1)); continue; }
       if (!r.ok) return null;
       const res = (await r.json()).chart?.result?.[0];
-      const ts = res?.timestamp ?? [], raw = res?.indicators?.quote?.[0]?.close ?? [], adj = res?.indicators?.adjclose?.[0]?.adjclose ?? raw;
+      // raw: the price traded that day (Yahoo's close undone for later splits), for the ticker check.
+      const ts = res?.timestamp ?? [], close = res?.indicators?.quote?.[0]?.close ?? [], raw = unsplit(ts, close, res?.events?.splits), adj = res?.indicators?.adjclose?.[0]?.adjclose ?? close;
       const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k]]);
       return out.length ? out : null;
     } catch { await sleep(2000); }

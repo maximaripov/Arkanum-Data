@@ -665,3 +665,10 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - Key wiring: `data.yml`, `congress.yml` and `insiders-hourly.yml` pass `secrets.TIINGO_API_KEY` (empty is fine). Still to do by the owner: a Tiingo account and token; the token as a Vercel environment variable `TIINGO_API_KEY` (Production) and a GitHub Actions secret of the same name.
 - `vercel.json`: no preview deploys for `dependabot/**` branches. Dependabot security updates themselves are a repo setting for the owner (Settings → Code security).
 - Key-free alternatives tried and rejected: Stooq answers servers with a browser check; Nasdaq's endpoint returned no data and would need a disguised browser user agent.
+
+## Round 81: stock splits no longer fail the ticker check (2026-11-09)
+
+- **Bug:** Yahoo's "close" is adjusted for every later split (NVIDIA $795.18 on 2024-04-22 shows as $79.52). The ticker check (price in the filing vs that day's close, within a third) therefore failed every trade made before a later split or reverse split. On the site those trades showed no returns; in the studies they were dropped as "price doesn't match" (3,118 buys in paper no. 1).
+- **Fix:** `unsplit()` in `lib/returns.mjs` undoes it using the splits Yahoo returns (`events.splits`), applied from the day after the ex-date. Used by the site (`dailyCloses`), `scripts/backtest.mjs` and `scripts/diagnose/sales-study.mjs`. Adjusted closes (returns) unchanged. Tests cover a forward and a reverse split.
+- **Reruns without publishing:** `backtest.yml` has a `publish` input (off: results printed to the run log between RESULT_JSON_START/END, nothing committed). Sales study through `diagnose.yml` as before.
+- **Fallback test:** `scripts/diagnose/price-fallback.mjs` (via `diagnose.yml`, which now has `id-token: write` and `TIINGO_API_KEY`) makes Yahoo fail and checks Tiingo on GitHub, then on Vercel through `/api/alerts/price-check` (GitHub-OIDC only, returns counts, never the key).

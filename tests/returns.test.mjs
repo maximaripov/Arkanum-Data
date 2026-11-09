@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { tradeReturns, summarize, median, dailyCloses } from "../lib/returns.mjs";
+import { tradeReturns, summarize, median, dailyCloses, unsplit } from "../lib/returns.mjs";
 
 const stock = [["2026-01-02", 10], ["2026-01-05", 11], ["2026-01-06", 12], ["2026-01-07", 15]];
 const spy = [["2026-01-02", 100], ["2026-01-05", 101], ["2026-01-06", 102], ["2026-01-07", 105]];
@@ -68,4 +68,20 @@ test("dailyCloses: falls back to Tiingo when Yahoo fails, not when the symbol is
   assert.equal(unknown.out, null);
   assert.ok(!unknown.urls.some((u) => /tiingo/.test(u)));
   assert.equal((await run(500, "")).out, null); // no key: no fallback
+});
+
+test("unsplit: undoes Yahoo's adjustment for later splits, forward and reverse", () => {
+  const t = (d) => Date.parse(d + "T13:30:00Z") / 1000;
+  const ts = [t("2024-06-07"), t("2024-06-10"), t("2025-03-03"), t("2025-03-04")];
+  const px = [120.89, 121.79, 2, 20];
+  const splits = {
+    a: { date: t("2024-06-10"), numerator: 10, denominator: 1 }, // 10-for-1 (NVIDIA)
+    b: { date: t("2025-03-04"), numerator: 1, denominator: 10 }, // 1-for-10 reverse split
+  };
+  const out = unsplit(ts, px, splits);
+  close(out[0], 120.89 * 10 * 0.1); // before both splits
+  close(out[1], 121.79 * 0.1); // ex-date of the first: already post-split, still before the reverse split
+  close(out[2], 2 * 0.1);
+  close(out[3], 20);
+  assert.deepEqual(unsplit(ts, px, undefined), px);
 });
