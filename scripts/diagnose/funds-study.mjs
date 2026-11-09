@@ -52,15 +52,19 @@ console.log(`${reports.length} reports, ${moves.length} moves with a ticker`);
 const from = reports.reduce((a, r) => (r.filed < a ? r.filed : a), reports[0].filed);
 const spy = await dailyCloses("SPY", from);
 if (!spy) throw new Error("No S&P 500 prices");
+// The equal-weighted S&P 500, so a few giant companies can't make every stock pick look bad.
+const rsp = await dailyCloses("RSP", from);
+if (!rsp) throw new Error("No equal-weighted S&P 500 prices");
 const tickers = new Set([...moves.map((m) => m.t), ...reports.flatMap((r) => [...r.holdings.values()].map((h) => h.t).filter(Boolean))]);
 const px = await closesFor([...tickers], from, { pause: 100 });
 console.log(`prices for ${px.size} of ${tickers.size} tickers, through ${spy.at(-1)[0]}`);
-const spyAt = new Map(spy.map(([d], i) => [d, i]));
+const index = (b) => ({ b, at: new Map(b.map(([d], i) => [d, i])) });
+const SPY = index(spy), RSP = index(rsp);
 const after = (s, date) => s.findIndex(([d]) => d > date);
-function excess(s, i, j) {
+function excess(s, i, j, bench = SPY) {
   if (i < 0 || j < 0 || j >= s.length || j <= i) return null;
-  const si = spyAt.get(s[i][0]), sj = spyAt.get(s[j][0]);
-  return si == null || sj == null ? null : s[j][1] / s[i][1] - 1 - (spy[sj][1] / spy[si][1] - 1);
+  const si = bench.at.get(s[i][0]), sj = bench.at.get(s[j][0]);
+  return si == null || sj == null ? null : s[j][1] / s[i][1] - 1 - (bench.b[sj][1] / bench.b[si][1] - 1);
 }
 
 // ---- 3. The moves --------------------------------------------------------------------------
@@ -68,6 +72,7 @@ for (const m of moves) {
   const s = px.get(m.t);
   const i = s ? after(s, m.filed) : -1;
   m.ret = Object.fromEntries(HORIZONS.map(([l, h]) => [l, s && i >= 0 ? excess(s, i, i + h) : null]));
+  m.eq = Object.fromEntries(HORIZONS.map(([l, h]) => [l, s && i >= 0 ? excess(s, i, i + h, RSP) : null]));
 }
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
 function stat(list, get) {
@@ -82,8 +87,8 @@ const MOVE_GROUPS = {
   "Added to": (m) => m.change === "added", "New or added": (m) => m.change === "new" || m.change === "added",
   "Reduced": (m) => m.change === "reduced", "Sold entirely": (m) => m.change === "sold",
 };
-const moveTable = (list) => Object.entries(MOVE_GROUPS).map(([name, f]) => { const g = list.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (m) => m.ret[l])]))]; });
-const perFund = [...byFund.keys()].map((fund) => [fund, Object.fromEntries(HORIZONS.map(([l]) => [l, stat(moves.filter((m) => m.fund === fund && (m.change === "new" || m.change === "added")), (m) => m.ret[l])]))]);
+const moveTable = (list, key = "ret") => Object.entries(MOVE_GROUPS).map(([name, f]) => { const g = list.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (m) => m[key][l])]))]; });
+const perFund = [...byFund.keys()].map((fund) => [fund, Object.fromEntries(HORIZONS.map(([l]) => [l, stat(moves.filter((m) => m.fund === fund && (m.change === "new" || m.change === "added")), (m) => m.eq[l])]))]);
 
 // ---- 4. Cloning: top ten holdings, equal-weighted, held until the next report --------------
 const clones = [];
@@ -92,22 +97,23 @@ for (const list of byFund.values()) for (let k = 0; k < list.length; k++) {
   const top = [...r.holdings.values()].filter((h) => h.t && px.has(h.t)).sort((a, b) => b.value - a.value).slice(0, 10);
   const rets = top.map((h) => {
     const s = px.get(h.t), i = after(s, r.filed), j = next ? after(s, next.filed) : s.length - 1;
-    return excess(s, i, j);
-  }).filter((x) => x != null);
+    return [excess(s, i, j), excess(s, i, j, RSP)];
+  }).filter(([x, e]) => x != null && e != null);
   if (rets.length >= 5 && (next || Date.parse(spy.at(-1)[0]) - Date.parse(r.filed) > 60 * 86_400_000))
-    clones.push({ fund: r.fund, filed: r.filed, until: next?.filed ?? spy.at(-1)[0], holdings: rets.length, excess: rets.reduce((a, b) => a + b, 0) / rets.length });
+    clones.push({ fund: r.fund, filed: r.filed, until: next?.filed ?? spy.at(-1)[0], holdings: rets.length, excess: rets.reduce((a, [b]) => a + b, 0) / rets.length, eq: rets.reduce((a, [, b]) => a + b, 0) / rets.length });
 }
 const cloneByFund = [...byFund.keys()].map((fund) => {
   const q = clones.filter((c) => c.fund === fund);
   const compound = q.reduce((a, c) => a * (1 + c.excess), 1) - 1; // approximate: compounds quarterly excess returns
-  return [fund, { quarters: q.length, beat: q.filter((c) => c.excess > 0).length, medianQuarter: median(q.map((c) => c.excess)), compound }];
+  const compoundEq = q.reduce((a, c) => a * (1 + c.eq), 1) - 1;
+  return [fund, { quarters: q.length, beat: q.filter((c) => c.excess > 0).length, beatEq: q.filter((c) => c.eq > 0).length, medianQuarter: median(q.map((c) => c.excess)), compound, compoundEq }];
 });
 
 const out = {
   generated: new Date().toISOString(), firstPeriod: FIRST_PERIOD, pricesThrough: spy.at(-1)[0],
   funds: tracked.map((f) => f.name), reports: reports.length, moves: moves.length,
   priced: moves.filter((m) => m.ret["1 month"] != null).length,
-  moveTable: moveTable(moves), perFund,
-  clone: { all: stat(clones, (c) => c.excess), quarters: clones.length, beat: clones.filter((c) => c.excess > 0).length / clones.length, byFund: cloneByFund },
+  moveTable: moveTable(moves), moveTableEq: moveTable(moves, "eq"), perFund,
+  clone: { all: stat(clones, (c) => c.excess), allEq: stat(clones, (c) => c.eq), beatEq: clones.filter((c) => c.eq > 0).length / clones.length, quarters: clones.length, beat: clones.filter((c) => c.excess > 0).length / clones.length, byFund: cloneByFund },
 };
 console.log("RESULT_JSON_START"); console.log(JSON.stringify(out)); console.log("RESULT_JSON_END");
