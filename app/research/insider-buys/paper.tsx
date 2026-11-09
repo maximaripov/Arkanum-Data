@@ -18,8 +18,8 @@ export const PAGES: PaperPage[] = [
   { slug: "appendix", title: "Appendix and references" },
 ];
 const DESCRIPTIONS = [
-  "Arkanum scored 22,969 officer and director purchases from 2023 to 2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.",
-  "How the 22,969 purchases were chosen, how each was scored, and how returns were measured against other insider buys, small-company stocks and the S&P 500.",
+  `Arkanum scored ${SAMPLE.kept.toLocaleString("en-US")} officer and director purchases from 2023 to 2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.`,
+  `How the ${SAMPLE.kept.toLocaleString("en-US")} purchases were chosen, how each was scored, and how returns were measured against other insider buys, small-company stocks and the S&P 500.`,
   "Higher scores didn't pick better purchases; $1M+ and pre-planned purchases did worst; directors did slightly better than CEOs; purchases filed since January 2026 point the same way so far. Charts and numbers at 1, 3 and 6 months.",
   "Insider buying as a whole trailed small-company stocks and the S&P 500 in 2023 to 2025. What Arkanum changed, and the limits of the test.",
   "Full results for all 28 groups against each benchmark, notes on the statistics, and references.",
