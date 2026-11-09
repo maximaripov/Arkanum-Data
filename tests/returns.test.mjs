@@ -50,3 +50,22 @@ test("dailyCloses: same URL all day and across a month, so Next's fetch cache is
   assert.equal(p2 % 86400, 0);
   assert.ok(p2 >= Date.now() / 1000);
 });
+
+test("dailyCloses: falls back to Tiingo when Yahoo fails, not when the symbol is unknown", async () => {
+  const tiingo = [{ date: "2026-03-02T00:00:00.000Z", close: 20, adjClose: 19.5 }, { date: "2026-03-03T00:00:00.000Z", close: 21, adjClose: 20.5 }];
+  const res = (status, body) => ({ status, ok: status === 200, json: async () => body });
+  const run = async (yahooStatus, key) => {
+    const urls = [];
+    const fetchImpl = async (u) => { urls.push(u); return /tiingo/.test(u) ? res(200, tiingo) : res(yahooStatus, {}); };
+    const old = process.env.TIINGO_API_KEY;
+    if (key) process.env.TIINGO_API_KEY = key; else delete process.env.TIINGO_API_KEY;
+    try { return { out: await dailyCloses("BRK.B", "2026-03-03", { fetchImpl }), urls }; } finally { if (old === undefined) delete process.env.TIINGO_API_KEY; else process.env.TIINGO_API_KEY = old; }
+  };
+  const failed = await run(500, "k");
+  assert.deepEqual(failed.out, [["2026-03-02", 19.5, 20], ["2026-03-03", 20.5, 21]]);
+  assert.match(failed.urls.at(-1), /tiingo\.com\/tiingo\/daily\/brk-b\/prices\?startDate=2026-02-19&endDate=/);
+  const unknown = await run(404, "k");
+  assert.equal(unknown.out, null);
+  assert.ok(!unknown.urls.some((u) => /tiingo/.test(u)));
+  assert.equal((await run(500, "")).out, null); // no key: no fallback
+});

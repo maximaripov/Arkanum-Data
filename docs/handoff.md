@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 78. Full history: `docs/build-log.md` (rounds 1-78); add new rounds there.
+Updated 2026-11-09, after round 80. Full history: `docs/build-log.md` (rounds 1-80); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -133,4 +133,5 @@ Updated 2026-11-09, after round 78. Full history: `docs/build-log.md` (rounds 1-
   - the code is publicly readable while the repo is public;
   - protecting the Arkanum name is a trademark matter.
 - **Name risk:** "Arkanum" is close to the ARCANUM trademark in financial services (Arcanum Global). Revisit before anything commercial.
+- **Price fallback (round 80):** Tiingo when Yahoo fails, via `TIINGO_API_KEY` (Vercel env var + GitHub secret, set by the owner). Until both are set, there is no fallback. Tiingo's free plan is personal / non-commercial.
 - **Ideas not started:** Bluesky auto-post bot, buybacks, weekly archive pages.

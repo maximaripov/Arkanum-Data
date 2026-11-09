@@ -3,6 +3,7 @@
   "git": {
     "deploymentEnabled": {
       "claude/**": false,
+      "dependabot/**": false,
       "claude/stoic-dijkstra-e0idlh": false
     }
   }

@@ -658,3 +658,10 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 
 - **Price cache keys were unique every second.** `dailyCloses` (`lib/returns.mjs`) put the current second in the Yahoo URL, so every insider-page build wrote new, never-reused price entries for SPY and each stock. The window now starts on the 1st of the trade's month (less 10 days) and ends at the next UTC midnight: one entry per stock and month, reused all day. Test in `tests/returns.test.mjs`.
 - **Own data files read from disk** (`lib/siteData.ts`): homepage, Congress page, stock page and its OG image, insider page and sitemap no longer fetch `/data/*.json` over HTTP through the fetch cache. Each deployment ships its files, so nothing is written. Bundled per function: overview, screener, insiders, insiders-today, congress-overview, famous (~1.8 MB; largest function 7.3 MB). Still fetched: Congress member files and digests (small), SEC and Yahoo.
+
+## Round 80: Tiingo price fallback; Dependabot previews off (2026-11-09)
+
+- `dailyCloses` (`lib/returns.mjs`) falls back to Tiingo's official API when Yahoo fails (an error status, repeated 429s, a network error or a changed format), not when Yahoo says the symbol doesn't exist. It needs `TIINGO_API_KEY`; with no key it behaves as before. Same rounded window as Yahoo, so cache keys stay stable. Tests in `tests/returns.test.mjs`.
+- Key wiring: `data.yml`, `congress.yml` and `insiders-hourly.yml` pass `secrets.TIINGO_API_KEY` (empty is fine). Still to do by the owner: a Tiingo account and token; the token as a Vercel environment variable `TIINGO_API_KEY` (Production) and a GitHub Actions secret of the same name.
+- `vercel.json`: no preview deploys for `dependabot/**` branches. Dependabot security updates themselves are a repo setting for the owner (Settings → Code security).
+- Key-free alternatives tried and rejected: Stooq answers servers with a browser check; Nasdaq's endpoint returned no data and would need a disguised browser user agent.
