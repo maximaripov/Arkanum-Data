@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CongressView, type Overview } from "@/components/CongressView";
+import { readCongressOverview } from "@/lib/siteData";
 
 export const metadata: Metadata = {
   title: "Congress trades (House)",
@@ -10,10 +11,8 @@ export const metadata: Metadata = {
 
 // Rendered on the server and refreshed at most hourly (the data changes once a day).
 export const revalidate = 3600;
-const SITE = "https://arkanumdata.vercel.app";
 
 export default async function Congress() {
-  const r = await fetch(`${SITE}/data/congress-overview.json`, { next: { revalidate: 3600 } }).catch(() => null);
-  const initial = r?.ok ? ((await r.json()) as Overview) : null;
+  const initial = (await readCongressOverview()) as Overview | null;
   return <CongressView initial={initial} />;
 }

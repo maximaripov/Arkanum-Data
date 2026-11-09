@@ -4,7 +4,7 @@ import { cikForTicker } from "@/lib/sec";
 import type { InsiderTrade } from "@/lib/sec";
 import { isExecOrDirector } from "@/lib/insider";
 import { fmtBig } from "@/lib/format";
-import { loadInsiders } from "@/lib/insiderData";
+import { readInsiders } from "@/lib/siteData";
 import { companyName } from "@/lib/people.mjs";
 
 export const alt = "Insider trades on Arkanum";
@@ -20,7 +20,7 @@ export default async function Image({ params }: { params: Promise<{ symbol: stri
   const symbol = decodeURIComponent((await params).symbol).toUpperCase();
   const [co, ins] = await Promise.all([
     cikForTicker(symbol).catch(() => null),
-    loadInsiders("https://arkanumdata.vercel.app", { next: { revalidate: 1800 } }),
+    readInsiders(),
   ]);
   const mine = ((ins?.trades ?? []) as InsiderTrade[]).filter((t) => t.symbol === symbol && isExecOrDirector(t));
   const sum = (code: string) => mine.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);

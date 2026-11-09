@@ -4,7 +4,8 @@ import { StockView, type StockInitial } from "./StockView";
 import { cikForTicker, insidersForTicker } from "@/lib/sec";
 import { announcements } from "@/lib/news";
 import { withConviction } from "@/lib/conviction.mjs";
-import { loadInsiders, withHistory } from "@/lib/insiderData";
+import { withHistory } from "@/lib/insiderData";
+import { readInsiders, readScreener } from "@/lib/siteData";
 import { companyName } from "@/lib/people.mjs";
 
 // Rebuilt at most every 30 minutes: the page arrives with its insider trades, fundamentals
@@ -33,8 +34,8 @@ async function load(symbol: string): Promise<{ initial: StockInitial; known: boo
     cikForTicker(symbol).catch(() => undefined), // null: SEC doesn't list it; undefined: SEC couldn't be reached
     quiet(insidersForTicker(symbol)),
     quiet(announcements(symbol)),
-    quiet(fetch(`${SITE}/data/screener.json`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : null))),
-    quiet(loadInsiders(SITE, { next: { revalidate: 1800 } })),
+    readScreener(),
+    readInsiders(),
   ]);
   const row = sc?.rows?.find((r: unknown[]) => r[0] === symbol);
   // A ticker SEC doesn't list and the site has no data for is not a stock page.

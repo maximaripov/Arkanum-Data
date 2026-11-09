@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { insiderTradesByOwner } from "@/lib/sec";
 import { withConviction } from "@/lib/conviction.mjs";
-import { loadInsiders, withHistory } from "@/lib/insiderData";
+import { withHistory } from "@/lib/insiderData";
+import { readInsiders } from "@/lib/siteData";
 import { TradeList } from "@/components/TradeList";
 import { FollowButton } from "@/components/FollowButton";
 import { personName, roleLabel } from "@/lib/people.mjs";
@@ -24,7 +25,7 @@ const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US",
 async function load(cik: string) {
   const [r, site] = await Promise.all([
     insiderTradesByOwner(cik), // an SEC outage fails the render, so the last good page stays cached
-    loadInsiders("https://arkanumdata.vercel.app", { next: { revalidate: 1800 } }).catch(() => null),
+    readInsiders(),
   ]);
   if (!r) return null;
   return { name: personName(r.name || r.trades[0]?.owner || "Insider"), trades: withConviction(withHistory(r.trades, site)) as InsiderTrade[] };

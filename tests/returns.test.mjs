@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { tradeReturns, summarize, median } from "../lib/returns.mjs";
+import { tradeReturns, summarize, median, dailyCloses } from "../lib/returns.mjs";
 
 const stock = [["2026-01-02", 10], ["2026-01-05", 11], ["2026-01-06", 12], ["2026-01-07", 15]];
 const spy = [["2026-01-02", 100], ["2026-01-05", 101], ["2026-01-06", 102], ["2026-01-07", 105]];
@@ -38,4 +38,15 @@ test("a price paid far from that day's close (a reused ticker) gives no returns"
 
 test("history that starts long after the trade (a later listing) gives no returns", () => {
   assert.deepEqual(tradeReturns(stock, spy, { traded: "2025-06-01", filed: "2025-06-03" }), { trade: null, pub: null });
+});
+
+test("dailyCloses: same URL all day and across a month, so Next's fetch cache is reused", async () => {
+  const urls = [];
+  const fetchImpl = async (u) => { urls.push(u); return { status: 404, ok: false }; };
+  await dailyCloses("SPY", "2026-03-03", { fetchImpl });
+  await dailyCloses("SPY", "2026-03-27", { fetchImpl });
+  assert.equal(urls[0], urls[1]);
+  const p2 = Number(new URL(urls[0]).searchParams.get("period2"));
+  assert.equal(p2 % 86400, 0);
+  assert.ok(p2 >= Date.now() / 1000);
 });
