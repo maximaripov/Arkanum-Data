@@ -613,3 +613,11 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - At the owner's request, `app/robots.ts` no longer turns away AI training crawlers (`BLOCK_AI_TRAINING = false`); every crawler may read every page except /api/. Set it back to true to restore the block from round 68.
 
 - Re-enabled the same day at the owner's request (`BLOCK_AI_TRAINING = true`).
+
+## Round 73: research rigor and an evidence-led homepage (2026-11-09)
+
+- **90% ranges:** six-month medians carry `lo`, `hi`, `months` from a month-block bootstrap (`lib/bootstrap.mjs`, 400 resamples of whole filing months, seeded). Trades filed in the same month move together, so trade counts overstate certainty.
+- **2026 verdicts** (`judge()` in `lib/research.ts`, `MIN_MONTHS = 12` in `lib/researchClaims.mjs`): "Too early" until 2026 has 12 filing months with six-month returns (about early 2028); then "Changed" only when the 2026 and 2023–25 ranges don't overlap, else "Holds". Used by the report card, paper no. 2 (`oosState()`: early / warns / same, replacing `oosWarns`), paper no. 1 (`early()`), findings and the "Trades like this" line.
+- **Homepage:** tagline "Other sites sell you insider signals. We test them."; the strip is "What actually mattered" (stocks under $5, $1M+ and CEO buys, pre-planned buys, vs the S&P 500) with a note that "vs other insider buys" is not the market. The 2026 sales claim is gone. Link previews (layout metadata, OG image, manifest) rewritten.
+- **Homepage lists server-rendered:** `app/page.tsx` fetches overview.json (revalidate 900) and passes it to `InsidersView`; the browser still refetches for freshness.
+- **Wording:** one-line "How unusual" explainer on the homepage table; "Congress trades (House)".

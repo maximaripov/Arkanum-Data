@@ -55,3 +55,6 @@ Paste this into a new chat to continue. Every change is in [build-log.md](build-
 
 ## Ideas not started
 - Congress "late disclosures" page (factual wording only, hand-check rows against PDFs first). Weekly archive pages. Bluesky auto-post bot (owner would create the account). Form 144 notices; watchlist sale alerts; buybacks.
+
+## Research verdict rule (round 73)
+2026 out-of-sample results are "too early" until 12 filing months have six-month returns (MIN_MONTHS in lib/researchClaims.mjs). After that a finding "changed" only if its 90% month-bootstrap range separates from 2023-25's. Paper wording branches on this (oosState in the sales paper, early() in the buys paper); don't add 2026 claims that bypass it.
