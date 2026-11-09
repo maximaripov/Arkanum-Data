@@ -60,6 +60,7 @@ jobs:
           git add ${{ matrix.file }}
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "data: research refresh (${{ matrix.paper }}) $(date -u +%F)"
+          git stash --include-untracked -q || true # other files a study touched (e.g. the 13F ticker cache) aren't published here
           for i in 1 2 3 4 5; do git pull --rebase -X theirs origin main && git push && exit 0; sleep $((i * 10)); done
           exit 1
       - name: Notify on failure
