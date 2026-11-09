@@ -642,3 +642,8 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - `insiders-hourly.yml` runs every two hours (UTC 11:17-23:17 odd hours Mon-Fri, 01:17 and 03:17 Tue-Sat), halving data deploys. Site wording updated (homepage "updated every 2 hours", About). The 5 PM digest release backstop now runs at 23:17 UTC at the latest; cron-job.org stays the main trigger.
 - Owner rule: push once per task, not after each change, since every push to main is a deploy.
 - Vercel API on Hobby: Active CPU and Functions Storage are not available (usage endpoint `v1/usage` is Pro-only). Function GB-hours since Nov 2: 3.74 (about 0.47/day), 22,427 invocations, 32 errors or timeouts.
+
+## Round 77: Vercel Firewall rules (2026-11-09)
+
+- Set through the Vercel API (no code change). Rule 1 denies AI training crawlers by User-Agent, enforcing robots.txt; verified GPTBot gets 403, OAI-SearchBot and browsers 200. Rule 2 rate-limits `/stock/*`, `/insider/*` and `/api/*` (not `/api/alerts/*`) to 40 requests per minute per IP with a 429; verified over one connection. `/data/*` is left out because the site's server functions fetch it.
+- Not turned on: Vercel's Bot Protection managed rules (they could challenge the site's own server fetches of `/data/*` and the scheduled jobs; needs a bypass rule first, owner's call).

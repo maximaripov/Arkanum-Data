@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 76. Full history: `docs/build-log.md` (rounds 1-76); add new rounds there.
+Updated 2026-11-09, after round 77. Full history: `docs/build-log.md` (rounds 1-77); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -51,6 +51,7 @@ Updated 2026-11-09, after round 76. Full history: `docs/build-log.md` (rounds 1-
   - Small-print credits.
   - "© {year} Arkanum Data. All rights reserved." Terms has a Copyright section.
 - **robots.txt:** blocks AI training crawlers (`BLOCK_AI_TRAINING = true` in `app/robots.ts`).
+- **Vercel Firewall** (set by API 2026-11-09, round 77): (1) deny AI training crawlers by User-Agent (same list as robots.ts; keep the two in sync); (2) rate limit `/stock/*`, `/insider/*`, `/api/*` except `/api/alerts/*`: 40 requests per minute per IP, then 429. `/data/*` is never covered, because the site's own functions fetch it. Read or change with `GET/PUT https://api.vercel.com/v1/security/firewall/config?projectId=prj_Y2wu1SJDKK4fcbwNXcI2wvPhh1LK&teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q`. Testing from the sandbox needs one reused connection (curl with many URLs), because its outgoing IP changes per connection.
 - **vercel.json:** turns off preview deploys for `claude/**` branches.
 - **next.config.mjs:** leaves `sharp` out of server functions, which keeps Functions Storage down.
 
