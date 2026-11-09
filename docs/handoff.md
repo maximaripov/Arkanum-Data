@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 80. Full history: `docs/build-log.md` (rounds 1-80); add new rounds there.
+Updated 2026-11-09, after round 82. Full history: `docs/build-log.md` (rounds 1-82); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -86,6 +86,9 @@ Updated 2026-11-09, after round 80. Full history: `docs/build-log.md` (rounds 1-
   - `/research/insider-buys`: paper no. 1.
   - `/research/insider-sales`: paper no. 2.
   - `/research/report-card`: each label, 2023-25 vs since January 2026.
+  - `/research/filing-delay`: paper no. 3 (head start before the filing; insider's vs follower's six months). Numbers: `delay` key in `results.json` and `sales.json` (`scripts/lib/delay.mjs`).
+  - `/research/house-trades`: paper no. 4 (House trades vs the S&P 500 and the equal-weighted S&P 500). Numbers: `docs/backtest/congress.json`, a one-off run of `scripts/diagnose/congress-study.mjs` (runs locally: no SEC needed).
+  - `/research/fund-copying`: paper no. 5 (13F funds). Numbers: `docs/backtest/funds.json` from `scripts/diagnose/funds-study.mjs` via `diagnose.yml`.
   - `/research/<paper>/print`: PDF version of each paper.
 - **Other pages:** `/open-data` (the research tables are "available on request"), `/about` (methodology, freshness, privacy, contact), `/terms`, `/markets`, `/stakes`.
 - **Search:** covers stocks, insiders (23k), House members and funds.
@@ -96,13 +99,14 @@ Updated 2026-11-09, after round 80. Full history: `docs/build-log.md` (rounds 1-
   - `sales.json`: 84,133 sales.
   - `oos-2026.json` and `sales-2026.json`: filings since January 2026, refreshed monthly by `research-refresh.yml`.
   - Read through `lib/research.ts`. Findings come from `lib/findings.ts`, built from the same numbers.
+- **Split fix (round 81):** Yahoo's close is split-adjusted; `unsplit()` in `lib/returns.mjs` restores the traded price for the ticker check. Rescued 1,973 buys and 5,283 sales (mostly reverse-split penny stocks); stocks under $5 went from −2.6% to −6.4%. Spot-checked against Tiingo. No correction note on the papers (owner's choice).
 - **Error ranges:** each six-month median carries a 90% range. It comes from a month-block bootstrap (`lib/bootstrap.mjs`) that resamples whole filing months, because trades filed in the same month move together.
 - **Verdict rule** (`judge()` in `lib/research.ts`; `MIN_MONTHS = 12` in `lib/researchClaims.mjs`):
   - "Too early" until 2026 has 12 filing months with six-month returns, which is about early 2028.
   - After that, "Changed" only if the 2026 range and the 2023-25 range don't overlap; otherwise "Holds".
   - Papers branch on it: `oosState()` (early / warns / same) in the sales paper, `early()` in the buys paper.
   - Never add a 2026 claim that bypasses this rule.
-- **Watch item:** large unplanned sales filed in 2026 have a range of −5.1% to −2.1%, against −0.8% to +0.7% for 2023-25. The ranges don't overlap, but 2026 only has 5 months. If it holds, then around spring 2027 the verdict flips by itself to "Changed: now more of a warning". Paper no. 2's discussion would then need rewriting by hand.
+- **Watch item:** notable sales (the site rule) filed in 2026 have a range of −5.8% to −1.7%, against −0.3% to +1.4% for 2023-25 (both after the split fix, 2026-11-09). The ranges don't overlap, but 2026 only has 5 months. If it holds, then around spring 2027 the verdict flips by itself to "Changed: now more of a warning". Paper no. 2's discussion would then need rewriting by hand.
 - **Reruns:**
   - `backtest.yml`: inputs from 2023q1, to 2025q4, history 2020q1.
   - `diagnose.yml` running `sales-study.mjs` with args `2023q1 2025q4 2022q1`. It prints JSON between RESULT_JSON_START and RESULT_JSON_END in the log, which you copy into `sales.json`.
