@@ -108,7 +108,7 @@ async function closes(symbol) {
       const j = await r.json(), res = j.chart?.result?.[0];
       // raw: the price traded that day (Yahoo's close undone for later splits), for the ticker check.
       const ts = res?.timestamp ?? [], close = res?.indicators?.quote?.[0]?.close ?? [], raw = unsplit(ts, close, res?.events?.splits), adj = res?.indicators?.adjclose?.[0]?.adjclose ?? close;
-      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k]]);
+      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k], close[k]]);
       return out.length ? out : null;
     } catch { await sleep(2000); }
   }
@@ -138,10 +138,12 @@ function tickerOk(series, e) {
   const ratio = c / paid;
   return ratio > 0.67 && ratio < 1.5;
 }
-const rows = []; let mismatched = 0;
+const rows = []; let mismatched = 0; const rescued = [];
 for (const e of tested) {
   const s = px.get(e.symbol); if (!s) continue;
   if (!tickerOk(s, e)) { mismatched++; continue; }
+  // Rescued by unsplit(): would have failed with Yahoo's split-adjusted close. Sampled to the log for checking.
+  { const i = s.findIndex(([d]) => d >= e.date), c = s[i]?.[3], k = c / (e.value / e.shares); if (c != null && !(k > 0.67 && k < 1.5)) rescued.push({ symbol: e.symbol, date: e.date, paid: +(e.value / e.shares).toFixed(4), actual: +(+s[i]?.[2]).toFixed(4), yahooClose: +(+c).toFixed(4) }); }
   const raw = {}, spyEx = {}, iwmEx = {};
   for (const [label, h] of HORIZONS) {
     const a = ret(s, e.filed, h), b = ret(spy, e.filed, h), c = ret(iwm, e.filed, h);
@@ -214,3 +216,6 @@ await mkdir(OUT, { recursive: true });
 await writeFile(`${OUT}/results.md`, md + "\n");
 await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: LAST, scored: tested.length, kept: rows.length, mismatched, tables }, null, 1));
 console.log(md);
+// A spread-out sample of the trades unsplit() rescued (under $5 first), for checking by hand.
+{ const pick = (xs, n) => xs.filter((_, i) => i % Math.max(1, Math.floor(xs.length / n)) === 0).slice(0, n);
+  console.log(`RESCUED ${rescued.length} SAMPLE_JSON ${JSON.stringify([...pick(rescued.filter((r) => r.actual < 5), 12), ...pick(rescued.filter((r) => r.actual >= 5), 6)])}`); }

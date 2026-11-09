@@ -88,7 +88,7 @@ async function closes(symbol) {
       const res = (await r.json()).chart?.result?.[0];
       // raw: the price traded that day (Yahoo's close undone for later splits), for the ticker check.
       const ts = res?.timestamp ?? [], close = res?.indicators?.quote?.[0]?.close ?? [], raw = unsplit(ts, close, res?.events?.splits), adj = res?.indicators?.adjclose?.[0]?.adjclose ?? close;
-      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k]]);
+      const out = []; for (let k = 0; k < ts.length; k++) if (adj[k] != null && raw[k] != null) out.push([new Date(ts[k] * 1000).toISOString().slice(0, 10), adj[k], raw[k], close[k]]);
       return out.length ? out : null;
     } catch { await sleep(2000); }
   }
@@ -101,10 +101,12 @@ const px = new Map(); let done = 0;
 for (const s of symbols) { const c = await closes(s); if (c) px.set(s, c); if (++done % 500 === 0) console.log(`prices ${done}/${symbols.length} (${px.size})`); await sleep(120); }
 const ret = (series, filed, h) => { const i = series.findIndex(([d]) => d > filed); return i < 0 || i + h >= series.length ? null : series[i + h][1] / series[i][1] - 1; };
 const tickerOk = (series, e) => { const paid = e.value / e.shares, i = series.findIndex(([d]) => d >= e.date), c = series[i]?.[2] ?? series.at(-1)?.[2]; const k = c / paid; return c && paid && k > 0.67 && k < 1.5; };
-const rows = []; let mismatched = 0;
+const rows = []; let mismatched = 0; const rescued = [];
 for (const e of tested) {
   const s = px.get(e.symbol); if (!s) continue;
   if (!tickerOk(s, e)) { mismatched++; continue; }
+  // Rescued by unsplit(): would have failed with Yahoo's split-adjusted close. Sampled to the log for checking.
+  { const i = s.findIndex(([d]) => d >= e.date), c = s[i]?.[3], k = c / (e.value / e.shares); if (c != null && !(k > 0.67 && k < 1.5)) rescued.push({ symbol: e.symbol, date: e.date, paid: +(e.value / e.shares).toFixed(4), actual: +(+s[i]?.[2]).toFixed(4), yahooClose: +(+c).toFixed(4) }); }
   const raw = {}, spyEx = {}, iwmEx = {};
   for (const [l, h] of HORIZONS) { const a = ret(s, e.filed, h), b = ret(spy, e.filed, h), c = ret(iwm, e.filed, h); raw[l] = a; spyEx[l] = a == null || b == null ? null : a - b; iwmEx[l] = a == null || c == null ? null : a - c; }
   rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx });
@@ -152,3 +154,6 @@ if (OUT) await writeFile(OUT, JSON.stringify(out, null, 1));
 console.log("RESULT_JSON_START");
 console.log(JSON.stringify(out));
 console.log("RESULT_JSON_END");
+// A spread-out sample of the trades unsplit() rescued (under $5 first), for checking by hand.
+{ const pick = (xs, n) => xs.filter((_, i) => i % Math.max(1, Math.floor(xs.length / n)) === 0).slice(0, n);
+  console.log(`RESCUED ${rescued.length} SAMPLE_JSON ${JSON.stringify([...pick(rescued.filter((r) => r.actual < 5), 12), ...pick(rescued.filter((r) => r.actual >= 5), 6)])}`); }
