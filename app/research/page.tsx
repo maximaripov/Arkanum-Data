@@ -6,10 +6,13 @@ import { oosState } from "./insider-sales/paper";
 import { findings } from "@/lib/findings";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TITLE as HOUSE_TITLE } from "./house-trades/paper";
+import { TITLE as DELAY_TITLE } from "./filing-delay/paper";
 
 const PAPERS = [
   { no: 4, href: "/research/house-trades", title: HOUSE_TITLE, date: "November 2026",
     summary: "Stock trades disclosed by members of the U.S. House, measured from the day each became public and from the member's own trade date: what they bought did no better than what they sold." },
+  { no: 3, href: "/research/filing-delay", title: DELAY_TITLE, date: "November 2026",
+    summary: "How much a stock moves between an insider's trade and the filing, and what the two-day delay costs a follower: about a point over six months for purchases, almost nothing for sales." },
   { no: 2, href: "/research/insider-sales", title: "Do insider stock sales predict anything? A test of 89,000 sales", date: "November 2026",
     summary: "Sales by company officers and directors from 2023 to 2025, including the ones Arkanum labels large and unplanned, were followed by the same returns as any other insider sale" + (oosState() === "warns" ? "; sales filed since 2026 are an exception." : ".") },
   { no: 1, href: "/research/insider-buys", title: "Do insider stock purchases beat the market? A test of 25,000 buys", date: "November 2026",
