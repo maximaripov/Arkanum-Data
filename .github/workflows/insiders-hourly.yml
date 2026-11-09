@@ -1,12 +1,14 @@
 name: Hourly insider trades
-# Weekdays from about 7 AM to 11 PM New York time (when executives file): pick up new
+# Weekdays from about 7 AM to 11 PM New York time (when executives file), every two hours: pick up new
 # Form 4 filings from SEC EDGAR's live feed, publish today's trades, and send instant
 # alerts to watchlists. About 2 minutes a run; well within GitHub's free monthly minutes.
-# Times are UTC: 11:17-23:17 Mon-Fri, then 00:17-03:17 Tue-Sat (the US evening before).
+# Times are UTC: 11:17-23:17 Mon-Fri, then 01:17 and 03:17 Tue-Sat (the US evening before).
+# Every two hours, not hourly (2026-11-09): each run that finds new trades commits, and every
+# commit is a full Vercel deploy, which was using up the free plan's runtime cache writes.
 on:
   schedule:
-    - cron: "17 11-23 * * 1-5"
-    - cron: "17 0-3 * * 2-6"
+    - cron: "17 11-23/2 * * 1-5"
+    - cron: "17 1-3/2 * * 2-6"
   workflow_dispatch:
     inputs:
       test_failure:

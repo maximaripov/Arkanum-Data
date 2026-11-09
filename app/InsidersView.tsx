@@ -118,7 +118,7 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "funds" | "f
     if (source === "history") {
       loadInsiders().then((d) => {
         setTrades(d.trades); setDays(d.days);
-        setUpdated(`Last 30 days · updated hourly on weekdays, last ${d.updated ? new Date(d.updated).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : "—"}`);
+        setUpdated(`Last 30 days · updated every 2 hours on weekdays, last ${d.updated ? new Date(d.updated).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : "—"}`);
       }).catch((e) => setErr(String(e)));
       return;
     }

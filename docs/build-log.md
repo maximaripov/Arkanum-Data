@@ -636,3 +636,9 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - Fixes: `/api/congress`, `/api/watch`, `/feeds/congress.xml`, `/feeds/insider-buys.xml` read the data files with `cache: "no-store"` (the CDN caches their responses via s-maxage; feeds are now per-request with `dynamic = "force-dynamic"`). Form 4 `index.json` and XML are cached with `revalidate: false`. SEC company submissions: 900 s -> 1800 s, matching the stock page.
 - **Security headers** on every response (`next.config.mjs`): X-Frame-Options DENY and CSP `frame-ancestors 'none'`, nosniff, strict-origin-when-cross-origin referrer, Permissions-Policy off for camera, mic, location and payment. No full CSP, on purpose (TradingView embeds).
 - Security review, no change needed: alerts auth (timing-safe secrets, GitHub OIDC pinned to owner ID and main), push endpoints allow-listed to real push services, device cap, workflows use env vars for inputs and read-only `pull_request`, `npm audit` clean.
+
+## Round 76: insider job every two hours; batched pushes (2026-11-09)
+
+- `insiders-hourly.yml` runs every two hours (UTC 11:17-23:17 odd hours Mon-Fri, 01:17 and 03:17 Tue-Sat), halving data deploys. Site wording updated (homepage "updated every 2 hours", About). The 5 PM digest release backstop now runs at 23:17 UTC at the latest; cron-job.org stays the main trigger.
+- Owner rule: push once per task, not after each change, since every push to main is a deploy.
+- Vercel API on Hobby: Active CPU and Functions Storage are not available (usage endpoint `v1/usage` is Pro-only). Function GB-hours since Nov 2: 3.74 (about 0.47/day), 22,427 invocations, 32 errors or timeouts.

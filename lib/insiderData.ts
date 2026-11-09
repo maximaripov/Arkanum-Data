@@ -1,5 +1,5 @@
 // The insider trades the site shows: the 30-day file (rebuilt nightly) plus today's file
-// (refreshed hourly), merged and scored for conviction.
+// (refreshed every two hours), merged and scored for conviction.
 import type { InsiderTrade } from "./sec";
 import { mergeInsiders as merge } from "./insiderMerge.mjs";
 

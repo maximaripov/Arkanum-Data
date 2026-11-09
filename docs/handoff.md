@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 75. Full history: `docs/build-log.md` (rounds 1-75); add new rounds there.
+Updated 2026-11-09, after round 76. Full history: `docs/build-log.md` (rounds 1-76); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -12,6 +12,7 @@ Updated 2026-11-09, after round 75. Full history: `docs/build-log.md` (rounds 1-
 - **Bugs:** fix bugs on your own without asking. Diagnose anything that depends on SEC with `diagnose.yml`, because SEC blocks the sandbox.
 - **Before pushing:** `npm test` and `npx tsc --noEmit` must pass.
 - **Pushing:** push to `main` and to the session's `claude/...` branch. Merge `origin/main`; never rebase, because force-pushes are blocked.
+- **Batch pushes (owner, 2026-11-09):** every push to `main` is a full Vercel deploy. Commit as you go, but push once per task (or once per session), not after each change.
 - **Commit identity:**
   - Author: `maximaripov <351230404+maximaripov@users.noreply.github.com>`. Vercel deploys only that author.
   - Committer: `noreply@anthropic.com`; a session hook requires it.
@@ -109,7 +110,7 @@ Updated 2026-11-09, after round 75. Full history: `docs/build-log.md` (rounds 1-
 
 ## 6. Data jobs (GitHub Actions; they often start 30-60 min late)
 - `data.yml`: weekdays at 4:02 PM ET (fundamentals, insiders, overview, people, well-known, funds, events, health check, digest).
-- `insiders-hourly.yml`: weekdays, roughly 7 AM to 11 PM ET.
+- `insiders-hourly.yml`: weekdays, every two hours, roughly 7 AM to 11 PM ET (was hourly until 2026-11-09; each commit is a full deploy, which used up runtime cache writes). The file name kept "hourly".
 - `congress.yml` and `stakes.yml`: daily.
 - Manual: `people-backfill.yml`, `backtest.yml`, `diagnose.yml`, `research-refresh.yml`. Rerun `people-backfill` after each SEC quarter.
 - **Data gotcha:** read trade files through `mergeInsiders()` or `cleanTrades()`, which fix doubled filings and totals typed into the price field.
@@ -119,7 +120,7 @@ Updated 2026-11-09, after round 75. Full history: `docs/build-log.md` (rounds 1-
   - Usage check: 7:37 PM ET (`trig_01E5A35A5tgeZXtuvtMvqfSj`).
   - Content check: 8:34 PM ET (`trig_014ngq1ztgL5aJVRk9BKYxXQ`).
 - A one-off "Check Monday Daily Digest" task (`trig_0183hKbFgkaW5iU519nzWBuY`) fires 2026-11-09 22:15 UTC into the previous session.
-- **Vercel API token:** works (re-saved 2026-11-09, round 75). Usage API: `GET https://api.vercel.com/v2/usage?teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q&type=data_cache` (or `requests`) with ISO `from`/`to` including milliseconds; `granularity=hour` for hourly.
+- **Vercel API token:** works (re-saved 2026-11-09, round 75). Usage API: `GET https://api.vercel.com/v2/usage?teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q&type=data_cache` (or `requests`) with ISO `from`/`to` including milliseconds; `granularity=hour` for hourly. Readable on Hobby: data cache bytes, requests, function GB-hours and invocations, builds, deployments. Not readable on Hobby (Pro-only API): Active CPU and Functions Storage; check those on the Usage page.
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
