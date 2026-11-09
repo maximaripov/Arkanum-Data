@@ -607,3 +607,7 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **H, papers as PDFs:** `/research/<paper>/print` renders the whole paper with "Save as PDF"; print styles drop the site chrome; "Download PDF" on every paper page.
 - **I, buy/sell colours and contrast:** filled BUY/SELL badges; light-theme green, red and amber darkened (#066b2e, #a61c23, #85560f). axe colour-contrast audit: 0 failures on 11 pages in both themes (was 102 in light).
 - Not done, by design: "See today's most unusual buys" as the main call to action (contradicts the research), email/SMS digests (breaks the no-account privacy promise), Senate coverage (the Senate's site blocks automated access).
+
+## Round 72: AI-crawler block off, temporarily (2026-11-09)
+
+- At the owner's request, `app/robots.ts` no longer turns away AI training crawlers (`BLOCK_AI_TRAINING = false`); every crawler may read every page except /api/. Set it back to true to restore the block from round 68.
