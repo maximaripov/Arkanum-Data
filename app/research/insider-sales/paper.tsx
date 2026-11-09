@@ -17,8 +17,8 @@ export const PAGES: PaperPage[] = [
   { slug: "discussion", title: "Discussion, appendix and references" },
 ];
 const DESCRIPTIONS = [
-  "Arkanum tested 84,158 open-market sales by company officers and directors from 2023 to 2025. Sales flagged as notable were followed by the same returns as any other sale.",
-  "How the 84,158 sales were chosen, how Arkanum's notable-sale rule works, and how returns were measured against other sales, small-company stocks and the S&P 500.",
+  `Arkanum tested ${SALES.kept.toLocaleString("en-US")} open-market sales by company officers and directors from 2023 to 2025. Sales flagged as notable were followed by the same returns as any other sale.`,
+  `How the ${SALES.kept.toLocaleString("en-US")} sales were chosen, how Arkanum's notable-sale rule works, and how returns were measured against other sales, small-company stocks and the S&P 500.`,
   "Notable sales, large sales, top-executive sales and sales of a big share of a stake were followed by much the same returns as other sales. Charts and numbers at 1, 3 and 6 months.",
   "What the results mean, what Arkanum's notable-sale label does and doesn't say, the limits of the test, full tables for all 20 groups and references.",
 ];
