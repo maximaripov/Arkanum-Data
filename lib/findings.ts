@@ -37,8 +37,8 @@ export function findings(): Finding[] {
     },
     {
       id: "planned", href: "/research/insider-buys/results",
-      head: "Pre-planned buys did worst",
-      body: `Purchases made under a pre-set trading plan had a median of ${signed(planned.median)} against other insider buys that month (${n(planned.n)} buys), the weakest group tested.`,
+      head: "Pre-planned buys did badly",
+      body: `Purchases made under a pre-set trading plan had a median of ${signed(planned.median)} against other insider buys that month (${n(planned.n)} buys), among the weakest groups tested.`,
       figure: signed(planned.median), figureNote: `pre-planned buys, 6 months, ${VS_BUYS}`,
     },
     {

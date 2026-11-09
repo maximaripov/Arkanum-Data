@@ -8,7 +8,7 @@ import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/resear
 import { BENCH, HORIZONS, MIN_MONTHS, SALES, SALES_OOS, judge, oosMonths, p, saleGroups, saleName, saleOosStat, saleStat, type Bench } from "@/lib/research";
 
 export const BASE = "/research/insider-sales";
-export const TITLE = "Do insider stock sales predict anything? A test of 84,000 sales";
+export const TITLE = "Do insider stock sales predict anything? A test of 89,000 sales";
 const DATE = "November 2026";
 export const PAGES: PaperPage[] = [
   { slug: "", title: "Abstract and introduction" },
@@ -114,7 +114,7 @@ function Page2() {
       <p>Six months after the filing, notable sales had a median of {signed(notable.median)} against the month&apos;s typical sale and {p(notable.below).toFixed(0)}% did worse; other sales had {signed(not.median)} and {p(not.below).toFixed(0)}%. The same held at one and three months (appendix, Table A1). The rule picks out sales that look more significant, but they were not followed by worse returns.</p>
 
       <h3>4.2 The traits behind it</h3>
-      <p>Figure 2 breaks sales down by the traits the rule and the usual advice rely on. Most sit within a point of zero. The exception runs the opposite way to the usual advice: small sales, under $100,000, did slightly worse ({signed(small.median)}), while sales of $1 million or more were followed by slightly <em>better</em> returns ({signed(big.median)}), and a top executive selling outside a trading plan only slightly worse ({signed(top.median)}). Selling half or more of a stake ({signed(half.median)}) or all of it ({signed(entire.median)}) made no difference. Pre-planned and unplanned sales ({signed(plan.median)} and {signed(unplan.median)}) were also alike, which matters: if insiders were timing unplanned sales on bad news, those should have done clearly worse.</p>
+      <p>Figure 2 breaks sales down by the traits the rule and the usual advice rely on. Most sit within a point of zero. The exception runs the opposite way to the usual advice: small sales, under $100,000, did worse ({signed(small.median)}), while sales of $1 million or more were followed by <em>better</em> returns ({signed(big.median)}), and a top executive selling outside a trading plan only slightly worse ({signed(top.median)}). Selling half or more of a stake ({signed(half.median)}) or all of it ({signed(entire.median)}) made no difference. Pre-planned and unplanned sales ({signed(plan.median)} and {signed(unplan.median)}) were also alike, which matters: if insiders were timing unplanned sales on bad news, those should have done clearly worse.</p>
       <Figure n={2} title="Median six-month return after the sale by trait, against the month's typical insider sale." note="Negative: the stock did worse after the sale. Groups overlap: a sale can be a CEO's, $1M+ and half a stake at once.">
         <DivergingBars rows={bars(TRAITS)} label="Median 6-month return vs the month's typical insider sale" unit="sales" />
       </Figure>
@@ -231,7 +231,7 @@ function Page3() {
 
       <h2>References</h2>
       <ol className="paper-refs">
-        <li>Arkanum Data Research (2026). Do insider stock purchases beat the market? A test of 23,000 buys. Working paper no. 1.</li>
+        <li>Arkanum Data Research (2026). Do insider stock purchases beat the market? A test of 25,000 buys. Working paper no. 1.</li>
         <li>Cohen, L., Malloy, C. and Pomorski, L. (2012). Decoding inside information. <em>Journal of Finance</em>, 67(3), 1009–1043.</li>
         <li>Jeng, L. A., Metrick, A. and Zeckhauser, R. (2003). Estimating the returns to insider trading: a performance-evaluation perspective. <em>Review of Economics and Statistics</em>, 85(2), 453–471.</li>
         <li>Lakonishok, J. and Lee, I. (2001). Are insider trades informative? <em>Review of Financial Studies</em>, 14(1), 79–111.</li>

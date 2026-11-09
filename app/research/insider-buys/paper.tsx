@@ -8,7 +8,7 @@ import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/resear
 import { BENCH, HORIZONS, MIN_MONTHS, OOS, SAMPLE, groups, nameOf, oosMonths, oosStat, p, stat, type Bench } from "@/lib/research";
 
 export const BASE = "/research/insider-buys";
-export const TITLE = "Do insider stock purchases beat the market? A test of 23,000 buys";
+export const TITLE = "Do insider stock purchases beat the market? A test of 25,000 buys";
 const DATE = "November 2026";
 export const PAGES: PaperPage[] = [
   { slug: "", title: "Abstract and introduction" },
@@ -20,7 +20,7 @@ export const PAGES: PaperPage[] = [
 const DESCRIPTIONS = [
   `Arkanum scored ${SAMPLE.kept.toLocaleString("en-US")} officer and director purchases from 2023 to 2025 with the usual rules (CEO buys, big buys, first buys, several insiders buying) and checked how they did. The rules didn't pick better buys.`,
   `How the ${SAMPLE.kept.toLocaleString("en-US")} purchases were chosen, how each was scored, and how returns were measured against other insider buys, small-company stocks and the S&P 500.`,
-  "Higher scores didn't pick better purchases; $1M+ and pre-planned purchases did worst; directors did slightly better than CEOs; purchases filed since January 2026 point the same way so far. Charts and numbers at 1, 3 and 6 months.",
+  "Higher scores didn't pick better purchases; purchases of stocks under $5, pre-planned purchases and $1M+ purchases did worst; directors did better than CEOs; purchases filed since January 2026 point the same way so far. Charts and numbers at 1, 3 and 6 months.",
   "Insider buying as a whole trailed small-company stocks and the S&P 500 in 2023 to 2025. What Arkanum changed, and the limits of the test.",
   "Full results for all 28 groups against each benchmark, notes on the statistics, and references.",
 ];
@@ -122,7 +122,7 @@ function Page2() {
       </Figure>
 
       <h3>4.2 The traits behind the score</h3>
-      <p>Figure 3 breaks the score into the traits it rewarded. Most made no real difference. Two went the wrong way: purchases of $1 million or more had the worst median of any group ({signed(big.median)}), and purchases by a CEO, CFO, President or Chair ({signed(ceo.median)}) did worse than purchases by directors ({signed(dir.median)}), the opposite of the usual advice. A first purchase in years, a big increase in the insider&apos;s stake and several insiders buying together were all close to zero.</p>
+      <p>Figure 3 breaks the score into the traits it rewarded. Most made no real difference. Two went the wrong way: purchases of $1 million or more did clearly worse ({signed(big.median)}), and purchases by a CEO, CFO, President or Chair ({signed(ceo.median)}) did worse than purchases by directors ({signed(dir.median)}), the opposite of the usual advice. A first purchase in years, a big increase in the insider&apos;s stake and several insiders buying together were all close to zero.</p>
       <Figure n={3} title="Median six-month return by trait, against the month's typical insider purchase." note="Groups overlap: a purchase can be a CEO's, a first purchase and $1M+ at once.">
         <DivergingBars rows={bars(TRAITS)} />
       </Figure>
