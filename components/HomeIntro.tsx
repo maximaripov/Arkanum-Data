@@ -1,7 +1,5 @@
-// The top of the homepage: what Arkanum is in one line, one obvious first step (the search),
-// a short "start here" path, and a compact strip of research findings. Server-rendered.
+// The top of the homepage: what Arkanum is in one line, a short "start here" path, and a compact strip of research findings. Server-rendered.
 import Link from "next/link";
-import { Search } from "./Search";
 import { findings } from "@/lib/findings";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 
@@ -14,9 +12,8 @@ export function HomeIntro() {
       <h1 className="hi-title">Insider and Congress trades, with the evidence.</h1>
       <p className="hi-tag">Other sites sell you insider signals. We test them.</p>
       <p className="hi-lead">Every trade from SEC and House filings, linked to the source, next to how trades like it have actually performed. We publish the results, including when our own labels don&apos;t work.</p>
-      <div className="hi-search"><Search placeholder="Search a stock, insider, politician or fund" /></div>
       <ol className="hi-steps" aria-label="Start here">
-        <li><div><span className="hi-n">1</span><div><strong>Look anything up</strong><span className="muted small">A stock, an executive, a member of Congress or a fund, in the box above.</span></div></div></li>
+        <li><div><span className="hi-n">1</span><div><strong>Look anything up</strong><span className="muted small">Use the search at the top of any page to find a stock, an executive, a member of Congress or a fund.</span></div></div></li>
         <li><Link href="/markets"><span className="hi-n">2</span><div><strong>Follow what matters to you</strong><span className="muted small">Add stocks to your watchlist and follow people; get a ping when they trade.</span></div></Link></li>
         <li><Link href="/research/report-card"><span className="hi-n">3</span><div><strong>Check what the labels are worth</strong><span className="muted small">The report card: how each label did, re-checked every month.</span></div></Link></li>
       </ol>

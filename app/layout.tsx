@@ -52,11 +52,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/about#privacy">Privacy</Link>
               <Link href="/research">Research</Link>
               <Link href="/terms">Terms</Link>
+              <Link href="/briefing/archive">Past digests</Link>
               <Link href="/about#contact">Contact</Link>
             </nav>
           </div>
           <p className="foot-legal">Not investment advice. Filings and fundamentals from SEC EDGAR. Market quotes and stock charts by TradingView (stocks delayed 15 minutes). Bitcoin, gold and Treasury figures from the Federal Reserve (FRED) and CoinGecko.</p>
-          <p className="foot-copy">&copy; {new Date().getFullYear()} Arkanum Data. Independent; not affiliated with the SEC.</p>
+          <p className="foot-copy">&copy; {new Date().getFullYear()} Arkanum Data. All rights reserved. Independent; not affiliated with the SEC.</p>
         </footer>
         <TabBar />
       </body>

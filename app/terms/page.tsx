@@ -27,6 +27,11 @@ export default function Terms() {
       </section>
 
       <section className="card">
+        <h2>Copyright</h2>
+        <p>&copy; {new Date().getFullYear()} Arkanum Data. All rights reserved. The site&apos;s text, research papers, report card, scores, labels, charts and design belong to Arkanum Data and are protected by copyright. You may quote short passages and use the files on the <Link href="/open-data">Open data</Link> page with credit to Arkanum Data and a link to the site. The underlying SEC and House filings are public records and are not claimed.</p>
+      </section>
+
+      <section className="card">
         <h2>Fair use of the site</h2>
         <ul>
           <li>Use Arkanum for your own personal, non-commercial purposes.</li>

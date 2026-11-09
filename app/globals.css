@@ -680,8 +680,6 @@ section[id] { scroll-margin-top: 5rem; }
 .hi-tag { margin: 0; font-size: 1.05rem; font-weight: 600; }
 .hi-note { flex-basis: 100%; margin: .2rem 0 0; }
 .hi-lead { margin: 0; color: var(--muted); line-height: 1.55; max-width: 72ch; }
-.hi-search .search { width: 100%; max-width: none; }
-.hi-search .search input { width: 100%; font-size: 1.05rem; padding: .9rem 1rem; border: 1px solid var(--text); }
 .hi-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .hi-steps li > div, .hi-steps li > a { display: flex; gap: .7rem; align-items: flex-start; padding: .75rem .8rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; height: 100%; }
 .hi-steps li > a:hover { border-color: var(--text); }

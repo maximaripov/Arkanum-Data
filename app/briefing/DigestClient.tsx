@@ -2,7 +2,8 @@
 import { SectionIntro } from "@/components/SectionIntro";
 import { useEffect, useState } from "react";
 import { deviceId, notificationsOn, register } from "@/lib/device";
-import { DigestView, PastDigests, isDigest, type Digest } from "@/components/DigestView";
+import Link from "next/link";
+import { DigestView, isDigest, type Digest } from "@/components/DigestView";
 
 function b64ToBytes(b64: string) {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -100,15 +101,13 @@ function Notifications() {
 
 export type Entry = { date: string; kind: string; title: string; lead?: string };
 
-/** The Digest page. The server passes the latest digest and the archive (so the page arrives
- *  complete); the browser re-checks for a newer one. */
-export function DigestClient({ initial = null, initialPast = [] }: { initial?: Digest | null | "none"; initialPast?: Entry[] }) {
+/** The Digest page. The server passes the latest digest (so the page arrives complete); the
+ *  browser re-checks for a newer one. Past digests live on /briefing/archive. */
+export function DigestClient({ initial = null }: { initial?: Digest | null | "none" }) {
   const [d, setD] = useState<Digest | null | "none">(initial);
-  const [past, setPast] = useState<Entry[]>(initialPast);
   useEffect(() => {
     // The latest digest is stored by the 4 PM job; the archive (committed with the data) is the fallback.
     const archive = fetch("/data/digests/index.json").then((r) => (r.ok ? r.json() : { digests: [] })).then((x) => x.digests as Entry[]).catch(() => [] as Entry[]);
-    archive.then(setPast);
     (async () => {
       const x = await fetch("/api/alerts/digest").then((r) => r.json()).catch(() => null);
       if (isDigest(x)) return setD(x);
@@ -117,19 +116,18 @@ export function DigestClient({ initial = null, initialPast = [] }: { initial?: D
       setD(isDigest(y) ? y : "none");
     })();
   }, []);
-  const shown = d && d !== "none" ? d.date : null;
 
   return (
     <div className="stack">
       <SectionIntro title="Daily digest"
-        lead="One notification each weekday at 5:00 PM ET with the day's biggest insider buys, groups of insiders buying and big-fund moves, and a week in review on Saturdays. Every digest is archived here."
+        lead="One notification each weekday at 5:00 PM ET with the day's biggest insider buys, groups of insiders buying and big-fund moves, and a week in review on Saturdays. Every past digest is in the archive."
         source="SEC Form 4 and 13F filings, the same data as the rest of the site."
         research={<>The digest lists what was filed, not tips: in our research, the most unusual buys did no better than routine ones.</>}
         researchHref="/research" />
       {d === null ? <section className="card"><p className="muted">Loading…</p></section> : d === "none" ? (
         <section className="card"><p className="muted">The first digest arrives at 5:00 PM ET on the next weekday.</p></section>
       ) : <DigestView d={d} latest />}
-      <PastDigests list={past.filter((x) => x.date !== shown)} />
+      <p className="small muted"><Link href="/briefing/archive">Past digests ›</Link></p>
       <Notifications />
     </div>
   );

@@ -16,5 +16,5 @@ export default async function DigestPage() {
   let latest: Digest | null = null;
   try { const x = await readDigest(); if (isDigest(x)) latest = x; } catch {}
   if (!latest && past[0]) { const y = await get<unknown>(`/data/digests/${past[0].date}.json`); if (isDigest(y)) latest = y; }
-  return <DigestClient initial={latest ?? "none"} initialPast={past} />;
+  return <DigestClient initial={latest ?? "none"} />;
 }

@@ -55,7 +55,7 @@ export default function About() {
 
       <section className="card" id="contact">
         <h2>Contact</h2>
-        <p>Found a wrong number, a bug, or have a question? Open an issue on the site&apos;s public code repository: <a href="https://github.com/maximaripov/Arkanum-Data/issues" target="_blank" rel="noreferrer">github.com/maximaripov/Arkanum-Data/issues</a>. The code, the data history and the research are all there.</p>
+        <p>Found a wrong number, a bug, or have a question? Email <a href="mailto:aripovmaxim@gmail.com">aripovmaxim@gmail.com</a>.</p>
       </section>
 
       <section className="card" id="privacy">

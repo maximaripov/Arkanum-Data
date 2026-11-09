@@ -621,3 +621,10 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Homepage:** tagline "Other sites sell you insider signals. We test them."; the strip is "What actually mattered" (stocks under $5, $1M+ and CEO buys, pre-planned buys, vs the S&P 500) with a note that "vs other insider buys" is not the market. The 2026 sales claim is gone. Link previews (layout metadata, OG image, manifest) rewritten.
 - **Homepage lists server-rendered:** `app/page.tsx` fetches overview.json (revalidate 900) and passes it to `InsidersView`; the browser still refetches for freshness.
 - **Wording:** one-line "How unusual" explainer on the homepage table; "Congress trades (House)".
+
+## Round 74: homepage, digest, contact, copyright (2026-11-09)
+
+- Homepage intro: the big search box is gone (the header search stays); step 1 points to the search at the top of any page.
+- Digest page: past digests removed from it; they live on /briefing/archive, linked from a small "Past digests" line on the digest page and from the footer.
+- No mention of GitHub anywhere on the site (About contact, Open data). Contact is the owner's email; research tables are "available on request".
+- Copyright: footer reads "All rights reserved"; Terms has a Copyright section (quotes and Open data files with credit; filings themselves not claimed).

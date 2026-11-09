@@ -52,7 +52,7 @@ export default function OpenData() {
 
       <section className="card">
         <h2>Research results and history</h2>
-        <p>The research tables behind the papers and the <Link href="/research/report-card">report card</Link> (every group, every horizon, against each benchmark) are in the public repository under <a href="https://github.com/maximaripov/Arkanum-Data/tree/main/docs/backtest" target="_blank" rel="noreferrer">docs/backtest</a>, along with the code that builds every file above and its full history.</p>
+        <p>The research tables behind the papers and the <Link href="/research/report-card">report card</Link> (every group, every horizon, against each benchmark) are available on request.</p>
         <p className="small muted">Questions or a format you need? <Link href="/about#contact">Contact</Link>.</p>
       </section>
     </div>
