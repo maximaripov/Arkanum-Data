@@ -647,3 +647,9 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 
 - Set through the Vercel API (no code change). Rule 1 denies AI training crawlers by User-Agent, enforcing robots.txt; verified GPTBot gets 403, OAI-SearchBot and browsers 200. Rule 2 rate-limits `/stock/*`, `/insider/*` and `/api/*` (not `/api/alerts/*`) to 40 requests per minute per IP with a 429; verified over one connection. `/data/*` is left out because the site's server functions fetch it.
 - Not turned on: Vercel's Bot Protection managed rules (they could challenge the site's own server fetches of `/data/*` and the scheduled jobs; needs a bypass rule first, owner's call).
+
+## Round 78: Bot Protection; monitoring prompts; usage review (2026-11-09)
+
+- Vercel Bot Protection (managed rule) set to challenge, with a bypass rule for `/data/*`, `/api/alerts/*`, `/feeds/*`, sitemap, robots, manifest, icons and `opengraph-image`. Verified: those return 200 to curl; other pages return 429 "Vercel Security Checkpoint" to non-browser and cloud clients. Real phones and desktops not verifiable from the sandbox (cloud IP, headless): owner to check.
+- The daily routines would now hit the checkpoint on HTML pages. New prompts in `docs/monitoring.md` (data-file checks, Vercel API checks for cache writes, functions, deploys and firewall); they must be applied from the "Arkanum Usage" chat.
+- Usage, Nov 2-9: 1,144 MB of runtime cache writes (75% warning suggests an allowance near 1.5 GB per cycle; inferred, not confirmed). Builds peaked at 84 on Nov 4 (Hobby cap 100 a day). 62k edge requests, 0.73 GB bandwidth, 22.5k function calls, 3.8 GB-hours: all far below limits. Repo 13.5 MB (6.5 MB on Nov 8).

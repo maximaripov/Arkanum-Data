@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 77. Full history: `docs/build-log.md` (rounds 1-77); add new rounds there.
+Updated 2026-11-09, after round 78. Full history: `docs/build-log.md` (rounds 1-78); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -51,7 +51,7 @@ Updated 2026-11-09, after round 77. Full history: `docs/build-log.md` (rounds 1-
   - Small-print credits.
   - "© {year} Arkanum Data. All rights reserved." Terms has a Copyright section.
 - **robots.txt:** blocks AI training crawlers (`BLOCK_AI_TRAINING = true` in `app/robots.ts`).
-- **Vercel Firewall** (set by API 2026-11-09, round 77): (1) deny AI training crawlers by User-Agent (same list as robots.ts; keep the two in sync); (2) rate limit `/stock/*`, `/insider/*`, `/api/*` except `/api/alerts/*`: 40 requests per minute per IP, then 429. `/data/*` is never covered, because the site's own functions fetch it. Read or change with `GET/PUT https://api.vercel.com/v1/security/firewall/config?projectId=prj_Y2wu1SJDKK4fcbwNXcI2wvPhh1LK&teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q`. Testing from the sandbox needs one reused connection (curl with many URLs), because its outgoing IP changes per connection.
+- **Vercel Firewall** (set by API 2026-11-09, round 77): (1) deny AI training crawlers by User-Agent (same list as robots.ts; keep the two in sync); (2) rate limit `/stock/*`, `/insider/*`, `/api/*` except `/api/alerts/*`: 40 requests per minute per IP, then 429. `/data/*` is never covered, because the site's own functions fetch it. Read or change with `GET/PUT https://api.vercel.com/v1/security/firewall/config?projectId=prj_Y2wu1SJDKK4fcbwNXcI2wvPhh1LK&teamId=team_mx8WiIrxvt7w6bBT2jvL8t6q`. Testing from the sandbox needs one reused connection (curl with many URLs), because its outgoing IP changes per connection. (3) Bot Protection managed rule on (challenge). (4) Bypass rule (skips Bot Protection only): `/data/*`, `/api/alerts/*`, `/feeds/*`, sitemap, robots, manifest, icons, `opengraph-image`. Cloud sessions (including the routines and Playwright here) get a 429 "Vercel Security Checkpoint" on HTML pages; check pages from the owner's phone. Bypassing the Claude cloud IP range was refused as too broad (it's shared by all cloud users).
 - **vercel.json:** turns off preview deploys for `claude/**` branches.
 - **next.config.mjs:** leaves `sharp` out of server functions, which keeps Functions Storage down.
 
@@ -117,6 +117,7 @@ Updated 2026-11-09, after round 77. Full history: `docs/build-log.md` (rounds 1-
 - **Data gotcha:** read trade files through `mergeInsiders()` or `cleanTrades()`, which fix doubled filings and totals typed into the price field.
 
 ## 7. Monitoring
+- Routine prompts live in `docs/monitoring.md`; they can only be updated from the "Arkanum Usage" chat.
 - Two daily routines post to the pinned "Arkanum Usage" session (`session_01FV3qJV8Wgyssc1swtx1Eho`). They post results every day and ping the owner only when there's an issue.
   - Usage check: 7:37 PM ET (`trig_01E5A35A5tgeZXtuvtMvqfSj`).
   - Content check: 8:34 PM ET (`trig_014ngq1ztgL5aJVRk9BKYxXQ`).
