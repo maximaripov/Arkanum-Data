@@ -13,6 +13,7 @@ import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from 
 import { roleKind, saleFlags } from "../../lib/conviction.mjs";
 import { monthBootstrap } from "../../lib/bootstrap.mjs";
 import { unsplit } from "../../lib/returns.mjs";
+import { delayFields, delayTables } from "../lib/delay.mjs";
 
 const [FROM = "2023q1", TO = "2025q4", HIST = "2022q1", OUT = null] = process.argv.slice(2);
 const UA = process.env.SEC_USER_AGENT;
@@ -109,7 +110,7 @@ for (const e of tested) {
   { const i = s.findIndex(([d]) => d >= e.date), c = s[i]?.[3], k = c / (e.value / e.shares); if (c != null && !(k > 0.67 && k < 1.5)) rescued.push({ symbol: e.symbol, date: e.date, paid: +(e.value / e.shares).toFixed(4), actual: +(+s[i]?.[2]).toFixed(4), yahooClose: +(+c).toFixed(4) }); }
   const raw = {}, spyEx = {}, iwmEx = {};
   for (const [l, h] of HORIZONS) { const a = ret(s, e.filed, h), b = ret(spy, e.filed, h), c = ret(iwm, e.filed, h); raw[l] = a; spyEx[l] = a == null || b == null ? null : a - b; iwmEx[l] = a == null || c == null ? null : a - c; }
-  rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx });
+  rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx, delay: delayFields(s, spy, e) });
 }
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
 for (const [l] of HORIZONS) {
@@ -149,7 +150,9 @@ const groups = {
 };
 const BENCH = ["month", "iwm", "spy"];
 const tables = Object.fromEntries(BENCH.map((b) => [b, Object.entries(groups).map(([name, f]) => { const g = rows.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stats(g, b, l)]))]; })]));
-const out = { generated: new Date().toISOString(), from: testStart, to: read.at(-1) ?? TO, tested: tested.length, kept: rows.length, mismatched, noPrices: symbols.length - px.size, symbols: symbols.length, tables };
+// Working paper no. 3 (the filing delay): head start, insider's and follower's six months, by group and by delay.
+const delay = delayTables(rows, Object.fromEntries(["All officer/director sales", "Top executive", "Top exec, not pre-planned", "Value $1M+", "Pre-planned (10b5-1)", "Not pre-planned", "Price under $5", "Price $5+", "Notable (site rule)"].map((k) => [k, groups[k]])));
+const out = { generated: new Date().toISOString(), from: testStart, to: read.at(-1) ?? TO, tested: tested.length, kept: rows.length, mismatched, noPrices: symbols.length - px.size, symbols: symbols.length, tables, delay };
 if (OUT) await writeFile(OUT, JSON.stringify(out, null, 1));
 console.log("RESULT_JSON_START");
 console.log(JSON.stringify(out));

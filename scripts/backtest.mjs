@@ -14,6 +14,7 @@ import { quarterRange, tsv, isoDate, truthy, roleOf, getZip as getZipFor } from 
 import { conviction, roleKind } from "../lib/conviction.mjs";
 import { monthBootstrap } from "../lib/bootstrap.mjs";
 import { unsplit } from "../lib/returns.mjs";
+import { delayFields, delayTables } from "./lib/delay.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const FROM = arg("from", "2023q1"), TO = arg("to", "2025q1"), HIST = arg("history-from", "2020q1");
@@ -149,7 +150,7 @@ for (const e of tested) {
     const a = ret(s, e.filed, h), b = ret(spy, e.filed, h), c = ret(iwm, e.filed, h);
     raw[label] = a; spyEx[label] = a == null || b == null ? null : a - b; iwmEx[label] = a == null || c == null ? null : a - c;
   }
-  rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx });
+  rows.push({ ...e, entry: s.find(([d]) => d > e.filed)?.[2], raw, spy: spyEx, iwm: iwmEx, delay: delayFields(s, spy, e) });
 }
 // Versus other insider buys filed the same month: takes out market and timing, so what's
 // left is whether the score picks the better buys.
@@ -194,6 +195,8 @@ const groups = {
 };
 const BENCH = [["month", "Versus other insider buys filed the same month (isolates the score)"], ["iwm", "Versus small caps (IWM)"], ["spy", "Versus the S&P 500 (SPY)"]];
 const tables = Object.fromEntries(BENCH.map(([b]) => [b, Object.entries(groups).map(([name, f]) => { const g = rows.filter(f); return [name, Object.fromEntries(HORIZONS.map(([l]) => [l, stats(g, b, l)]))]; })]));
+// Working paper no. 3 (the filing delay): head start, insider's and follower's six months, by group and by delay.
+const delay = delayTables(rows, Object.fromEntries(["All officer/director buys", "Top executive (CEO/CFO/President/Chair)", "Director only", "Value $1M+", "Pre-planned", "Price under $5", "Price $5+", "Strong (60+)"].map((k) => [k, groups[k]])));
 
 const pct = (x) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}%`;
 const cell = (s) => s.mean == null ? `n=${s.n}` : `${s.n} · ${pct(s.mean)} · ${pct(s.median)} · ${(s.hit * 100).toFixed(0)}% · ${s.t.toFixed(1)}`;
@@ -214,7 +217,7 @@ const md = [`# Signal backtest (owner-only)`, ``,
 ].join("\n");
 await mkdir(OUT, { recursive: true });
 await writeFile(`${OUT}/results.md`, md + "\n");
-await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: LAST, scored: tested.length, kept: rows.length, mismatched, tables }, null, 1));
+await writeFile(`${OUT}/results.json`, JSON.stringify({ generated: new Date().toISOString(), from: testStart, to: LAST, scored: tested.length, kept: rows.length, mismatched, tables, delay }, null, 1));
 console.log(md);
 // A spread-out sample of the trades unsplit() rescued (under $5 first), for checking by hand.
 { const pick = (xs, n) => xs.filter((_, i) => i % Math.max(1, Math.floor(xs.length / n)) === 0).slice(0, n);
