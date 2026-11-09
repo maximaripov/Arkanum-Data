@@ -594,3 +594,16 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Filings:** Congress trades now link to the member's report on phones and on stock pages too ("Filing ↗"); insider trades already linked to SEC.
 - **Research page:** key findings in plain words first, then "How we test", then the papers.
 - **Every section opens the same way** (`components/SectionIntro.tsx`): what it shows, source and freshness, and what the research says (or that it hasn't been tested): Congress (with the live count of top traders the S&P beat), Holdings (was "Stakes"), Markets, Digest.
+
+## Round 71: second feedback round, A–I (2026-11-09)
+
+- **A, since filing on the live lists:** `build-overview.mjs` (hourly) adds each listed trade's stock and S&P 500 change from the first close after filing, with the trading days covered (`since` in overview.json); the homepage's most-unusual buys, large unplanned sales and latest filings show it, with "a few days says little" on hover. Congress trade tables show "since public" in the Traded cell; congress-trades.json keeps returns for the filtered view.
+- **B, report card** (`/research/report-card`): every label, 2023–2025 against filings since January 2026, with a verdict (Holds / Changed / Too early under 300 six-month returns; one-point dead band). First reading: several sale labels and directors' and cluster buys have changed in 2026, unsettled.
+- **C, homepage:** one band: headline, full-width search, three "Start here" steps (look up, follow, report card), a compact research strip.
+- **D, Congress windows:** 30 days / 90 days / 1 year / 2 years for most bought, most sold and most active members (`windows` and per-member `w` in congress-overview.json); default 1 year; member returns stay 2-year.
+- **E, calmer table:** "How unusual" shows the number only (score bars removed), "why" as plain text with every reason on hover, narrower name columns.
+- **F, Digest page** rendered on the server with the latest digest and archive (`app/briefing/page.tsx` → `DigestClient.tsx`); no "Loading…".
+- **G, open data** (`/open-data`): every JSON file the site reads, what it holds, how often it updates. About adds methodology, data freshness and contact (GitHub issues); footer links Methodology, Open data, Contact.
+- **H, papers as PDFs:** `/research/<paper>/print` renders the whole paper with "Save as PDF"; print styles drop the site chrome; "Download PDF" on every paper page.
+- **I, buy/sell colours and contrast:** filled BUY/SELL badges; light-theme green, red and amber darkened (#066b2e, #a61c23, #85560f). axe colour-contrast audit: 0 failures on 11 pages in both themes (was 102 in light).
+- Not done, by design: "See today's most unusual buys" as the main call to action (contradicts the research), email/SMS digests (breaks the no-account privacy promise), Senate coverage (the Senate's site blocks automated access).

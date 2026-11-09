@@ -206,22 +206,23 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
 
           <section className="card flush span8">
             <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days · unusual describes the trade, not the outlook (<Link href="/research/insider-buys/results">research</Link>)</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
-            <table className="ttable d-only">
-              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">How unusual</th><th>Why</th><th className="r">Value</th></tr></thead>
+            <div className="tscroll d-only"><table className="ttable ut">
+              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">How unusual</th><th>Why</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
                 <tr key={t.accession}>
                   <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
                   <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
-                  <td className="nowrap">{t.conv ? <><Meter score={t.conv.score} /> <span className="mono muted">{t.conv.score}</span></> : null}</td>
-                  <td>{t.conv?.reasons.filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).slice(0, 1).map((r) => <span key={r.text} className="why">{r.text}</span>)}</td>
+                  <td className="nowrap mono">{t.conv ? <>{t.conv.score}<span className="muted small">/100</span></> : null}</td>
+                  <td><Why t={t} /></td>
+                  <td className="r"><Since t={t} /></td>
                   <td className="r"><span className="mono up"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.date)}</div></td>
                 </tr>
               ))}</tbody>
-            </table>
+            </table></div>
             <ul className="lrows m-only">{o.strongest.filter((t) => t.accession !== o.hero?.t.accession).slice(0, 5).map((t) => (
               <li key={t.accession}><Link href={`/stock/${t.symbol}`}>
                 <Ring score={t.conv?.score ?? 0} />
-                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}</span></span>
+                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}{t.since ? <> · since filing <SincePct x={t.since.s} /> (S&amp;P {pct1(t.since.m)}, {t.since.d}d)</> : null}</span></span>
                 <span className="lrow-v"><span className="mono up">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.date)}</span></span>
               </Link></li>
             ))}</ul>
@@ -248,7 +249,7 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
             <ul className="lrows">{o.latest.map((t, i) => (
               <li key={t.accession + t.code + i}><Link href={`/stock/${t.symbol}`}>
                 <span className={`side ${t.code === "P" ? "up" : "down"}`}>{t.code === "P" ? "BUY" : "SELL"}</span>
-                <span className="lrow-main"><strong>{t.symbol}</strong><span className="muted small">{personName(t.owner)} · {shortDay(t.filed || t.date)}</span></span>
+                <span className="lrow-main"><strong>{t.symbol}</strong><span className="muted small">{personName(t.owner)} · {shortDay(t.filed || t.date)}{t.since ? <> · since filing <SincePct x={t.since.s} /> (S&amp;P {pct1(t.since.m)})</> : null}</span></span>
                 <span className={`lrow-v mono ${t.code === "P" ? "up" : "down"}`}>${fmtBig(t.value ?? 0)}</span>
               </Link></li>
             ))}</ul>
@@ -258,12 +259,13 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
             <section className="card flush">
               <div className="card-title"><h2>Large unplanned sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
               <table className="ttable d-only">
-                <thead><tr><th>Stock</th><th>Insider</th><th>What stands out</th><th className="r">Value</th></tr></thead>
+                <thead><tr><th>Stock</th><th>Insider</th><th>What stands out</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
                 <tbody>{o.notableSales.map((t) => (
                   <tr key={t.accession + t.code}>
                     <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
                     <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
-                    <td>{t.sale?.flags.filter((f) => !/^(CEO|CFO|President|Chair)$/.test(f.text)).map((f) => <span key={f.text} className="why">{f.text}</span>)}</td>
+                    <td className="muted small">{t.sale?.flags.filter((f) => !/^(CEO|CFO|President|Chair)$/.test(f.text)).map((f) => f.text).join(" · ")}</td>
+                    <td className="r"><Since t={t} /></td>
                     <td className="r"><span className="mono down"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.filed || t.date)}</div></td>
                   </tr>
                 ))}</tbody>
@@ -284,10 +286,23 @@ function InsiderTrades({ view, go }: { view: Exclude<View, "funds" | "famous">; 
 }
 
 /** The buy score as ten small bars (desktop tables). */
-function Meter({ score }: { score: number }) {
-  return <span className="meter" aria-label={`How unusual: ${score} of 100`}>{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(score / 10) ? "on" : ""} />)}</span>;
-}
 /** The buy score as a ring with the score inside (phone lists). */
+const SINCE_HELP = "The stock's change from the first close after the filing to the latest close, the S&P 500 over the same days, and how many trading days that is. A few days says little.";
+const pct1 = (x: number) => `${x > 0.0005 ? "+" : x < -0.0005 ? "−" : ""}${Math.abs(x * 100).toFixed(1)}%`;
+const SincePct = ({ x }: { x: number }) => <span className={`mono ${x > 0.0005 ? "up" : x < -0.0005 ? "down" : ""}`}>{pct1(x)}</span>;
+/** Since filing: the stock, the S&P 500 over the same days, and how many trading days. */
+function Since({ t }: { t: InsiderTrade }) {
+  if (!t.since) return <span className="muted small" title={SINCE_HELP}>—</span>;
+  const { s, m, d } = t.since;
+  return <span title={SINCE_HELP}><SincePct x={s} /><div className="muted small">S&amp;P {pct1(m)} · {d} {d === 1 ? "day" : "days"}</div></span>;
+}
+/** The reasons a buy is unusual: the first in the cell, all of them on hover. */
+function Why({ t }: { t: InsiderTrade }) {
+  const rs = (t.conv?.reasons ?? []).filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).map((r) => r.text);
+  if (!rs.length) return null;
+  return <span className="muted small" title={rs.join(" · ")}>{rs[0]}{rs.length > 1 ? <span className="more-why"> +{rs.length - 1}</span> : null}</span>;
+}
+
 function Ring({ score }: { score: number }) {
   return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`How unusual: ${score} of 100`}><b className="mono">{score}</b></span>;
 }

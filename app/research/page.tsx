@@ -43,6 +43,8 @@ export default function Research() {
           ))}
         </ol>
 
+        <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
+
         <h2>How we test</h2>
         <ul>
           <li><strong>Every trade, not a selection:</strong> all open-market buys and sales by officers and directors in SEC&apos;s insider data sets, with the few whose ticker or price didn&apos;t match left out and counted.</li>

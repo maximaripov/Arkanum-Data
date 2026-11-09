@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Paper, type PaperPage } from "@/components/research/Paper";
+import { PaperPrint } from "@/components/research/PaperPrint";
 import { DivergingBars, DotPlot, ColumnPanel, Figure } from "@/components/research/Charts";
 import { BENCH, HORIZONS, SALES, SALES_OOS, p, saleGroups, saleName, saleOosStat, saleStat, type Bench } from "@/lib/research";
 
@@ -240,4 +241,10 @@ export function PaperPageView({ i }: { i: number }) {
       <Body />
     </Paper>
   );
+}
+
+/** The whole paper on one page, for printing or saving as a PDF. */
+export function PaperPrintView() {
+  const updated = new Date(SALES_OOS.generated).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return <PaperPrint base={BASE} title={TITLE} date={DATE} no={2} pages={PAGES} bodies={BODIES.map((B, i) => <B key={i} />)} updated={updated} />;
 }

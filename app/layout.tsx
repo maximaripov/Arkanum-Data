@@ -46,10 +46,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="foot-brand"><LogoMark size={20} /><span>Arkanum Data</span></Link>
             <nav className="foot-links" aria-label="About this site">
               <Link href="/about">About</Link>
-              <Link href="/about#data">Data sources</Link>
+              <Link href="/about#methodology">Methodology</Link>
+              <Link href="/open-data">Open data</Link>
               <Link href="/about#privacy">Privacy</Link>
               <Link href="/research">Research</Link>
               <Link href="/terms">Terms</Link>
+              <Link href="/about#contact">Contact</Link>
             </nav>
           </div>
           <p className="foot-legal">Not investment advice. Filings and fundamentals from SEC EDGAR. Market quotes and stock charts by TradingView (stocks delayed 15 minutes). Bitcoin, gold and Treasury figures from the Federal Reserve (FRED) and CoinGecko.</p>

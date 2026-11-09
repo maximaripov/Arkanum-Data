@@ -15,13 +15,16 @@ import { SectionIntro } from "@/components/SectionIntro";
 
 export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean };
 /** usd, buyUsd, sellUsd: estimated dollars traded (midpoints of the reported ranges). */
-export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; usd?: number; buyUsd?: number; sellUsd?: number; last: string; ret?: { buys: RetSide; sells: RetSide } };
+export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; usd?: number; buyUsd?: number; sellUsd?: number; last: string; ret?: { buys: RetSide; sells: RetSide }; w?: Record<string, [usd: number, n: number, buys: number, sells: number]> };
 /** What the member dropdown needs. */
 export type PickerMember = Pick<Member, "m" | "p" | "sd" | "n" | "usd">;
+type Ranked = { t: string; a: string; members: number; n: number; usd?: number };
 export type Overview = {
   updated: string;
   stats: { trades30: number; members30: number; buys30: number; sells30: number; medianDelay: number | null; scannedSkipped: number; total: number };
-  latest: CTrade[]; bought: { t: string; a: string; members: number; n: number; usd?: number }[]; sold: { t: string; a: string; members: number; n: number; usd?: number }[]; members: Member[];
+  latest: CTrade[]; bought: Ranked[]; sold: Ranked[]; members: Member[];
+  /** The same lists by trade date over 30, 90, 365 and 730 days. */
+  windows?: Record<string, { bought: Ranked[]; sold: Ranked[] }>;
 };
 
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
@@ -47,7 +50,7 @@ export function CongressTrades({ trades, showMember = true, showStock = true, sh
             {showStock ? <td className="cstock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></Link></td> : null}
             <td><span className={`side ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span></td>
             <td className="mono r">{range(t.lo, t.hi)}{OWNER[t.o] ? <div className="muted small">{OWNER[t.o]}</div> : null}</td>
-            <td className="mono muted r">{traded(t)}{t.du ? null : <div className="small">reported {delay(t)} days later</div>}</td>
+            <td className="mono muted r">{traded(t)}{t.du ? null : <div className="small">reported {delay(t)} days later</div>}{!showReturns && pairs(t)[1] ? <div className="small" title="The stock since the first close after the disclosure, and the S&P 500 over the same days">since public <span className={pairs(t)[1]![0] > pairs(t)[1]![1] ? "up" : "down"}>{pctS(pairs(t)[1]![0])}</span> vs {pctS(pairs(t)[1]![1])}</div> : null}</td>
             {showReturns ? <><td className="r"><ReturnCell p={pairs(t)[0]} /></td><td className="r"><ReturnCell p={pairs(t)[1]} /></td></> : null}
           </tr>
         ))}</tbody>
@@ -159,6 +162,7 @@ export function MemberView({ member: sel, trades: shown, members, skipped, retur
 export function CongressView({ initial }: { initial?: Overview | null }) {
   const router = useRouter();
   const [o, setO] = useState<Overview | null | undefined>(initial ?? undefined);
+  const [win, setWin] = useState("365"); // time window for the ranked lists
   useEffect(() => {
     // Old links (/congress?member=Name) go to the member's page.
     const m = new URLSearchParams(location.search).get("member");
@@ -169,6 +173,12 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
   if (o === undefined) return <section className="card"><p className="muted">Loading…</p></section>;
   if (!o) return <section className="card"><p className="muted">Congress trades aren&apos;t available right now.</p></section>;
   const s = o.stats;
+  const w = o.windows?.[win];
+  const bought = w?.bought ?? o.bought, sold = w?.sold ?? o.sold;
+  const winLabel = w ? WINDOW_LABEL[win] : "last 90 days";
+  const active = o.members.some((x) => x.w)
+    ? [...o.members].filter((x) => (x.w?.[win]?.[1] ?? 0) > 0).sort((a, b) => (b.w![win][0] - a.w![win][0]) || (b.w![win][1] - a.w![win][1]))
+    : o.members;
   return (
     <div className="ov">
       <CongressIntro o={o} />
@@ -187,9 +197,10 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
       </section>
 
       <div className="stack span4" style={{ alignContent: "start" }}>
-        {[["Most bought", o.bought, "up"], ["Most sold", o.sold, "down"]].map(([title, list, tone]) => (
+        {o.windows ? <WindowPick win={win} setWin={setWin} /> : null}
+        {[["Most bought", bought, "up"], ["Most sold", sold, "down"]].map(([title, list, tone]) => (
           <section key={title as string} className="card flush">
-            <div className="card-title"><h2>{title as string} <span className="muted small">last 90 days · estimated $</span></h2></div>
+            <div className="card-title"><h2>{title as string} <span className="muted small">{winLabel} · estimated $</span></h2></div>
             <ul className="lrows">{(list as Overview["bought"]).slice(0, 6).map((x) => (
               <li key={x.t}><Link href={`/stock/${x.t}`}>
                 <strong className="lrow-sym">{x.t}</strong>
@@ -202,15 +213,28 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
       </div>
 
       <section className="card flush">
-        <div className="card-title"><h2>Most active members <span className="muted small">estimated $ traded, last 2 years</span></h2></div>
-        <ul className="lrows">{o.members.slice(0, 12).map((x) => (
+        <div className="card-title"><h2>Most active members <span className="muted small">estimated $ traded, {winLabel}{win !== "730" ? " · returns over 2 years" : ""}</span></h2>{o.windows ? <WindowPick win={win} setWin={setWin} /> : null}</div>
+        {!active.length ? <p className="muted pad">No member reported a stock trade in this window.</p> : null}
+        <ul className="lrows">{active.slice(0, 12).map((x) => (
           <li key={x.m}><Link href={`/congress/${memberSlug(x.m)}`}>
-            <span className="lrow-main"><span className="wraps"><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small wraps">{x.n.toLocaleString("en-US")} trades · latest {day(x.last)}{x.ret?.buys?.trade ? <> · buys {pctS(x.ret.buys.trade.stock)} vs S&amp;P {pctS(x.ret.buys.trade.spy)}</> : null}</span></span>
-            <span className="lrow-v"><span className="mono">{x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.n.toLocaleString("en-US")} trades`}</span><span className="muted small"><span className="up">{x.buys} buys</span> · <span className="down">{x.sells} sales</span></span></span>
+            <span className="lrow-main"><span className="wraps"><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small wraps">{(x.w ? x.w[win][1] : x.n).toLocaleString("en-US")} trades · latest {day(x.last)}{x.ret?.buys?.trade ? <> · buys {pctS(x.ret.buys.trade.stock)} vs S&amp;P {pctS(x.ret.buys.trade.spy)}</> : null}</span></span>
+            <span className="lrow-v"><span className="mono">{x.w ? `~$${fmtBig(x.w[win][0])}` : x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.n.toLocaleString("en-US")} trades`}</span><span className="muted small"><span className="up">{x.w ? x.w[win][2] : x.buys} buys</span> · <span className="down">{x.w ? x.w[win][3] : x.sells} sales</span></span></span>
           </Link></li>
         ))}</ul>
       </section>
       <Note skipped={s.scannedSkipped} />
+    </div>
+  );
+}
+
+const WINDOW_LABEL: Record<string, string> = { "30": "last 30 days", "90": "last 90 days", "365": "last year", "730": "last 2 years" };
+/** Time window for the ranked lists (by trade date). */
+function WindowPick({ win, setWin }: { win: string; setWin: (w: string) => void }) {
+  return (
+    <div className="winpick" role="group" aria-label="Time window">
+      {[["30", "30d"], ["90", "90d"], ["365", "1y"], ["730", "2y"]].map(([k, l]) => (
+        <button key={k} className={win === k ? "on" : ""} aria-pressed={win === k} onClick={() => setWin(k)}>{l}</button>
+      ))}
     </div>
   );
 }

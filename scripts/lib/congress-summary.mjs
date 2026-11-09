@@ -58,7 +58,14 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
   }
   const lag = stocks.filter((t) => t.filed >= daysAgo(365) && !t.dateUnclear).map((t) => (Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000).sort((a, b) => a - b);
   const last30 = stocks.filter((t) => t.filed >= daysAgo(30));
+  // The same lists over other windows (by trade date): most bought and sold, and each member's
+  // estimated dollars, trades, buys and sales, for the page's 30 days / 90 days / 1 year / 2 years.
+  const WINDOWS = [30, 90, 365, 730];
+  const windows = Object.fromEntries(WINDOWS.map((d) => { const w = stocks.filter((t) => t.date >= daysAgo(d)); return [d, { bought: rank(w, "P"), sold: rank(w, "S") }]; }));
+  for (const m of members.values()) m.w = Object.fromEntries(WINDOWS.map((d) => [d, [0, 0, 0, 0]]));
+  for (const t of stocks) for (const d of WINDOWS) if (t.date >= daysAgo(d)) { const w = members.get(t.member).w[d]; w[0] += estAmount(t.min, t.max); w[1]++; w[t.type === "P" ? 2 : 3]++; }
   for (const m of members.values()) {
+    for (const d of WINDOWS) m.w[d][0] = Math.round(m.w[d][0]);
     for (const k of ["usd", "buyUsd", "sellUsd"]) m[k] = Math.round(m[k]);
     // How the stocks did after this member's buys and after their sales.
     if (asOf) m.ret = { buys: summary(stocks.filter((t) => t.member === m.m && t.type === "P")), sells: summary(stocks.filter((t) => t.member === m.m && t.type !== "P")) };
@@ -69,12 +76,12 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
     returnsAsOf: asOf,
     stats: { trades30: last30.length, members30: new Set(last30.map((t) => t.member)).size, buys30: last30.filter((t) => t.type === "P").length, sells30: last30.filter((t) => t.type === "S").length, medianDelay: lag.length ? Math.round(lag[Math.floor(lag.length / 2)]) : null, scannedSkipped, total: stocks.length },
     latest: stocks.slice(0, 60).map(slim),
-    bought: rank(recent90, "P"), sold: rank(recent90, "S"),
+    bought: rank(recent90, "P"), sold: rank(recent90, "S"), windows,
     members: list.map(({ trades, ...m }) => m),
   }));
   // Every stock trade, for the Congress page's filters and sorting (fetched only when used).
-  // No returns or long asset names, to keep it small.
-  await writeFile("public/data/congress-trades.json", JSON.stringify({ trades: stocks.map((t) => { const { r, ...x } = slim(t); return { ...x, a: x.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "").slice(0, 40) }; }) }));
+  // Shortened asset names to keep it small; returns kept (the table shows them).
+  await writeFile("public/data/congress-trades.json", JSON.stringify({ trades: stocks.map((t) => { const x = slim(t); return { ...x, a: x.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "").slice(0, 40) }; }) }));
   await mkdir(DIR, { recursive: true });
   for (const f of await readdir(DIR)) if (!bySlug.has(f.replace(/\.json$/, ""))) await rm(`${DIR}/${f}`);
   for (const { trades, ...m } of list) await writeFile(`${DIR}/${m.s}.json`, JSON.stringify({ member: m, returnsAsOf: asOf, trades }));

@@ -10,7 +10,7 @@
    "printout" of the terminal, with green and red darkened for contrast. */
 html[data-theme="light"] {
   --bg: #ffffff; --card: #ffffff; --card2: #f5f5f5; --line: #d4d4d4; --text: #0a0a0a; --muted: #5c5c5c;
-  --up: #0a8a3e; --down: #c6282d; --accent: #0a0a0a; --brand: #0a0a0a; --bar: #0a8a3e; --chip: #f0f0f0; --meter-off: #e2e2e2; --level: #b7791f;
+  --up: #066b2e; --down: #a61c23; --accent: #0a0a0a; --brand: #0a0a0a; --bar: #066b2e; --chip: #f0f0f0; --meter-off: #e2e2e2; --level: #85560f;
   --glow: none;
   --ma50: #2563eb; --ma200: #9333ea; --rsi: #0891b2; --cmp1: #2563eb; --cmp2: #db2777; --cmp3: #ca8a04;
   --shadow: 0 1px 2px #0000000d, 0 8px 24px -14px #0f172a26;
@@ -566,8 +566,8 @@ h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
 .hero, .kpis { border: 3px double var(--text) !important; background: var(--card) !important; }
 .hero-tag { background: transparent !important; border: 1px solid var(--up); color: var(--up) !important; text-transform: uppercase; letter-spacing: .06em; }
 .hero-chips span { background: transparent !important; }
-.side.up { background: transparent !important; border: 1px solid var(--up); color: var(--up); }
-.side.down { background: transparent !important; border: 1px solid var(--down); color: var(--down); }
+.side.up { background: color-mix(in srgb, var(--up) 18%, transparent) !important; border: 1px solid var(--up); color: var(--up); font-weight: 700; }
+.side.down { background: color-mix(in srgb, var(--down) 18%, transparent) !important; border: 1px solid var(--down); color: var(--down); font-weight: 700; }
 .linkbtn::before { content: "> "; }
 
 
@@ -673,27 +673,25 @@ section[id] { scroll-margin-top: 5rem; }
 .lrow-doc { display: flex; align-items: center; padding: 0 .9rem 0 .2rem; font-size: .72rem; color: var(--muted); white-space: nowrap; }
 .lrow-doc:hover { color: var(--text); }
 
-/* Homepage top (components/HomeIntro.tsx): what Arkanum is, search, three research findings. */
-.home-intro { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; margin-bottom: 14px; }
-.hi-top, .hi-findings { border: 1px solid var(--line); border-radius: 14px; padding: 1.3rem 1.3rem 1.1rem; background: var(--card); min-width: 0; }
-.hi-top { display: grid; gap: .8rem; align-content: start; }
-.hi-title { font-size: 1.75rem; line-height: 1.2; margin: 0; letter-spacing: -.01em; }
-.hi-lead { margin: 0; color: var(--muted); line-height: 1.55; font-size: .95rem; }
+/* Homepage top (components/HomeIntro.tsx): one line on what Arkanum is, search as the first step,
+   a short start-here path, and a compact research strip. */
+.home-intro { border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem 1.5rem 1.1rem; background: var(--card); margin-bottom: 14px; display: grid; gap: .9rem; }
+.hi-title { font-size: 1.9rem; line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+.hi-lead { margin: 0; color: var(--muted); line-height: 1.55; max-width: 72ch; }
 .hi-search .search { width: 100%; max-width: none; }
-.hi-search .search input { width: 100%; font-size: 1rem; padding: .75rem .9rem; }
-.hi-links { display: flex; flex-wrap: wrap; gap: .4rem; }
-.hi-links a { border: 1px solid var(--line); padding: .3rem .65rem; font-size: .8rem; color: var(--text); text-decoration: none; border-radius: 999px; }
-.hi-links a:hover { border-color: var(--text); }
-.hi-findings { display: grid; gap: .8rem; align-content: start; }
-.hi-kicker { margin: 0; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
-.hi-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.hi-card { display: grid; gap: .3rem; align-content: start; border: 1px solid var(--line); padding: .9rem; color: var(--text); text-decoration: none; background: var(--card2); border-radius: 10px; }
-.hi-card:hover { border-color: var(--text); }
-.hi-fig { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
-.hi-fignote { margin-bottom: .3rem; }
-.hi-findings > .linkbtn { justify-self: start; }
-@media (max-width: 900px) { .home-intro { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 640px) { .hi-cards { grid-template-columns: minmax(0, 1fr); } .hi-title { font-size: 1.4rem; } .hi-top, .hi-findings { padding: 1rem; } }
+.hi-search .search input { width: 100%; font-size: 1.05rem; padding: .9rem 1rem; border: 1px solid var(--text); }
+.hi-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hi-steps li > div, .hi-steps li > a { display: flex; gap: .7rem; align-items: flex-start; padding: .75rem .8rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; height: 100%; }
+.hi-steps li > a:hover { border-color: var(--text); }
+.hi-steps li div div, .hi-steps a div { display: grid; gap: .15rem; }
+.hi-n { flex: none; width: 1.6rem; height: 1.6rem; border: 1px solid var(--text); border-radius: 50%; display: grid; place-items: center; font-size: .8rem; font-weight: 700; }
+.hi-findings { display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; border-top: 1px solid var(--line); padding-top: .8rem; }
+.hi-kicker { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-right: .3rem; }
+.hi-find { font-size: .82rem; color: var(--text); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: .25rem .65rem; }
+.hi-find:hover { border-color: var(--text); }
+.hi-find .mono { font-weight: 700; margin-right: .2rem; }
+.hi-find.more { border: 0; color: var(--muted); }
+@media (max-width: 760px) { .hi-steps { grid-template-columns: minmax(0, 1fr); } .hi-title { font-size: 1.45rem; } .home-intro { padding: 1.1rem 1rem .9rem; } }
 
 /* Section intro (components/SectionIntro.tsx): the same opening on every section. */
 .intro h1 { margin: 0 0 .35rem; font-size: 1.35rem; }
@@ -710,3 +708,30 @@ section[id] { scroll-margin-top: 5rem; }
 .find-fig { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
 .findings p { margin: .25rem 0 0 !important; }
 @media (max-width: 640px) { .findings li { grid-template-columns: minmax(0, 1fr); gap: .2rem; } }
+/* Report card verdicts */
+.ttable td.level { color: var(--level); font-weight: 600; }
+/* Congress: time window for the ranked lists */
+.winpick { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.winpick button { border: 0; background: transparent; color: var(--muted); padding: .3rem .6rem; font: inherit; font-size: .78rem; cursor: pointer; }
+.winpick button.on { background: var(--chip); color: var(--text); font-weight: 600; }
+.stack > .winpick { justify-self: start; }
+/* Printing a paper (or saving it as a PDF): just the paper, black on white. */
+.print-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.2rem; font-size: .85rem; }
+.print-part-title { margin-top: 2.2rem !important; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media print {
+  @page { margin: 16mm 14mm; }
+  header.nav, .ticker, .tabbar, .site-footer, .welcome-backdrop, .no-print, .paper-toc, .paper-pager { display: none !important; }
+  html, body, main, .paper { background: #fff !important; color: #000 !important; }
+  .paper { border: 0 !important; max-width: none !important; padding: 0 !important; box-shadow: none !important; }
+  .paper *, .paper-chart text { color: #000 !important; text-shadow: none !important; }
+  .paper a { color: #000 !important; text-decoration: none; }
+  .paper-figure, .paper-table, .findings li { break-inside: avoid; }
+  .print-part { break-before: page; }
+  .print-part:first-of-type { break-before: auto; }
+  .muted { color: #444 !important; }
+}
+/* Most unusual buys: narrower name columns so "Since filing" fits beside them. */
+.ttable.ut td:first-child a { max-width: 10rem; }
+.ttable.ut td:nth-child(2) { max-width: 10.5rem; overflow: hidden; text-overflow: ellipsis; }
+.ttable.ut td:nth-child(4) { max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ttable.ut th, .ttable.ut td { padding-left: .7rem; padding-right: .7rem; }
