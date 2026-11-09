@@ -25,18 +25,23 @@ console.log(`${trades.length} stock trades (${all.length} lines in the file), tr
 
 const spy = await dailyCloses("SPY", from);
 if (!spy) throw new Error("No S&P 500 prices");
+// The equal-weighted S&P 500 (every company counts the same), so a few giant companies
+// can't make every individual stock pick look bad.
+const rsp = await dailyCloses("RSP", from);
+if (!rsp) throw new Error("No equal-weighted S&P 500 prices");
 const px = await closesFor(trades.map((t) => t.ticker), from, { pause: 100 });
 console.log(`prices for ${px.size} of ${new Set(trades.map((t) => t.ticker)).size} stocks, through ${spy.at(-1)[0]}`);
 
 const at = (s, date, after = false) => s.findIndex(([d]) => (after ? d > date : d >= date));
-const spyAt = new Map(spy.map(([d], i) => [d, i]));
-/** Stock minus S&P 500 from index i for h trading days, or null. */
-function excess(s, i, h) {
+const index = (b) => ({ b, at: new Map(b.map(([d], i) => [d, i])) });
+const SPY = index(spy), RSP = index(rsp);
+/** Stock minus a benchmark from index i for h trading days, or null. */
+function excess(s, i, h, bench = SPY) {
   if (i < 0 || i + h >= s.length) return null;
   const a = s[i + h][1] / s[i][1] - 1;
-  const si = spyAt.get(s[i][0]), sj = spyAt.get(s[i + h][0]);
+  const si = bench.at.get(s[i][0]), sj = bench.at.get(s[i + h][0]);
   if (si == null || sj == null) return null;
-  return a - (spy[sj][1] / spy[si][1] - 1);
+  return a - (bench.b[sj][1] / bench.b[si][1] - 1);
 }
 
 const rows = [];
@@ -48,10 +53,10 @@ for (const t of trades) {
   if (i0 < 0 || j < 0) { noPrice++; continue; }
   if (Date.parse(s[i0][0]) - Date.parse(t.date) > 10 * 86_400_000) { laterListing++; continue; }
   // mine: from the member's trade date; follow: from the first close after the disclosure.
-  const mine = {}, follow = {};
-  for (const [l, h] of HORIZONS) { mine[l] = excess(s, i0, h); follow[l] = excess(s, j, h); }
+  const mine = {}, follow = {}, mineEq = {}, followEq = {};
+  for (const [l, h] of HORIZONS) { mine[l] = excess(s, i0, h); follow[l] = excess(s, j, h); mineEq[l] = excess(s, i0, h, RSP); followEq[l] = excess(s, j, h, RSP); }
   const lagDays = Math.round((Date.parse(t.filed) - Date.parse(t.date)) / 86_400_000);
-  rows.push({ ...t, mid: t.min != null && t.max != null ? (t.min + t.max) / 2 : t.min, lagDays, head: excess(s, i0, Math.max(0, j - i0)) ?? (j === i0 ? 0 : null), mine, follow });
+  rows.push({ ...t, mid: t.min != null && t.max != null ? (t.min + t.max) / 2 : t.min, lagDays, head: excess(s, i0, Math.max(0, j - i0)) ?? (j === i0 ? 0 : null), mine, follow, mineEq, followEq });
 }
 console.log(`${rows.length} trades kept; ${noPrice} without prices, ${laterListing} whose ticker now belongs to a later listing`);
 
@@ -90,6 +95,8 @@ const side = (type) => Object.entries(GROUPS).map(([name, f]) => {
     n: g.length,
     member: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.mine[l])])),
     follower: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.follow[l])])),
+    memberEq: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.mineEq[l])])),
+    followerEq: Object.fromEntries(HORIZONS.map(([l]) => [l, stat(g, (r) => r.followEq[l])])),
     head: stat(g, (r) => r.head),
     weighted6: { member: weighted(g, (r) => r.mine["6 months"]), follower: weighted(g, (r) => r.follow["6 months"]) },
   }];

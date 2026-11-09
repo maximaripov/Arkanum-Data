@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci # some scripts need the repo's packages (e.g. fast-xml-parser for 13F)
       - name: Run
         env:
           SCRIPT: ${{ inputs.script }}

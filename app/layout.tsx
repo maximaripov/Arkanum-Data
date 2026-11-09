@@ -27,6 +27,18 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: THEME_COLORS.dark, width: "device-width", initialScale: 1, viewportFit: "cover" };
 
+// Tells search engines what the site is (schema.org): the site's name for brand searches, and
+// the organization behind it. No social profiles yet; add them under sameAs when they exist.
+const SITE = "https://arkanumdata.vercel.app";
+const JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebSite", "@id": `${SITE}/#website`, url: SITE, name: "Arkanum Data", alternateName: "Arkanum", description: DESCRIPTION, inLanguage: "en-US", publisher: { "@id": `${SITE}/#org` } },
+    { "@type": "Organization", "@id": `${SITE}/#org`, name: "Arkanum Data", url: SITE, logo: `${SITE}/icon-512.png`,
+      description: "Arkanum Data is a free website that shows insider and House members' stock trades from official SEC and House filings, and tests how trades like them have actually done." },
+  ],
+}).replace(/</g, "\\u003c");
+
 // Applies a saved light-mode choice before the first paint, so dark-mode visitors and
 // light-mode visitors both see their theme immediately (dark is the default).
 const THEME_SCRIPT = `try{if(localStorage.getItem(${JSON.stringify(THEME_KEY)})==="light"){document.documentElement.dataset.theme="light";var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",${JSON.stringify(THEME_COLORS.light)})}}catch(e){}`;
@@ -34,7 +46,7 @@ const THEME_SCRIPT = `try{if(localStorage.getItem(${JSON.stringify(THEME_KEY)})=
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} /></head>
       <body>
         <ServiceWorker />
         <Welcome />
