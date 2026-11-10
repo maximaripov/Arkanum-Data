@@ -1,6 +1,6 @@
-# Form4
+# Arkanum Data
 
-A free, public market tracker built around official filings: what company insiders buy and sell, what big funds hold, what companies announce, and how their businesses are doing — in plain English — with prices, charts and news from TradingView. No account, no ads. Works on any phone via **Add to Home Screen**, with an optional daily notification.
+Insider and House-member stock trades from official filings, with tested evidence next to each one. Tagline: "Other sites sell you insider signals. We test them." Five working papers measure how insider buys, insider sales, the filing delay, House trades and copying famous funds' 13F reports actually did, and every trade on the site shows how trades like it did. Prices, charts and news come from TradingView. No account, no ads. Works on any phone via **Add to Home Screen**, with an optional daily notification.
 
 Live: https://arkanumdata.vercel.app
 
@@ -8,12 +8,17 @@ Live: https://arkanumdata.vercel.app
 
 | Page | What it does | Data |
 |---|---|---|
+| Home | What Arkanum is, three places to start, and the research's key findings (computed from the papers' data); this week's most unusual buys, large unplanned sales and latest filings | SEC Form 4; research results |
 | Markets | Ticker tape and market overview (indices, commodities, bonds, forex, crypto), your watchlist, this week's insider buying | TradingView widgets; SEC Form 4 |
-| Stock page | TradingView quote header (incl. next earnings, market cap, P/E, yield) and full chart (indicators, compare); SEC fundamentals; 8-K announcements in plain English; TradingView headlines; big funds holding it; insider trades; Congress trades | TradingView, SEC, House Clerk |
-| Insiders | Insider trades (30 days; officers & directors vs funds; cluster buys; live feed) and Big funds (13F) for 13 well-known funds | SEC Form 4, SEC 13F |
-| Stakes | What listed companies (NVIDIA, Amazon, Alphabet…) own in other companies: quarterly holdings and changes, 5%+ stakes, and private investments announced in press releases (unverified, linked) | SEC 13F, SEC 13D/13G; PR Newswire, Business Wire |
+| Stock page | TradingView quote header (incl. next earnings, market cap, P/E, yield) and full chart (indicators, compare); SEC fundamentals; 8-K announcements in plain English; TradingView headlines; big funds holding it; insider trades with a "Trades like this" evidence line; Congress trades | TradingView, SEC, House Clerk |
+| Insider trades (home tabs) | Insider trades (30 days; officers & directors vs funds; cluster buys; live feed) and Big funds (13F) for 13 well-known funds | SEC Form 4, SEC 13F |
+| Insider page (`/insider/[cik]`) | One insider's trades with returns since filing; Follow for alerts | SEC Form 4 |
+| Congress | House members' trades (30 days to 2 years): most bought, most sold, most active, filters; a page per member with Follow | House Clerk |
+| Holdings (`/stakes`) | What listed companies (NVIDIA, Amazon, Alphabet…) own in other companies: quarterly holdings and changes, 5%+ stakes, and private investments announced in press releases (unverified, linked) | SEC 13F, SEC 13D/13G; PR Newswire, Business Wire |
 | Digest | Daily summary after the 4 PM close: biggest insider buys, cluster buys, big-fund filings, coming events, and your watchlist's insider trades and fund moves. Optional push notification personalized to your watchlist, plus instant alerts for watchlist buys and people you follow | All of the above |
-| About | Disclaimer, data sources and attribution, privacy | — |
+| Research | Five working papers (each with a PDF version) and a report card re-checking every label against filings since January 2026; papers refresh monthly and publish only while their written claims still hold | SEC Form 4, SEC 13F, House Clerk; prices |
+| Open data | Every JSON file the site reads, what it holds and how often it updates | — |
+| About | Disclaimer, methodology, data sources and attribution, freshness, privacy, contact | — |
 
 ## Data licensing (why it's built this way)
 
@@ -28,7 +33,7 @@ Not used, because their terms don't allow showing their data to the public: Yaho
 ## How it runs (free)
 
 - **Vercel Hobby** hosts the site (free for non-commercial use). A private **Vercel Blob** store holds devices that turned on notifications (random device ID, push address, watchlist, people followed) and the latest digest.
-- **GitHub Actions** (`.github/workflows/data.yml`) runs weekdays at 4:02 PM New York time: SEC fundamentals → insider trades → 13F holdings → big economic releases → health check → digest → commit. `insiders-hourly.yml` adds new filings hourly; `stakes.yml` updates company stakes each weekday morning. If any step fails, nothing is sent or published and the owner's devices get an alert naming the step. The job proves its identity to the site with a GitHub-signed token (no secret stored in GitHub).
+- **GitHub Actions** (`.github/workflows/data.yml`) runs weekdays at 4:02 PM New York time: SEC fundamentals → insider trades → 13F holdings → big economic releases → health check → digest → commit. `insiders-hourly.yml` adds new filings every two hours on weekdays (the file name kept "hourly"); `congress.yml` adds House trades daily; `research-refresh.yml` reruns the studies monthly; `stakes.yml` updates company stakes each weekday morning. If any step fails, nothing is sent or published and the owner's devices get an alert naming the step. The job proves its identity to the site with a GitHub-signed token (no secret stored in GitHub).
 
 ### Settings
 
@@ -48,7 +53,7 @@ node scripts/daily-digest.mjs --dry-run
 
 ## Known limits
 
-- **Free-tier limits:** Vercel Hobby and the Blob store have usage limits; notifications are capped at 5,000 devices. If Form4 gets popular, these are the first things to revisit.
+- **Free-tier limits:** Vercel Hobby and the Blob store have usage limits; notifications are capped at 5,000 devices. If Arkanum gets popular, these are the first things to revisit.
 - **Fundamentals** use the last 4 reported quarters where SEC data allows, otherwise the last fiscal year; dividends and free cash flow use the last fiscal year. Banks, insurers and funds don't get free cash flow or debt/equity.
 - **ETFs** aren't in SEC's company list, so search doesn't suggest them; typing the ticker and pressing Enter still opens a TradingView chart.
 - **13F holdings** are 6–20 weeks old when published.

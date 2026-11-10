@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-84); add new rounds there.
+Updated 2026-11-10, after round 86. Full history: `docs/build-log.md` (rounds 1-86); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -58,11 +58,11 @@ Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-
 ## 4. Pages
 - **`/` (home):**
   - Intro box with the tagline and three steps: look up (via the header search; the big search box is gone), follow, report card.
-  - "What actually mattered" strip, all six-month medians:
-    - stocks under $5: −2.6%
-    - $1M+ buys: −4.7%, and CEO buys also trailed
-    - pre-planned buys: −6.9%
-    - insider buys vs the S&P 500: −5.4%
+  - "What actually mattered" strip, all six-month medians, computed by `lib/findings.ts` from the research files (so they follow the monthly refresh; don't hardcode them anywhere). As of 2026-11-10, after the split fix:
+    - stocks under $5: −6.4%
+    - $1M+ buys: −4.8%, and CEO-level buys also trailed (−1.6%)
+    - pre-planned buys: −5.1%
+    - insider buys vs the S&P 500: −6.7%
   - A note says "vs other insider buys" means the month's typical insider buy, not the market.
   - The overview lists are server-rendered: `app/page.tsx` fetches overview.json with revalidate 900 and passes it to `InsidersView`.
   - Tabs: Overview, Group buys, All trades, Big funds, Well-known.
@@ -82,7 +82,7 @@ Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-
   - Dated pages live at `/briefing/[date]`.
   - The daily is released at 5 PM ET by cron-job.org calling `/api/alerts/release`. The week in review comes out on Saturdays.
 - **Research:**
-  - `/research`: key findings, report card link, how we test, both papers.
+  - `/research`: key findings, report card link, how we test, all five papers.
   - `/research/insider-buys`: paper no. 1.
   - `/research/insider-sales`: paper no. 2.
   - `/research/report-card`: each label, 2023-25 vs since January 2026.
@@ -95,8 +95,8 @@ Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-
 
 ## 5. Research (the site's core claim)
 - **Data:**
-  - `docs/backtest/results.json`: 22,951 buys, 2023-25.
-  - `sales.json`: 84,133 sales.
+  - `docs/backtest/results.json`: 24,922 buys kept, 2023-25 (after the split fix).
+  - `sales.json`: 89,416 sales kept.
   - `oos-2026.json` and `sales-2026.json`: filings since January 2026, refreshed monthly by `research-refresh.yml`.
   - Read through `lib/research.ts`. Findings come from `lib/findings.ts`, built from the same numbers.
 - **Split fix (round 81):** Yahoo's close is split-adjusted; `unsplit()` in `lib/returns.mjs` restores the traded price for the ticker check. Rescued 1,973 buys and 5,283 sales (mostly reverse-split penny stocks); stocks under $5 went from −2.6% to −6.4%. Spot-checked against Tiingo. No correction note on the papers (owner's choice).
@@ -139,4 +139,5 @@ Updated 2026-11-09, after round 84. Full history: `docs/build-log.md` (rounds 1-
   - protecting the Arkanum name is a trademark matter.
 - **Name risk:** "Arkanum" is close to the ARCANUM trademark in financial services (Arcanum Global). Revisit before anything commercial.
 - **Price fallback (round 80):** Tiingo when Yahoo fails, via `TIINGO_API_KEY` (Vercel env var + GitHub secret, set by the owner). Until both are set, there is no fallback. Tiingo's free plan is personal / non-commercial.
+- **Launch drafts are stale:** `docs/backtest/social-drafts.md` and `writeup-draft.md` still say "Form4", link to the old `form4-insiders.vercel.app`, and quote pre-split-fix numbers. Rewrite them before anyone posts them (offered to the owner 2026-11-10, not started).
 - **Ideas not started:** Bluesky auto-post bot, buybacks, weekly archive pages.
