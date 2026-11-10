@@ -27,8 +27,9 @@ Everything shown is either public domain or explicitly licensed for free display
 - **SEC EDGAR, BEA, Federal Reserve:** public domain.
 - **TradingView widgets:** free to embed on other sites as long as TradingView's attribution stays as designed (the "by TradingView" links under each widget). US stock prices in widgets are delayed; forex and crypto are real-time.
 - **OpenFIGI:** CUSIP → ticker lookups.
+- **Yahoo Finance (Tiingo as fallback):** daily closing prices, used only to calculate returns after each filing (on trade pages and in the research). No Yahoo or Tiingo prices or quotes are shown; every price on screen comes from a TradingView widget.
 
-Not used, because their terms don't allow showing their data to the public: Yahoo Finance, Nasdaq's site API (options, analyst ratings, earnings/dividend calendars), Coinbase market data, ApeWisdom (Reddit mentions).
+Not used, because their terms don't allow showing their data to the public: Nasdaq's site API (options, analyst ratings, earnings/dividend calendars), Coinbase market data, ApeWisdom (Reddit mentions).
 
 ## How it runs (free)
 
