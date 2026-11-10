@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MemberView, type CTrade, type Member, type Overview } from "@/components/CongressView";
+import { readCongressOverview } from "@/lib/siteData";
+import { readCongressMember } from "@/lib/congressFiles";
 
 // One page per House member, built on first visit and refreshed at most hourly (the data
 // changes once a day), so the trades are in the HTML for visitors and search engines.
 export const revalidate = 3600;
 export async function generateStaticParams() { return []; }
-const SITE = "https://arkanumdata.vercel.app";
-
-const get = async <T,>(path: string): Promise<T | null> => {
-  const r = await fetch(SITE + path, { next: { revalidate: 3600 } }).catch(() => null);
-  return r?.ok ? ((await r.json()) as T) : null;
-};
-const load = (slug: string) => /^[a-z0-9-]+$/.test(slug) ? get<{ member: Member; trades: CTrade[]; returnsAsOf?: string | null }>(`/data/congress/${slug}.json`) : Promise.resolve(null);
+// Read from the deployment's own copy, not fetched through the runtime cache (its writes are limited).
+const load = (slug: string) => readCongressMember(slug) as Promise<{ member: Member; trades: CTrade[]; returnsAsOf?: string | null } | null>;
 
 export async function generateMetadata({ params }: { params: Promise<{ member: string }> }): Promise<Metadata> {
   const slug = (await params).member;
@@ -27,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ member: s
 
 export default async function Page({ params }: { params: Promise<{ member: string }> }) {
   const slug = (await params).member;
-  const [d, o] = await Promise.all([load(slug), get<Overview>("/data/congress-overview.json")]);
+  const [d, o] = await Promise.all([load(slug), readCongressOverview() as Promise<Overview | null>]);
   if (!d) notFound();
   return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n, usd }) => ({ m, p, sd, n, usd }))} skipped={o?.stats.scannedSkipped ?? 0} returnsAsOf={d.returnsAsOf} />;
 }

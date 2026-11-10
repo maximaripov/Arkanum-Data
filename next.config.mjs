@@ -4,7 +4,14 @@ const nextConfig = {
   // sharp (image resizing for next/image, which the site doesn't use) was ~48 MB of every
   // ~54 MB server function, and Vercel keeps every function of every deployment it retains:
   // that filled the 10 GB Functions Storage allowance. Leave it out of the bundles.
-  outputFileTracingExcludes: { "*": ["node_modules/@img/**", "node_modules/sharp/**"] },
+  outputFileTracingExcludes: {
+    "*": [
+      "node_modules/@img/**", "node_modules/sharp/**",
+      // Read over HTTP, never from disk; the Congress member pages' folder read would otherwise
+      // pull these two big files (7 MB) into their functions too.
+      "public/data/congress.json", "public/data/congress-trades.json",
+    ],
+  },
   // Basic browser protections on every page: no framing by other sites (clickjacking), no
   // MIME sniffing, no full URLs leaked to other sites, no camera/mic/location access. A full
   // Content-Security-Policy is left out on purpose: the TradingView embeds load scripts from

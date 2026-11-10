@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StockView, type StockInitial } from "./StockView";
-import { cikForTicker, insidersForTicker } from "@/lib/sec";
-import { announcements } from "@/lib/news";
+import { cikForTicker } from "@/lib/sec";
+import { announcementsCached, insidersForTickerCached } from "@/lib/secCached";
 import { withConviction } from "@/lib/conviction.mjs";
 import { withHistory } from "@/lib/insiderData";
 import { readInsiders, readScreener } from "@/lib/siteData";
@@ -32,8 +32,8 @@ async function load(symbol: string): Promise<{ initial: StockInitial; known: boo
   const quiet = <T,>(p: Promise<T>) => p.catch(() => null);
   const [c, ins, news, sc, site] = await Promise.all([
     cikForTicker(symbol).catch(() => undefined), // null: SEC doesn't list it; undefined: SEC couldn't be reached
-    quiet(insidersForTicker(symbol)),
-    quiet(announcements(symbol)),
+    quiet(insidersForTickerCached(symbol)),
+    quiet(announcementsCached(symbol)),
     readScreener(),
     readInsiders(),
   ]);

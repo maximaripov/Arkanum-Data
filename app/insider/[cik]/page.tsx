@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { insiderTradesByOwner } from "@/lib/sec";
+import { unstable_cache } from "next/cache";
+import { insiderTradesByOwnerCached } from "@/lib/secCached";
 import { withConviction } from "@/lib/conviction.mjs";
 import { withHistory } from "@/lib/insiderData";
 import { readInsiders } from "@/lib/siteData";
@@ -24,7 +25,7 @@ const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US",
 
 async function load(cik: string) {
   const [r, site] = await Promise.all([
-    insiderTradesByOwner(cik), // an SEC outage fails the render, so the last good page stays cached
+    insiderTradesByOwnerCached(cik), // an SEC outage fails the render, so the last good page stays cached
     readInsiders(),
   ]);
   if (!r) return null;
@@ -53,12 +54,21 @@ async function withReturns(trades: InsiderTrade[]): Promise<string | null> {
 }
 const side = (list: InsiderTrade[]): RetSide => ({ trade: summarize(list.map((t) => t.ret?.trade)), pub: summarize(list.map((t) => t.ret?.pub)) });
 
+// The trades with their returns, cached as one small result: the price series behind the
+// returns (years of daily closes per stock) are fetched inside the cache and not stored.
+const withPrices = unstable_cache(async (cik: string) => {
+  const d = await load(cik);
+  if (!d) return null;
+  const asOf = await withReturns(d.trades.filter((t) => t.code === "P" || t.code === "S"));
+  return { d, asOf };
+}, ["insider-page-v1"], { revalidate: 21600 });
+
 export default async function InsiderPage({ params }: { params: Promise<{ cik: string }> }) {
   const { cik } = await params;
-  const d = await load(cik);
-  if (!d) notFound();
+  const page = await withPrices(cik);
+  if (!page) notFound();
+  const { d, asOf } = page;
   const market = d.trades.filter((t) => t.code === "P" || t.code === "S");
-  const asOf = await withReturns(market);
   const sum = (code: string) => market.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
   const companies = new Map<string, InsiderTrade>();
   for (const t of d.trades) if (!companies.has(t.symbol)) companies.set(t.symbol, t); // newest first

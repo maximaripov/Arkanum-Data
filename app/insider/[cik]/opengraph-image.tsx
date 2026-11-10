@@ -1,6 +1,6 @@
 // Share picture for an insider page: the person, their role, what they bought and sold in
 // their latest filings, and the latest three trades.
-import { insiderTradesByOwner } from "@/lib/sec";
+import { insiderTradesByOwnerCached } from "@/lib/secCached";
 import { companyName, personName, roleLabel } from "@/lib/people.mjs";
 import { fmtBig } from "@/lib/format";
 import { ogImage, ogDay, OG_SIZE } from "@/lib/og";
@@ -14,7 +14,7 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ cik: string }> }) {
   const { cik } = await params;
-  const r = await insiderTradesByOwner(cik).catch(() => null);
+  const r = await insiderTradesByOwnerCached(cik).catch(() => null);
   const trades = r?.trades ?? [];
   const name = personName(r?.name || trades[0]?.owner || "Insider");
   const market = trades.filter((t) => (t.code === "P" || t.code === "S") && t.value);

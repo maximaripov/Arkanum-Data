@@ -1,6 +1,7 @@
 // Share picture for a Congress member's page: name, party and seat, two years of stock
 // trades, and the latest three.
 import { amountRange } from "@/lib/congress.mjs";
+import { readCongressMember } from "@/lib/congressFiles";
 import { ogImage, ogDay, OG_SIZE } from "@/lib/og";
 import type { CTrade, Member } from "@/components/CongressView";
 
@@ -10,12 +11,10 @@ export async function generateStaticParams() { return []; }
 export const alt = "This House member's stock trades on Arkanum";
 export const size = OG_SIZE;
 export const contentType = "image/png";
-const SITE = "https://arkanumdata.vercel.app";
 
 export default async function Image({ params }: { params: Promise<{ member: string }> }) {
   const slug = (await params).member;
-  const r = /^[a-z0-9-]+$/.test(slug) ? await fetch(`${SITE}/data/congress/${slug}.json`, { next: { revalidate: 3600 } }).catch(() => null) : null;
-  const d = r?.ok ? ((await r.json()) as { member: Member; trades: CTrade[] }) : null;
+  const d = (await readCongressMember(slug)) as { member: Member; trades: CTrade[] } | null;
   if (!d) return ogImage({ section: "Congress trades", title: "House stock trades", empty: "From members' STOCK Act reports" });
   const m = d.member;
   return ogImage({
