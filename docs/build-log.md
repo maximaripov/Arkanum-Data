@@ -704,3 +704,8 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - README: renamed from Form4 to Arkanum Data; intro leads with the research; page table adds Home, insider page, Congress, Research and Open data, renames Stakes to Holdings; the insider job is every two hours, plus the Congress and monthly research jobs.
 - Handoff: homepage figures updated to the post-split-fix values (under $5 −6.4%, $1M+ −4.8%, CEO-level −1.6%, pre-planned −5.1%, vs S&P 500 −6.7%), with a note that `lib/findings.ts` computes them; sample sizes 24,922 buys and 89,416 sales; five papers; the launch drafts in `docs/backtest/` flagged as stale (old name, old URL, old numbers).
 - README licensing: Yahoo Finance is no longer listed as "not used". It is listed as the source of daily closes for calculated returns only (Tiingo as fallback), with no quotes shown. This is a description, not a licensing clearance.
+
+## Round 87: ticker on federal holidays (2026-11-11)
+
+- On Veterans Day the tape read "Live · 14 h ago": SEC's EDGAR takes no filings on federal holidays, so the insider job found 0 new filings all day and left `updated` at the previous night's run. The data was fine; the label wasn't.
+- `secHolidays()` / `secClosed()` in `lib/marketDays.mjs` (federal holidays by rule: open Good Friday, closed Columbus Day and Veterans Day; test against OPM's 2026 list). On those days `components/Ticker.tsx` shows "SEC closed today" instead of "Live · …", as weekends show "This week".

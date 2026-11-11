@@ -15,3 +15,11 @@ test("closed on weekends and holidays, open otherwise", () => {
   assert.equal(marketClosed("2026-11-11"), false); // Veterans Day: stocks trade
   assert.equal(marketClosed("2026-11-27"), false); // day after Thanksgiving: early close, still open
 });
+
+test("SEC (federal) holidays, 2026 (as published by OPM)", async () => {
+  const { secHolidays, secClosed } = await import("../lib/marketDays.mjs");
+  assert.deepEqual(secHolidays(2026), ["2026-01-01", "2026-01-19", "2026-02-16", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07", "2026-10-12", "2026-11-11", "2026-11-26", "2026-12-25"]);
+  assert.equal(secClosed("2026-11-11"), true); // Veterans Day: NYSE open, EDGAR closed
+  assert.equal(secClosed("2026-04-03"), false); // Good Friday: NYSE closed, EDGAR open
+  assert.equal(secClosed("2026-11-12"), false);
+});

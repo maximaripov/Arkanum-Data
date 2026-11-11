@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import { cleanTrades } from "@/lib/insiderMerge.mjs";
+import { secClosed } from "@/lib/marketDays.mjs";
 import type { InsiderTrade } from "@/lib/sec";
 
 const ago = (iso: string) => {
@@ -67,8 +68,11 @@ export function Ticker() {
     .sort((a, b) => (b.filed || b.date).localeCompare(a.filed || a.date) || (b.value ?? 0) - (a.value ?? 0))
     .slice(0, 24);
   if (!d || !items.length) return null;
-  // On Saturdays and Sundays (New York time) nothing new is filed, so the tape is the week's trades, not live.
+  // On weekends and federal holidays (New York time) SEC accepts no filings, so the tape isn't
+  // live: "14 h ago" on Veterans Day read as a broken feed.
+  const nyDay = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const weekend = ["Sat", "Sun"].includes(new Date().toLocaleDateString("en-US", { weekday: "short", timeZone: "America/New_York" }));
+  const holiday = !weekend && secClosed(nyDay);
   // Rolls right to left like an exchange tape: the list is drawn twice and slides by one
   // copy's width, so the loop has no seam. A short list is repeated first so a copy is
   // wider than the screen. Speed stays the same whatever the length (~3.5 s per trade).
@@ -80,7 +84,7 @@ export function Ticker() {
   );
   return (
     <div className="ticker" aria-label="Today's insider trades">
-      {weekend ? <span className="ticker-live">This week</span> : <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>}
+      {weekend ? <span className="ticker-live">This week</span> : holiday ? <span className="ticker-live" title="Federal holiday: SEC accepts no filings today">SEC closed today</span> : <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>}
       <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
         onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
         <div className="ticker-run" ref={runRef} style={{ animationDuration: `${run.length * 3.5}s` }}>
