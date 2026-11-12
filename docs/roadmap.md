@@ -118,7 +118,7 @@ row read twice:
 | 9 | Move the 13 hedge funds (today the Insiders page's "Big funds" tab) under Institutional Holdings, next to company holdings, so the renamed section holds all institutional data |
 | 9 | More funds: add the most-followed 13F filers (about 15 more), same study pipeline so paper no. 5 refreshes with them |
 
-## Phase 6: strategy backtester (rounds 94-95)
+## Phase 6: strategy backtester (round 93, done; plus saved strategies with alerts)
 
 | Notes | Item |
 |---|---|

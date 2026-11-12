@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { applyRules, decode, DEFAULT_RULES, HORIZONS, summarize, verdict } from "@/lib/lab.mjs";
 import { RangeBar } from "@/components/TradeAnalysis";
+import { MAX_SAVED, useStrategies, type Saved } from "@/components/useStrategies";
+import { notificationsOn } from "@/lib/device";
 
 type Rules = typeof DEFAULT_RULES;
 type Row = ReturnType<typeof decode>[number];
@@ -21,6 +23,64 @@ const PRESETS: [string, Rules][] = [
   ["3+ insiders buying", { ...DEFAULT_RULES, minInsiders: 3 }],
   ["Top executives, $2B+ companies", { ...DEFAULT_RULES, topOnly: true, minCapM: 2000 }],
 ];
+
+/** A strategy's rules in words, for its default name and the saved list. */
+function describe(r: Rules) {
+  const parts = [r.ceoOnly ? "CEOs" : r.topOnly ? "Top executives" : "All insiders"];
+  if (r.minInsiders > 1) parts.push(`${r.minInsiders}+ buying`);
+  if (r.minValue) parts.push(`$${r.minValue >= 1e6 ? `${r.minValue / 1e6}M` : `${r.minValue / 1e3}K`}+`);
+  if (r.minCapM) parts.push(`$${r.minCapM >= 1000 ? `${r.minCapM / 1000}B` : `${r.minCapM}M`}+ companies`);
+  if (r.noPlanned) parts.push("not pre-planned");
+  if (r.noUnder5) parts.push("$5+ stocks");
+  return parts.join(", ");
+}
+
+/** Save a strategy for alerts: a name, with its tested six-month result kept alongside. */
+function SaveStrategy({ rules, rows, period, label }: { rules: Rules; rows: Row[] | null; period: string; label: string }) {
+  const { list, save } = useStrategies();
+  const [name, setName] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [on, setOn] = useState(true);
+  useEffect(() => setOn(notificationsOn()), []);
+  const s = useMemo(() => (rows ? summarize(rows, "m6") : null), [rows]);
+  const dup = list.some((x) => JSON.stringify(x.rules) === JSON.stringify(rules));
+  const id = `save-${label.replace(/\W/g, "")}`;
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = save({ name: (name.trim() || describe(rules)).slice(0, 60), rules, med: s?.med ?? null, period });
+    setMsg(ok ? "Saved. You'll get an alert when a new purchase meets every rule." : `You can save up to ${MAX_SAVED} strategies; remove one first.`);
+    setName("");
+  };
+  return (
+    <form className="lab-save" onSubmit={submit}>
+      <label htmlFor={id} className="small">Get an alert when a new purchase meets every rule</label>
+      <div className="lab-save-row">
+        <input id={id} placeholder={describe(rules)} value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
+        <button className="btn" type="submit" disabled={dup}>{dup ? "Saved" : "Save and alert me"}</button>
+      </div>
+      {s ? <p className="muted small">In {period === "2026" ? "2026 so far" : "2023 to 2025"} this strategy did {pct(s.med)} against the S&amp;P 500 over six months ({VERDICT[verdict(s)].charAt(0).toLowerCase() + VERDICT[verdict(s)].slice(1)}). An alert means a purchase meets your rules, not that it will do well.</p> : null}
+      {msg ? <p className="small" role="status">{msg}</p> : null}
+      {!on ? <p className="small">Alerts need notifications on this device: <Link href="/briefing#notify">turn them on</Link>.</p> : null}
+    </form>
+  );
+}
+
+/** The strategies saved on this device, with their tested result; open one in A or remove it. */
+function SavedList({ load }: { load: (r: Rules) => void }) {
+  const { list, remove } = useStrategies();
+  if (!list.length) return null;
+  return (
+    <section className="card">
+      <h2>Your saved strategies <span className="muted small">alerts on this device, {list.length} of {MAX_SAVED}</span></h2>
+      <ul className="lab-saved">{list.map((x: Saved) => (
+        <li key={x.id}>
+          <div><strong>{x.name}</strong><span className="muted small">{describe(x.rules)}{x.med != null ? ` · tested ${x.period === "2026" ? "2026" : "2023-25"}: ${pct(x.med)} vs S&P 500, 6 months` : ""}</span></div>
+          <div className="lab-saved-act"><button className="linkbtn" onClick={() => load(x.rules)}>Open in A</button><button className="linkbtn" onClick={() => remove(x.id)} aria-label={`Stop alerts for ${x.name}`}>Remove</button></div>
+        </li>
+      ))}</ul>
+    </section>
+  );
+}
 
 function RuleForm({ rules, set, label }: { rules: Rules; set: (r: Rules) => void; label: string }) {
   const up = (k: keyof Rules, v: Rules[keyof Rules]) => set({ ...rules, [k]: v });
@@ -117,10 +177,11 @@ export function LabView() {
       </div>
       {d === null ? <p className="muted">The {period} table isn&apos;t published yet; it&apos;s written by the research backtest.</p> : null}
       <div className="lab-grid">
-        <section className="card"><RuleForm rules={a} set={setA} label="Strategy A" /><Results rows={rowsA} title="Strategy A" /></section>
-        <section className="card"><RuleForm rules={b} set={setB} label="Strategy B" /><Results rows={rowsB} title="Strategy B" /></section>
+        <section className="card"><RuleForm rules={a} set={setA} label="Strategy A" /><Results rows={rowsA} title="Strategy A" /><SaveStrategy rules={a} rows={rowsA} period={period} label="A" /></section>
+        <section className="card"><RuleForm rules={b} set={setB} label="Strategy B" /><Results rows={rowsB} title="Strategy B" /><SaveStrategy rules={b} rows={rowsB} period={period} label="B" /></section>
       </div>
       <Compare a={rowsA} b={rowsB} />
+      <SavedList load={setA} />
       <section className="paper-body lab-notes">
         <h2>Reading the results</h2>
         <ul>
@@ -130,7 +191,7 @@ export function LabView() {
           {usesCap && d ? <li><strong>Market cap</strong> is the entry price times shares outstanding from SEC filings. It is unknown for {Math.round(d.unknownCap * 100)}% of purchases (mostly foreign companies), which drop out when a minimum is set.</li> : null}
           <li>Returns are before trading costs and taxes, and stocks that stopped trading are left out, which flatters the results somewhat. Past results, not a forecast. <Link href="/research/methodology">Methodology ›</Link></li>
         </ul>
-        {d ? <p className="muted small">Filings from {d.from} to {d.to}. Returns against the S&amp;P 500 only; no prices are published.</p> : null}
+        {d ? <p className="muted small">Filings from {d.from.slice(0, 4)} to the end of {d.to.replace(/^(\d{4})q(\d)$/i, "Q$2 $1")}. Returns against the S&amp;P 500 only; no prices are published.</p> : null}
       </section>
     </article>
   );

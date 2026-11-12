@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 92. Full history: `docs/build-log.md` (rounds 1-92); add new rounds there.
+Updated 2026-11-12, after round 93. Full history: `docs/build-log.md` (rounds 1-93); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -94,6 +94,7 @@ Updated 2026-11-12, after round 92. Full history: `docs/build-log.md` (rounds 1-
   - `/research/house-trades`: paper no. 4 (House trades vs the S&P 500 and the equal-weighted S&P 500). Numbers: `docs/backtest/congress.json`, a one-off run of `scripts/diagnose/congress-study.mjs` (runs locally: no SEC needed).
   - `/research/fund-copying`: paper no. 5 (13F funds). Numbers: `docs/backtest/funds.json` from `scripts/diagnose/funds-study.mjs` via `diagnose.yml`.
   - `/research/<paper>/print`: PDF version of each paper.
+  - `/research/lab`: strategy backtester over `public/data/lab/*.json` (from `backtest.mjs --lab`); strategies can be saved for alerts (checked by `instant-alerts.mjs`).
 - **Navigation:** Insiders, Congress, Research, Institutional Holdings (`/stakes`), Markets, Digest. Custom 404 page.
 - **Institutional Holdings** (`/stakes`): tabs Companies and Funds (28 funds, `scripts/build-funds.mjs`; followable, alerts via `scripts/fund-alerts.mjs`).
 - **Watching** (`/watching`): everything this device watches, new since last visit. CSV export buttons on stock, insider, member and fund pages (raw filings only).
@@ -138,7 +139,7 @@ Updated 2026-11-12, after round 92. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-5 done (rounds 88-92); next is phase 6 (the strategy backtester, `/research/lab`). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-6 done (rounds 88-93); next is phase 7 (competitor audit, brand pillars, the launch kit). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**

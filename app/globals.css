@@ -831,3 +831,10 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .lab-rules select { max-width: 100%; }
 @media (max-width: 900px) { .lab-grid { grid-template-columns: minmax(0, 1fr); } }
 .lab-compare { border: 1px solid var(--line); padding: .7rem .9rem; margin: 14px 0; } .lab-compare.apart { border-color: var(--accent); }
+.lab-save { border-top: 1px solid var(--line); margin-top: .8rem; padding-top: .7rem; display: grid; gap: .35rem; }
+.lab-save-row { display: flex; gap: .4rem; flex-wrap: wrap; }
+.lab-save-row input { flex: 1; min-width: 0; background: var(--card2); color: var(--text); border: 1px solid var(--line); padding: .35rem .5rem; }
+.lab-saved { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.lab-saved li { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: .45rem; }
+.lab-saved li > div:first-child { display: grid; gap: .1rem; }
+.lab-saved-act { display: flex; gap: .8rem; }

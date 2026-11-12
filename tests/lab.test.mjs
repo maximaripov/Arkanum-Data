@@ -36,3 +36,25 @@ test("summarize gives median, range and beat share; verdict needs the range to e
   assert.equal(verdict(summarize(mixed, "m6")), "no clear edge");
   assert.equal(summarize([], "m6"), null);
 });
+
+import { roleCode, tradeAsRow, cleanRules, matches } from "../lib/lab.mjs";
+const trade = (x) => ({ code: "P", filed: "2026-11-10", role: "Director, Chief Executive Officer", value: 250_000, shares: 10_000, price: 25, planned: false, ...x });
+
+test("roleCode: CEO first, then top executives, directors, other officers", () => {
+  assert.deepEqual(["Director, Chief Executive Officer", "Chief Financial Officer", "Director", "SVP, Operations"].map(roleCode), [ROLE.ceo, ROLE.top, ROLE.director, ROLE.officer]);
+});
+
+test("matches: a live purchase against a saved strategy, with market cap from shares outstanding", () => {
+  const rules = { ceoOnly: true, minValue: 100_000, noPlanned: true, minInsiders: 2, minCapM: 1000 };
+  assert.equal(matches(trade(), rules, { insiders: 2, shares: 100e6 }), true); // $2.5B company
+  assert.equal(matches(trade(), rules, { insiders: 1, shares: 100e6 }), false); // only one insider buying
+  assert.equal(matches(trade(), rules, { insiders: 2, shares: null }), false); // market cap unknown
+  assert.equal(matches(trade({ planned: true }), rules, { insiders: 2, shares: 100e6 }), false);
+  assert.equal(matches(trade({ code: "S" }), {}, {}), false);
+  assert.equal(tradeAsRow(trade({ price: 3 })).u, 1);
+});
+
+test("cleanRules keeps only known rules with sane values", () => {
+  assert.deepEqual(cleanRules({ ceoOnly: true, topOnly: true, minInsiders: "3", minValue: -5, minCapM: 2000, evil: "x" }), { ceoOnly: true, topOnly: false, minInsiders: 3, minValue: 0, noPlanned: false, minCapM: 2000, noUnder5: false });
+  assert.equal(cleanRules(null), null);
+});

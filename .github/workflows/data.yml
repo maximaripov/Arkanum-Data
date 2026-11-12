@@ -84,6 +84,10 @@ jobs:
       - id: funds
         name: Update big-fund holdings (SEC 13F)
         run: FUNDS_NEW_OUT="$RUNNER_TEMP/funds-new.json" node scripts/build-funds.mjs
+      # Shares outstanding by ticker, for the market-cap rule of saved lab strategies.
+      - name: Shares outstanding (SEC XBRL frames)
+        continue-on-error: true
+        run: node scripts/build-shares.mjs
       - id: events
         name: Update economic calendar
         env:

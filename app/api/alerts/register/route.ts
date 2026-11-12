@@ -1,6 +1,6 @@
 // A device turns notifications on/off or updates its watchlist and who it follows.
 // No account: the random device ID (kept on the device) is what identifies it.
-import { MAX_DEVICES, ownerCodeOk, readDevices, sanitizeFollowing, sanitizeSub, sanitizeWatchlist, updateDevices, validId } from "@/lib/alerts";
+import { MAX_DEVICES, ownerCodeOk, readDevices, sanitizeFollowing, sanitizeStrategies, sanitizeSub, sanitizeWatchlist, updateDevices, validId } from "@/lib/alerts";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -22,6 +22,8 @@ export async function POST(req: Request) {
       if (w) cur.watchlist = w;
       const fo = sanitizeFollowing(body.following);
       if (fo) cur.following = fo;
+      const st = sanitizeStrategies(body.strategies);
+      if (st) cur.strategies = st;
       if (body.ownerCode !== undefined) cur.owner = ownerCodeOk(body.ownerCode);
       if (typeof body.instant === "boolean") cur.instant = body.instant;
       delete (cur as any).screens; delete (cur as any).screenMatches; // left over from the removed screener

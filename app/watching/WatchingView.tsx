@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useWatchlist } from "@/components/useWatchlist";
 import { useFollowing, type Followed } from "@/components/useFollowing";
 import { fmtBig } from "@/lib/format";
+import { useStrategies } from "@/components/useStrategies";
 
 const SEEN = "arkanum.watching.seen";
 type WatchItem = { t: string; name: string | null; insiders: { buys: number; buyValue: number; sells: number; sellValue: number }; funds: { bought: string[]; sold: string[] } };
@@ -20,6 +21,7 @@ const New = () => <span className="new-tag">New</span>;
 export function WatchingView() {
   const { list: tickers } = useWatchlist();
   const { list: following } = useFollowing();
+  const { list: strategies } = useStrategies();
   const [since, setSince] = useState<string | null>(null);
   const [stocks, setStocks] = useState<WatchItem[] | null>(null);
   const [members, setMembers] = useState<Record<string, MemberFile | null>>({});
@@ -52,7 +54,7 @@ export function WatchingView() {
   }, [fundIds.join()]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isNew = (date?: string | null) => !!since && !!date && date > since;
-  const nothing = !tickers.length && !following.length;
+  const nothing = !tickers.length && !following.length && !strategies.length;
   return (
     <div className="stack">
       <section className="card">
@@ -107,6 +109,15 @@ export function WatchingView() {
               </Link></li>
             );
           })}</ul>
+        </section>
+      ) : null}
+
+      {strategies.length ? (
+        <section className="card flush">
+          <div className="card-title"><h2>Saved strategies <span className="muted small">an alert when a new purchase meets every rule</span></h2><Link href="/research/lab" className="linkbtn">Research lab ›</Link></div>
+          <ul className="lrows">{strategies.map((x) => (
+            <li key={x.id}><Link href="/research/lab"><span className="lrow-main"><strong>{x.name}</strong><span className="muted small">saved {day(x.saved)}{x.med != null ? ` · tested ${x.period === "2026" ? "2026" : "2023-25"}: ${x.med > 0 ? "+" : x.med < 0 ? "−" : ""}${Math.abs(x.med * 100).toFixed(1)}% vs the S&P 500 over 6 months` : ""}</span></span></Link></li>
+          ))}</ul>
         </section>
       ) : null}
 

@@ -31,6 +31,7 @@ export const notificationsOn = () => ls.get(ON) === "1";
 const prefs = () => ({
   watchlist: ls.json<string[] | null>("foresight.watchlist", null) ?? DEFAULT_WATCHLIST,
   following: ls.json<{ cik: string }[]>("foresight.following", []).map((p) => p.cik),
+  strategies: ls.json<unknown[]>("arkanum.strategies", []), // saved in the research lab
 });
 const SYNCED = "foresight.synced"; // what the server last received, and when
 

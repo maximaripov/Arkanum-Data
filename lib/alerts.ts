@@ -11,6 +11,7 @@ import webpush, { type PushSubscription } from "web-push";
 import { timingSafeEqual } from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { nyNow, pastSendTime } from "./sendTime.mjs";
+import { cleanRules } from "./lab.mjs";
 export { pastSendTime };
 
 export type Device = {
@@ -20,10 +21,13 @@ export type Device = {
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
   instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
   following?: string[]; // SEC IDs of insiders this device follows, "house:<slug>" for House members, "fund:<SEC ID>" for funds
+  strategies?: SavedStrategy[]; // research-lab strategies: an alert when a new purchase meets every rule
   added: string;
   seen: string;
 };
 type Store = { devices: Record<string, Device> };
+/** A strategy saved from the research lab, with its tested result for the alert text. */
+export type SavedStrategy = { id: string; name: string; rules: NonNullable<ReturnType<typeof cleanRules>>; med?: number | null; period?: string };
 
 const DEVICES = "alerts/devices.json";
 const DIGEST = "alerts/digest.json";
@@ -206,4 +210,20 @@ export function sanitizeSub(s: any): PushSubscription | null {
   if (!/^https:\/\//.test(endpoint) || endpoint.length > 600) return null;
   try { if (!PUSH_HOST.test(new URL(endpoint).hostname)) return null; } catch { return null; }
   return { endpoint, keys: { p256dh: String(s.keys.p256dh).slice(0, 200), auth: String(s.keys.auth).slice(0, 100) } };
+}
+
+/** Up to five saved lab strategies: a short ID, a plain-text name, known rules only. */
+export function sanitizeStrategies(x: unknown): SavedStrategy[] | undefined {
+  if (!Array.isArray(x)) return undefined;
+  const out: SavedStrategy[] = [];
+  for (const v of x.slice(0, 5)) {
+    const rules = cleanRules(v?.rules);
+    const id = String(v?.id ?? "");
+    if (!rules || !/^[a-z0-9]{1,12}$/.test(id)) continue;
+    const name = String(v?.name ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 60) || "My strategy";
+    const med = Number.isFinite(+v?.med) && Math.abs(+v.med) < 10 ? Math.round(+v.med * 10000) / 10000 : null;
+    const period = v?.period === "2026" ? "2026" : "2023-25";
+    out.push({ id, name, rules, med, period });
+  }
+  return out;
 }

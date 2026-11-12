@@ -17,7 +17,7 @@ import { conviction, roleKind } from "../lib/conviction.mjs";
 import { monthBootstrap } from "../lib/bootstrap.mjs";
 import { unsplit } from "../lib/returns.mjs";
 import { delayFields, delayTables } from "./lib/delay.mjs";
-import { encode, ROLE } from "../lib/lab.mjs";
+import { encode, roleCode } from "../lib/lab.mjs";
 import { getJson } from "./lib/sec.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
@@ -254,9 +254,8 @@ if (LAB) {
     for (const k of [0, 1, 2]) { const m = await sharesIn(back(qOf(r.date), k)); shares = m.get(String(+r.issuerCik)) ?? null; if (shares) break; }
     const mcap = shares && r.entry ? shares * r.entry : null;
     if (mcap) known++;
-    const kind = roleKind(r.role);
     lab.push({
-      filed: r.filed, role: /chief executive|\bceo\b/i.test(r.role) ? ROLE.ceo : kind === "top" ? ROLE.top : kind === "director" ? ROLE.director : ROLE.officer,
+      filed: r.filed, role: roleCode(r.role), // the same rule the live strategy alerts use (lib/lab.mjs)
       insiders: r.insiders, value: r.value, planned: r.planned, mcap, cheap: r.entry < 5,
       m1: r.spy["1 month"], m3: r.spy["3 months"], m6: r.spy["6 months"],
     });
