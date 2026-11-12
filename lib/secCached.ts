@@ -17,5 +17,7 @@ const headlineCached = unstable_cache(async (link: string) => pressHeadline(link
  * item labels only, to keep the first visit to a stock page quick). */
 export const announcementsCached = unstable_cache(async (symbol: string): Promise<Announcement[]> => {
   const list = await announcements(symbol);
-  return Promise.all(list.map(async (a, i) => (i < 4 ? { ...a, headline: await headlineCached(a.link).catch(() => null) } : a)));
+  // At most 8 seconds for all headlines together: a page never waits on SEC longer than that.
+  const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<null>((r) => setTimeout(() => r(null), ms))]);
+  return Promise.all(list.map(async (a, i) => (i < 4 ? { ...a, headline: await within(headlineCached(a.link), 8000).catch(() => null) } : a)));
 }, ["sec-announcements-v2"], { revalidate: 1800 });

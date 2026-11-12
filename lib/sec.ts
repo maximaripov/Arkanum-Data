@@ -18,9 +18,14 @@ async function gate<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+// Every SEC request gives up after 15 seconds, body included. Without a limit, one stalled
+// response held a gate slot for good; five of them froze every SEC lookup in that server
+// instance until Vercel killed each request at its time limit (2026-11-12: 214 timeouts).
+const SEC_TIMEOUT_MS = 15_000;
+
 async function secFetch(url: string, revalidate: number | false, as: "json" | "text" = "json") {
   return gate(async () => {
-    const res = await fetch(url, { headers: { "User-Agent": UA }, next: { revalidate } });
+    const res = await fetch(url, { headers: { "User-Agent": UA }, next: { revalidate }, signal: AbortSignal.timeout(SEC_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`SEC ${res.status} for ${url}`);
     return as === "json" ? res.json() : res.text();
   });
@@ -32,13 +37,21 @@ export const secJson = (url: string, revalidate: number | false) => secFetch(url
  * cached here; callers cache the result. */
 export async function secTextHead(url: string): Promise<string> {
   return gate(async () => {
-    const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
-    if (!res.ok || !res.body) throw new Error(`SEC ${res.status} for ${url}`);
-    const reader = res.body.getReader(), parts: Uint8Array[] = [];
-    let size = 0;
-    while (size < 65_536) { const { done, value } = await reader.read(); if (done) break; parts.push(value); size += value.length; }
-    await reader.cancel().catch(() => {});
-    return new TextDecoder().decode(Buffer.concat(parts)).slice(0, 65_536);
+    // One controller ends both the wait and the download: after 64 KB we abort instead of
+    // awaiting reader.cancel(), which could leave this gate slot held indefinitely.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), SEC_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store", signal: ctl.signal });
+      if (!res.ok || !res.body) throw new Error(`SEC ${res.status} for ${url}`);
+      const reader = res.body.getReader(), parts: Uint8Array[] = [];
+      let size = 0;
+      while (size < 65_536) { const { done, value } = await reader.read(); if (done) break; parts.push(value); size += value.length; }
+      return new TextDecoder().decode(Buffer.concat(parts)).slice(0, 65_536);
+    } finally {
+      clearTimeout(timer);
+      ctl.abort(); // drop the rest of the document (and close the connection) without waiting
+    }
   });
 }
 
