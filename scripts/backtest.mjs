@@ -3,7 +3,9 @@
 // open-market purchase by an officer or director with the site's own conviction() and
 // measures what the stock did after the filing became public, against SPY.
 //
-//   node scripts/backtest.mjs [--from 2023q1] [--to 2025q1] [--history-from 2020q1] [--max-tickers N]
+//   node scripts/backtest.mjs [--from 2023q1] [--to 2025q1] [--history-from 2020q1] [--max-tickers N] [--lab file.json]
+// --lab also writes every kept purchase for the research lab (/research/lab): traits and returns
+// against the S&P 500 only, no prices (lib/lab.mjs).
 //
 // Data: SEC's quarterly Insider Transactions Data Sets (every Form 3/4/5, as TSV in a zip)
 // and daily closes from Yahoo's chart endpoint. The prices are used only to compute these
@@ -15,6 +17,8 @@ import { conviction, roleKind } from "../lib/conviction.mjs";
 import { monthBootstrap } from "../lib/bootstrap.mjs";
 import { unsplit } from "../lib/returns.mjs";
 import { delayFields, delayTables } from "./lib/delay.mjs";
+import { encode, ROLE } from "../lib/lab.mjs";
+import { getJson } from "./lib/sec.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const FROM = arg("from", "2023q1"), TO = arg("to", "2025q1"), HIST = arg("history-from", "2020q1");
@@ -222,3 +226,41 @@ console.log(md);
 // A spread-out sample of the trades unsplit() rescued (under $5 first), for checking by hand.
 { const pick = (xs, n) => xs.filter((_, i) => i % Math.max(1, Math.floor(xs.length / n)) === 0).slice(0, n);
   console.log(`RESCUED ${rescued.length} SAMPLE_JSON ${JSON.stringify([...pick(rescued.filter((r) => r.actual < 5), 12), ...pick(rescued.filter((r) => r.actual >= 5), 6)])}`); }
+
+// ---- Research lab table (--lab): one row per kept purchase ----------------------------------
+// Market cap at entry = the unadjusted entry price × shares outstanding from SEC's XBRL frames
+// (cover-page and balance-sheet figures, one request per quarter for every company), taken from
+// the trade's quarter first, then earlier ones, so a later stock split can't inflate it.
+// Foreign filers (20-F) aren't in the frames: their market cap stays unknown.
+const LAB = arg("lab", null);
+if (LAB) {
+  const qOf = (d) => `${d.slice(0, 4)}Q${Math.ceil(+d.slice(5, 7) / 3)}`;
+  const back = (q, k) => { let y = +q.slice(0, 4), n = +q.slice(5) - k; while (n < 1) { n += 4; y--; } return `${y}Q${n}`; };
+  const frames = new Map();
+  async function sharesIn(q) {
+    if (frames.has(q)) return frames.get(q);
+    const m = new Map();
+    for (const c of ["us-gaap/CommonStockSharesOutstanding", "dei/EntityCommonStockSharesOutstanding"]) { // dei last: it wins where both exist
+      const j = await getJson(`https://data.sec.gov/api/xbrl/frames/${c}/shares/CY${q}I.json`).catch(() => null);
+      for (const d of j?.data ?? []) if (d.val > 0) m.set(String(d.cik), d.val);
+    }
+    frames.set(q, m);
+    return m;
+  }
+  const lab = [];
+  let known = 0;
+  for (const r of rows) {
+    let shares = null;
+    for (const k of [0, 1, 2]) { const m = await sharesIn(back(qOf(r.date), k)); shares = m.get(String(+r.issuerCik)) ?? null; if (shares) break; }
+    const mcap = shares && r.entry ? shares * r.entry : null;
+    if (mcap) known++;
+    const kind = roleKind(r.role);
+    lab.push({
+      filed: r.filed, role: /chief executive|\bceo\b/i.test(r.role) ? ROLE.ceo : kind === "top" ? ROLE.top : kind === "director" ? ROLE.director : ROLE.officer,
+      insiders: r.insiders, value: r.value, planned: r.planned, mcap, cheap: r.entry < 5,
+      m1: r.spy["1 month"], m3: r.spy["3 months"], m6: r.spy["6 months"],
+    });
+  }
+  await writeFile(LAB, JSON.stringify(encode(lab, { from: testStart, to: LAST, generated: new Date().toISOString() })));
+  console.log(`lab: ${lab.length} purchases, market cap known for ${known} (${Math.round((100 * known) / Math.max(1, lab.length))}%) -> ${LAB}`);
+}

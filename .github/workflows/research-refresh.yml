@@ -25,7 +25,7 @@ jobs:
         include:
           - paper: buys # working paper no. 1
             file: docs/backtest/oos-2026.json
-            run: node scripts/backtest.mjs --from 2026q1 --to "$TO" --history-from 2021q1 --out /tmp/out && cp /tmp/out/results.json /tmp/new.json
+            run: mkdir -p public/data/lab && node scripts/backtest.mjs --from 2026q1 --to "$TO" --history-from 2021q1 --out /tmp/out --lab public/data/lab/buys-2026.json && cp /tmp/out/results.json /tmp/new.json
           - paper: sales # working paper no. 2
             file: docs/backtest/sales-2026.json
             run: node scripts/diagnose/sales-study.mjs 2026q1 "$TO" 2025q4 /tmp/new.json
@@ -58,6 +58,7 @@ jobs:
           git config user.name "maximaripov"
           git config user.email "351230404+maximaripov@users.noreply.github.com"
           git add ${{ matrix.file }}
+          [ -d public/data/lab ] && git add public/data/lab # the research lab's 2026 table (buys leg)
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "data: research refresh (${{ matrix.paper }}) $(date -u +%F)"
           git stash --include-untracked -q || true # other files a study touched (e.g. the 13F ticker cache) aren't published here
