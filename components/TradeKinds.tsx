@@ -55,7 +55,7 @@ export function TradeKinds({ compact = false }: { compact?: boolean }) {
           </span>
         </li>
       </ol>
-      <p className="muted small kinds-more"><Link href="/research">How we test ›</Link></p>
+      <p className="muted small kinds-more"><Link href="/research?tab=method">How we test ›</Link></p>
     </section>
   );
 }
