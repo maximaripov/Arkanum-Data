@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 93. Full history: `docs/build-log.md` (rounds 1-93); add new rounds there.
+Updated 2026-11-12, after round 94. Full history: `docs/build-log.md` (rounds 1-94); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -139,7 +139,7 @@ Updated 2026-11-12, after round 93. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-6 done (rounds 88-93); next is phase 7 (competitor audit, brand pillars, the launch kit). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. All seven phases done (rounds 88-94). Competitor audit: `docs/competitors.md`. The launch kit (`docs/backtest/social-drafts.md`, `writeup-draft.md`) is current as of 2026-11-12 and ready for the owner to post; recheck figures against the homepage first. The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**
@@ -149,7 +149,6 @@ Updated 2026-11-12, after round 93. Full history: `docs/build-log.md` (rounds 1-
 - **Name risk:** "Arkanum" is close to the ARCANUM trademark in financial services (Arcanum Global). Revisit before anything commercial.
 - **Price fallback (round 80):** Tiingo when Yahoo fails, via `TIINGO_API_KEY` (Vercel env var + GitHub secret, set by the owner). Until both are set, there is no fallback. Tiingo's free plan is personal / non-commercial.
 - **Price licensing (told to the owner 2026-11-10):** Yahoo (Tiingo fallback) supplies the daily closes behind every since-filing return and all five papers; no quotes from them are shown. The README now says so (owner chose rewording over switching source). Accurate is not the same as permitted: revisit before any wide launch or income.
-- **Launch drafts are stale:** `docs/backtest/social-drafts.md` and `writeup-draft.md` still say "Form4", link to the old `form4-insiders.vercel.app`, and quote pre-split-fix numbers. Rewrite them before anyone posts them (offered to the owner 2026-11-10, not started).
 - **Digest on federal holidays:** `daily-digest.mjs` uses `marketClosed()` (NYSE calendar), so on SEC-only holidays (Columbus Day, Veterans Day) it sends with no new insider filings. Offered to skip or say "SEC closed today" via `secClosed()`; owner hasn't decided.
 - **Main strategic point (2026-11-10):** the site has never been launched; rounds 69-87 were mostly hardening and cost control. Recommended order: (1) rebuild the launch kit, (2) Bluesky bot, then polish. Owner did only housekeeping so far.
 - **Unanswered request (2026-11-11, interrupted by the owner):** a broad checklist: no API keys in front-end code, no .env served, row-level security, SSR, access control on IDs in URLs, API keys locked to the site's origin, update packages, parameterized queries, security headers, SEO/GEO, meta titles and descriptions on every page, alt text, colour contrast, keyboard navigation, purge git secrets, rate limits, DDoS, UI/UX mock-ups. Much of it is already done or doesn't apply (no database, so no RLS or SQL; security headers round 75; firewall and rate limits rounds 77-78; contrast round 71; SSR rounds 71-73). If raised again: audit each item against the code and report done / not applicable / to do, rather than redoing work.

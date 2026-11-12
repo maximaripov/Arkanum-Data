@@ -126,7 +126,7 @@ row read twice:
 | 5 | Compare two rule sets side by side; 2023-25 against 2026 for the same rule |
 | 5 | Runs in the browser on a compact trade table built monthly with the research refresh (no new server functions, so no new function usage) |
 
-## Phase 7: competitor audit and brand (alongside, written work)
+## Phase 7: competitor audit and brand (round 94, done)
 
 | Notes | Item |
 |---|---|

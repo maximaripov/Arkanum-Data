@@ -11,6 +11,16 @@ export default function About() {
         <p className="muted">What insiders do with their own company&apos;s stock is public, in filings like Form 4, which executives, directors and major shareholders must submit within two business days of trading. Arkanum Data is an independent site and isn&apos;t affiliated with the SEC.</p>
       </section>
 
+      <section className="card" id="principles">
+        <h2>What Arkanum stands on</h2>
+        <ul>
+          <li><strong>Credibility at the source.</strong> Every trade comes from an official filing (SEC Form 4, 13F, 13D/13G, 8-K, and House STOCK Act reports) and links to it, so any row can be checked against the original. Where a filing is unclear we say so; we don&apos;t fill gaps with guesses.</li>
+          <li><strong>Transparency.</strong> How every number is made is written down in the <Link href="/research/methodology">methodology</Link>: which trades are counted, how prices are checked, how ranges are worked out, and what isn&apos;t tested. The data files are <Link href="/open-data">open</Link>.</li>
+          <li><strong>Evidence, including when it goes against us.</strong> Our labels are tested on years of filings and retested every month on new ones, and the results stay up when a label doesn&apos;t work. A trade is shown as reported, unusual, or a tested signal, and nothing is called a signal until it has earned it. See the <Link href="/research">research</Link> and the <Link href="/research/report-card">report card</Link>.</li>
+        </ul>
+        <p className="muted small">Arkanum is independent: no ads, no paid placements, no accounts, and no tips. It doesn&apos;t sell trading signals, so it has no reason to make them look better than they are.</p>
+      </section>
+
       <section className="card">
         <h2>Not investment advice</h2>
         <p>Everything here is for information and education only. It is not a recommendation to buy or sell any security, and nothing on Arkanum considers your personal situation. Data can be delayed, incomplete or wrong. Do your own research and consider a licensed adviser before making investment decisions. Arkanum is provided as is, without warranty of any kind.</p>

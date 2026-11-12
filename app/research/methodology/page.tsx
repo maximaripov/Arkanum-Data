@@ -25,6 +25,7 @@ export default function Methodology() {
         <p className="paper-authors">How the numbers on this site are made, and why you can check them</p>
       </header>
       <section className="paper-body">
+        <p>Three rules run through everything below. <strong>Credibility at the source:</strong> every number starts from an official filing, linked so you can check it. <strong>Transparency:</strong> every step from filing to figure is written here, including what isn&apos;t tested. <strong>Evidence:</strong> results come with their uncertainty and stay up when they go against our own labels.</p>
         <h2>1. Sources: official filings only</h2>
         <ul>
           <li><strong>Company insiders:</strong> Form 4 filings from SEC EDGAR, read every two hours on weekdays. The research uses SEC&apos;s quarterly insider transaction data sets, the same filings in bulk.</li>
