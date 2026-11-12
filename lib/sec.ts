@@ -27,7 +27,15 @@ async function secFetch(url: string, revalidate: number | false, as: "json" | "t
 }
 
 export const secJson = (url: string, revalidate: number | false) => secFetch(url, revalidate, "json");
-export const secText = (url: string, revalidate: number | false) => secFetch(url, revalidate, "text") as Promise<string>;
+/** The first 64 KB of a document (SEC serves byte ranges): enough for a press release's
+ * headline, without downloading a 6 MB exhibit. Not cached here; callers cache the result. */
+export async function secTextHead(url: string): Promise<string> {
+  return gate(async () => {
+    const res = await fetch(url, { headers: { "User-Agent": UA, Range: "bytes=0-65535" }, cache: "no-store" });
+    if (!res.ok) throw new Error(`SEC ${res.status} for ${url}`);
+    return (await res.text()).slice(0, 65_536);
+  });
+}
 
 export type Company = { cik: number; name: string; ticker: string; exchange: string | null };
 let tickerMap: { at: number; map: Map<string, Company>; list: Company[] } | null = null;

@@ -1,7 +1,7 @@
 // The company's own SEC 8-K filings: official announcements of earnings, executive
 // changes, deals and other material events, translated into plain English. Public domain.
-import { cikForTicker, secJson, secText } from "./sec";
-import { headline, pickExhibit } from "./pressRelease.mjs";
+import { cikForTicker, secJson, secTextHead } from "./sec";
+import { exhibitFromIndex, headline } from "./pressRelease.mjs";
 
 export type Announcement = { date: string; items: string[]; link: string; headline?: string | null };
 
@@ -45,7 +45,8 @@ export async function announcements(symbol: string, limit = 10): Promise<Announc
  * failed lookup is never cached as "no headline". */
 export async function pressHeadline(link: string): Promise<string | null> {
   const dir = link.slice(0, link.lastIndexOf("/"));
-  const index = await secJson(`${dir}/index.json`, false);
-  const ex = pickExhibit((index?.directory?.item ?? []).map((x: { name: string }) => x.name));
-  return ex ? headline(await secText(`${dir}/${ex}`, false)) : null;
+  const acc = dir.slice(dir.lastIndexOf("/") + 1); // 18 digits, no dashes
+  const index = await secTextHead(`${dir}/${acc.slice(0, 10)}-${acc.slice(10, 12)}-${acc.slice(12)}-index.html`);
+  const ex = exhibitFromIndex(index);
+  return ex ? headline(await secTextHead(`${dir}/${ex}`)) : null;
 }
