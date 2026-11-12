@@ -6,6 +6,7 @@ import { findings } from "@/lib/findings";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TradeKinds } from "./TradeKinds";
 import { KindsLine } from "./KindsLine";
+import { OpenSearch } from "./OpenSearch";
 
 const PAPERS: [string, string][] = [
   ["/research/insider-buys", "Do insider buys beat the market?"],
@@ -28,7 +29,7 @@ export function HomeIntro() {
         <h1 id="hero-title" className="hi-title">Follow the money. Test the signal.</h1>
         <p className="hi-lead">Insider, Congress and fund trades from official filings, next to how trades like them have actually done. Other sites sell insider signals; we test them and publish every result.</p>
         <ul className="hero-uses" aria-label="What you can do here">
-          <li><strong>Check a stock</strong> <span className="muted">who inside bought or sold, and how trades like it did</span></li>
+          <li><OpenSearch><strong>Check a stock</strong></OpenSearch> <span className="muted">who inside bought or sold, and how trades like it did</span></li>
           <li><Link href="/markets"><strong>Follow people and funds</strong></Link> <span className="muted">executives, House members, funds; a ping when they trade</span></li>
           <li><Link href="/research"><strong>See what has worked</strong></Link> <span className="muted">{(Math.floor(tested / 1000) * 1000).toLocaleString("en-US")}+ trades tested</span></li>
         </ul>

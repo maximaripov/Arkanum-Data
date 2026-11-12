@@ -841,3 +841,5 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .home-papers a { color: var(--text); }
 @media (max-width: 1000px) { .home-papers ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .home-papers { display: none; } } /* phones: the Research tab is one tap away */
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--text); cursor: pointer; text-align: left; }
+.linklike:hover strong, .hero-uses a:hover strong { text-decoration: underline; }
