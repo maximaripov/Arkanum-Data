@@ -13,6 +13,8 @@ import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from 
 import { FollowButton } from "@/components/FollowButton";
 import { SectionIntro } from "@/components/SectionIntro";
 import { KindsLine } from "@/components/KindsLine";
+import { CsvButton } from "@/components/CsvButton";
+import { HOUSE_COLS, houseRows } from "@/lib/csvColumns";
 import { BoughtTogether, ByTrackRecord, Committees, Sectors, TrackRecord, type Committee, type Overlap, type SectorRow, type Track } from "@/components/CongressIntel";
 const HOUSE_KINDS = "These are reported trades: what House members disclosed, often weeks after trading. None is a tested signal: in our test, no group of House trades clearly beat the market.";
 
@@ -162,6 +164,7 @@ export function MemberView({ member: sel, trades: shown, members, skipped, retur
       <section className="card flush">
         <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
         <KindsLine>{HOUSE_KINDS}</KindsLine>
+        <CsvButton rows={houseRows(shown)} cols={HOUSE_COLS} file={`${memberSlug(sel.m)}-trades`} />
         <CongressTrades trades={shown} showMember={false} showReturns />
       </section>
       <Note skipped={skipped} />

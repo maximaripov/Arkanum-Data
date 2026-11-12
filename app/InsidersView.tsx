@@ -4,7 +4,6 @@ import { FamousView } from "@/components/FamousView";
 import Link from "next/link";
 import { TradeList, Signal, personName, roleLabel } from "@/components/TradeList";
 import { loadInsiders } from "@/lib/insiderData";
-import { FundsView } from "@/components/FundsView";
 import { VBars } from "@/components/Bars";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
@@ -26,8 +25,9 @@ const buildOv = buildOverview as unknown as (d: { trades: InsiderTrade[]; days: 
 import { companyName } from "@/lib/people.mjs";
 
 type Kind = "buys" | "sells" | "all";
-type View = "overview" | "groups" | "trades" | "funds" | "famous";
-const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["funds", "Big funds"], ["famous", "Well-known"]];
+type View = "overview" | "groups" | "trades" | "famous";
+// Big funds moved to Institutional Holdings (round 92); old ?view=funds links are sent there.
+const VIEWS: [View, string][] = [["overview", "Overview"], ["groups", "Group buys"], ["trades", "All trades"], ["famous", "Well-known"]];
 const SIZES = [[0, "Any size"], [100_000, "$100K+"], [1_000_000, "$1M+"]] as const;
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
 const shortDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -63,7 +63,7 @@ function ClusterCards({ clusters, preview, more }: { clusters: Cluster[]; previe
   );
 }
 
-function InsiderTrades({ view, go, initial }: { view: Exclude<View, "funds" | "famous">; go: (v: View) => void; initial?: Overview | null }) {
+function InsiderTrades({ view, go, initial }: { view: Exclude<View, "famous">; go: (v: View) => void; initial?: Overview | null }) {
   const [trades, setTrades] = useState<InsiderTrade[] | null>(null);
   const [err, setErr] = useState("");
   const [updated, setUpdated] = useState("");
@@ -316,6 +316,7 @@ export default function InsidersView({ initial }: { initial?: Overview | null } 
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const v = p.get("view") as View | null;
+    if ((v as string) === "funds") { location.replace(`/stakes?view=funds${p.get("fund") ? `&fund=${p.get("fund")}` : ""}`); return; } // moved, round 92
     if (v && VIEWS.some(([k]) => k === v)) setView(v);
     else if (p.get("show") || p.get("q") || p.get("min") || p.get("everyone")) setView("trades");
   }, []);
@@ -333,7 +334,7 @@ export default function InsidersView({ initial }: { initial?: Overview | null } 
         {VIEWS.map(([k, l]) => <button key={k} id={`tab-${k}`} role="tab" aria-selected={view === k} aria-controls="insider-panel" tabIndex={view === k ? 0 : -1} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
       </div>
       <div id="insider-panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
-      {view === "funds" ? <FundsView /> : view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} initial={initial} />}
+      {view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} initial={initial} />}
       </div>
     </div>
   );

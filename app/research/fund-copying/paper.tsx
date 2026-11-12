@@ -16,6 +16,8 @@ const PER_FUND = study.perFund as [string, H][];
 const CLONE = study.clone as { all: S; allEq: S; beat: number; beatEq: number; quarters: number; byFund: [string, C][] };
 
 export const BASE = "/research/fund-copying";
+/** How many funds the published study covers (its own data, not the site's current list). */
+export const FUNDS_TESTED = study.funds.length;
 export const TITLE = `Does copying famous funds from their 13F reports work? A test of ${study.funds.length} funds and ${(Math.floor(study.priced / 1000) * 1000).toLocaleString("en-US")} portfolio changes`;
 const DATE = "November 2026";
 export const PAGES: PaperPage[] = [

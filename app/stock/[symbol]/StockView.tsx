@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
 import { TradeList } from "@/components/TradeList";
 import { KindsLine } from "@/components/KindsLine";
+import { CsvButton } from "@/components/CsvButton";
+import { INSIDER_COLS, insiderRows } from "@/lib/csvColumns";
 import { MonthBars } from "@/components/MonthBars";
 import { ResearchFor } from "@/components/ResearchFor";
 import { companyRisks, health } from "@/lib/context.mjs";
@@ -132,6 +134,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
               { key: "s", label: <strong>Sold</strong>, sub: `${ex.filter((t) => t.code === "S").length} trades`, value: sd, text: `$${fmtBig(sd)}`, tone: "down" },
             ]} /> : null;
           })() : null}
+          {insiders?.length ? <CsvButton rows={insiderRows(insiders)} cols={INSIDER_COLS} file={`${symbol}-insider-trades`} /> : null}
           {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} context={ctx} />}
         </section>
       ) : null}

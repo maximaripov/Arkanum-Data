@@ -19,7 +19,7 @@ export type Device = {
   watchlist: string[];
   owner?: boolean; // the site owner's device: also gets "update failed" health alerts
   instant?: boolean; // instant alerts for strong insider buys in the watchlist (on unless false)
-  following?: string[]; // SEC IDs of insiders this device follows, and "house:<slug>" for House members
+  following?: string[]; // SEC IDs of insiders this device follows, "house:<slug>" for House members, "fund:<SEC ID>" for funds
   added: string;
   seen: string;
 };
@@ -192,8 +192,9 @@ export function sanitizeWatchlist(w: unknown): string[] | undefined {
 /** SEC IDs of followed insiders: digits only, at most 100. */
 export function sanitizeFollowing(f: unknown): string[] | undefined {
   if (!Array.isArray(f)) return undefined;
-  const id = (x: unknown) => { const v = String(x ?? ""); return /^house:[a-z0-9-]{1,80}$/.test(v) ? v : String(Number(v) || ""); };
-  return [...new Set(f.map(id).filter((x) => /^\d{1,10}$/.test(x) || x.startsWith("house:")))].slice(0, 100);
+  // An insider's SEC ID, "house:<member slug>", or "fund:<the fund's SEC ID>".
+  const id = (x: unknown) => { const v = String(x ?? ""); return /^house:[a-z0-9-]{1,80}$/.test(v) || /^fund:\d{1,10}$/.test(v) ? v : String(Number(v) || ""); };
+  return [...new Set(f.map(id).filter((x) => /^\d{1,10}$/.test(x) || x.startsWith("house:") || x.startsWith("fund:")))].slice(0, 100);
 }
 /** Browsers' push services (Chrome/Edge/Android via Google, Safari/iPhone via Apple, Firefox
  *  via Mozilla, Windows via Microsoft). Anything else isn't a real browser subscription:

@@ -60,7 +60,7 @@ export function DigestView({ d, latest = false }: { d: Digest; latest?: boolean 
         {/* Funds file quarterly (mid-Feb, May, Aug, Nov), so most days this is left out. */}
         {d.funds.length ? (
           <section className="card">
-            <div className="card-head"><h2>Big-fund filings</h2><Link href="/?view=funds" className="small">All funds ›</Link></div>
+            <div className="card-head"><h2>Big-fund filings</h2><Link href="/stakes?view=funds" className="small">All funds ›</Link></div>
             <ul className="rows">{d.funds.map((f) => (
               <li key={f.fund} className="row-static"><div className="row-main">
                 <strong>{f.fund}</strong>

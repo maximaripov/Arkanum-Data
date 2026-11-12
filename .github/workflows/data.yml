@@ -83,7 +83,7 @@ jobs:
         run: node scripts/build-famous.mjs && node scripts/build-people.mjs
       - id: funds
         name: Update big-fund holdings (SEC 13F)
-        run: node scripts/build-funds.mjs
+        run: FUNDS_NEW_OUT="$RUNNER_TEMP/funds-new.json" node scripts/build-funds.mjs
       - id: events
         name: Update economic calendar
         env:
@@ -113,6 +113,10 @@ jobs:
           # The hourly insider job may have pushed meanwhile; on the shared history cache, keep ours.
           for i in 1 2 3; do git pull --rebase -X theirs origin main && git push && exit 0; sleep 10; done
           exit 1
+      # Devices following a fund hear about its new quarterly report (after the data is live).
+      - name: Alerts for followed funds
+        continue-on-error: true
+        run: FUNDS_NEW_OUT="$RUNNER_TEMP/funds-new.json" node scripts/fund-alerts.mjs
       # If any step failed, nothing was sent or published (the site keeps the last good
       # data) and the owner's devices get a notification naming the step.
       - name: Notify on failure

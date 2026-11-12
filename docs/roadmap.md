@@ -105,7 +105,7 @@ row read twice:
 | 4 | Overlap: stocks several members bought within the same 30 days |
 | 3, 4 | Performance after disclosure per member, with ranges and minimum sample (see decision 1) |
 
-## Phase 5: watchlists, alerts, exports (round 93)
+## Phase 5: watchlists, alerts, exports (round 92, done)
 
 | Notes | Item | Today |
 |---|---|---|

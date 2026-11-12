@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 91. Full history: `docs/build-log.md` (rounds 1-91); add new rounds there.
+Updated 2026-11-12, after round 92. Full history: `docs/build-log.md` (rounds 1-92); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -66,7 +66,7 @@ Updated 2026-11-12, after round 91. Full history: `docs/build-log.md` (rounds 1-
     - insider buys vs the S&P 500: −6.7%
   - A note says "vs other insider buys" means the month's typical insider buy, not the market.
   - The overview lists are server-rendered: `app/page.tsx` fetches overview.json with revalidate 900 and passes it to `InsidersView`.
-  - Tabs: Overview, Group buys, All trades, Big funds, Well-known.
+  - Tabs: Overview, Group buys, All trades, Well-known (Big funds moved to Institutional Holdings, round 92).
   - The "Insider Activity Score" (was "How unusual", round 88) is a 0-100 score with a one-line explainer. It describes the trade, not the outlook.
 - **Stocks and insiders:**
   - `/stock/[symbol]` and `/insider/[cik]` (Follow) are server-rendered.
@@ -95,6 +95,8 @@ Updated 2026-11-12, after round 91. Full history: `docs/build-log.md` (rounds 1-
   - `/research/fund-copying`: paper no. 5 (13F funds). Numbers: `docs/backtest/funds.json` from `scripts/diagnose/funds-study.mjs` via `diagnose.yml`.
   - `/research/<paper>/print`: PDF version of each paper.
 - **Navigation:** Insiders, Congress, Research, Institutional Holdings (`/stakes`), Markets, Digest. Custom 404 page.
+- **Institutional Holdings** (`/stakes`): tabs Companies and Funds (28 funds, `scripts/build-funds.mjs`; followable, alerts via `scripts/fund-alerts.mjs`).
+- **Watching** (`/watching`): everything this device watches, new since last visit. CSV export buttons on stock, insider, member and fund pages (raw filings only).
 - **Other pages:** `/open-data` (the research tables are "available on request"), `/about` (methodology, freshness, privacy, contact), `/terms`, `/markets`, `/stakes`.
 - **Search:** covers stocks, insiders (23k), House members and funds.
 
@@ -136,7 +138,7 @@ Updated 2026-11-12, after round 91. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-4 done (rounds 88-91); next is phase 5 (follow funds, a Watching page, CSV exports, funds under Institutional Holdings, more funds). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-5 done (rounds 88-92); next is phase 6 (the strategy backtester, `/research/lab`). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**

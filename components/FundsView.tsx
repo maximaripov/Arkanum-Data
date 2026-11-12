@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Picker } from "@/components/Picker";
+import { FollowButton } from "@/components/FollowButton";
+import { CsvButton } from "@/components/CsvButton";
+import { FUND_COLS } from "@/lib/csvColumns";
 import Link from "next/link";
 import { fmtBig, fmtPct } from "@/lib/format";
 import { companyName } from "@/lib/people.mjs";
@@ -69,7 +72,7 @@ export function FundsView() {
   useEffect(() => {
     fetch("/data/funds.json").then((r) => r.json()).then((d) => {
       setFunds(d.funds);
-      // From search: /?view=funds&fund=<SEC ID> opens that fund.
+      // From search and alerts: /stakes?view=funds&fund=<SEC ID> opens that fund.
       const want = new URLSearchParams(location.search).get("fund");
       const i = want ? (d.funds as Fund[]).findIndex((x) => String(x.cik) === want) : -1;
       if (i >= 0) { setSel(i); setPart("fund"); }
@@ -121,10 +124,12 @@ export function FundsView() {
             <div><dt>As of</dt><dd>{q(f.period)}</dd></div>
           </dl>
         </div>
+        <FollowButton cik={`fund:${f.cik}`} name={f.name} />
       </section>
 
       <section className="card">
         <h2>Largest holdings <span className="muted small">{q(f.period)}, filed {new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></h2>
+        <CsvButton rows={[...new Map([...f.top, ...f.new, ...f.added, ...f.reduced, ...f.sold].map((h) => [h.cusip, { ...h, pct: Math.round(h.pct * 100) / 100, chgPct: h.chgPct == null ? null : Math.round(h.chgPct * 10) / 10 }])).values()]} cols={FUND_COLS} file={`${f.name.replace(/[^A-Za-z0-9]+/g, "-")}-13F-${f.period}`} />
         <HoldingRows items={f.top} max={25} maxPct={f.top[0]?.pct} />
         {f.prevPeriod ? <ChangeLines c={f} since={q(f.prevPeriod)} /> : null}
       </section>
@@ -161,7 +166,7 @@ export function FundHolders({ symbol }: { symbol: string }) {
           </div>
         </li>
       ))}</ul>
-      <Link href="/?view=funds" className="small muted">See all funds →</Link>
+      <Link href="/stakes?view=funds" className="small muted">See all funds →</Link>
     </section>
   );
 }

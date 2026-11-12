@@ -808,3 +808,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .tr-cell { display: grid; justify-items: end; gap: .1rem; min-width: 140px; }
 .tr-cell .rangebar { width: 140px; margin: 0; }
 .card-title .winpick + .winpick { margin-left: .4rem; }
+.holdings-title { font-size: 1.1rem; margin: 0; }
+.new-tag { display: inline-block; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .05rem .35rem; margin-left: .35rem; background: var(--accent); color: var(--bg); vertical-align: middle; }
+.csv-btn { display: inline-block; margin: .2rem 0 .6rem; font-size: .8rem; }

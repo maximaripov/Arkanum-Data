@@ -44,7 +44,7 @@ async function searchMembers(terms: string[], origin: string): Promise<Hit[]> {
 async function searchFunds(terms: string[], origin: string): Promise<Hit[]> {
   const f = await load<{ funds: Fund[] } | null>("/data/funds.json", origin, null);
   return (f?.funds ?? []).filter((x) => matches(terms, `${x.name} ${x.who ?? ""}`)).slice(0, 3)
-    .map((x) => ({ symbol: "", name: x.name, type: "Fund", exchange: x.who ?? "Investment fund", href: `/?view=funds&fund=${x.cik}` }));
+    .map((x) => ({ symbol: "", name: x.name, type: "Fund", exchange: x.who ?? "Investment fund", href: `/stakes?view=funds&fund=${x.cik}` }));
 }
 
 export async function GET(req: Request) {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { KindsLine } from "@/components/KindsLine";
 import { MonthBars } from "@/components/MonthBars";
+import { CsvButton } from "@/components/CsvButton";
+import { INSIDER_COLS, insiderRows } from "@/lib/csvColumns";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { insiderTradesByOwnerCached } from "@/lib/secCached";
@@ -107,6 +109,7 @@ export default async function InsiderPage({ params }: { params: Promise<{ cik: s
         <p className="muted small">Open-market purchases and sales only; grants, option exercises and tax withholding are routine pay and left out.</p>
         <KindsLine />
         <MonthBars trades={market} months={24} />
+        <CsvButton rows={insiderRows(market)} cols={INSIDER_COLS} file={`${d.name.replace(/[^A-Za-z0-9]+/g, "-")}-trades`} />
         <TradeList trades={market} pageSize={20} empty="No open-market buys or sales in their recent filings." />
         <p className="small muted"><a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=4&dateb=&owner=include&count=40`} target="_blank" rel="noreferrer">All their filings on SEC EDGAR ↗</a></p>
       </section>

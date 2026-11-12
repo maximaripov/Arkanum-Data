@@ -73,7 +73,7 @@ export function StakesView() {
   const side = c.top?.length ? "span4" : "span12";
   return (
     <div className="ov">
-      <SectionIntro title="Institutional Holdings"
+      <SectionIntro title="Company holdings"
         lead="What listed companies own in other companies: their quarterly holdings of public stocks, their 5%+ stakes, and private funding rounds they took part in."
         source="SEC 13F holdings reports and 13D/13G ownership filings, read each weekday morning; private rounds from company press releases, not verified. Every stake links to its filing." />
       <section className="card">
