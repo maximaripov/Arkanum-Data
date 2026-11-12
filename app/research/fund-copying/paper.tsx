@@ -83,7 +83,7 @@ function Page1() {
       <h2>4. Results</h2>
       <h3>4.1 Bought and sold ended up alike</h3>
       <p>Six months after the report was public, stocks the funds had opened or added to did {signed(bought.median)} against the equal-weighted S&amp;P 500{range(bought)}; stocks they had reduced did {signed(six(MOVES_EQ["Reduced"]).median)}, and stocks they had sold entirely {signed(sold.median)}{range(sold)}. {overlap(bought, sold) ? "The ranges overlap: by the time the reports were public, the funds' purchases and sales were not distinguishable." : "The ranges don't overlap."} New positions large enough to be at least 1% of the fund, the ones most likely to reflect a manager&apos;s conviction, did {signed(big.median)}{range(big)} (Figure 1).</p>
-      <Figure n={1} title="Median six-month return after the 13F report was public, by kind of change, against the equal-weighted S&P 500." note="All 13 funds together; a fund with thousands of positions (Renaissance) contributes many more changes than one with ten.">
+      <Figure n={1} title="Median six-month return after the 13F report was public, by kind of change, against the equal-weighted S&P 500." note={`All ${study.funds.length} funds together; a fund with thousands of positions (Renaissance) contributes many more changes than one with ten.`}>
         <DivergingBars rows={MOVE_ORDER.map((g) => ({ label: g, value: pc(six(MOVES_EQ[g]).median), n: six(MOVES_EQ[g]).n }))} label="Median 6-month return vs the equal-weighted S&P 500" unit="changes" />
       </Figure>
 
