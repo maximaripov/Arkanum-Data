@@ -8,7 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 // [address, label, phone tab label]: the phone tab bar has about 53px per tab, too narrow for
 // "Institutional Holdings", so it keeps the short name there.
-const LINKS: [string, string, string][] = [["/insiders", "Insiders", "Insiders"], ["/congress", "Congress", "Congress"], ["/research", "Research", "Research"], ["/stakes", "Institutional Holdings", "Holdings"], ["/markets", "Markets", "Markets"], ["/briefing", "Digest", "Digest"]];
+const LINKS: [string, string, string][] = [["/insiders", "Insiders", "Insiders"], ["/congress", "Congress", "Congress"], ["/stakes", "Institutional Holdings", "Holdings"], ["/markets", "Markets", "Markets"], ["/research", "Research", "Research"], ["/briefing", "Digest", "Digest"]];
 
 const ICONS: Record<string, React.ReactNode> = {
   Insiders: <><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>,
