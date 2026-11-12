@@ -567,7 +567,7 @@ h1, h2, .hero-big, .kpi span, .wordmark { text-shadow: var(--glow); }
 /* Selection in inverse video: the active nav item and tab, like a highlighted menu line. */
 .nav-links a.active, .tabs button.on, .tabs button[aria-selected="true"] { background: var(--text) !important; color: var(--bg) !important; text-shadow: none; }
 .tabs button.on::before, .tabs button[aria-selected="true"]::before { content: "["; } .tabs button.on::after, .tabs button[aria-selected="true"]::after { content: "]"; }
-.nav-links a, .tabs button, .tabbar a, .wordmark { text-transform: lowercase; }
+.wordmark { text-transform: lowercase; } /* the logo only: navigation and tab labels show as written, first letter capitalized (owner, 2026-11-12) */
 
 /* Boxes: double-line borders on the key boxes, single lines elsewhere. */
 .hero, .kpis { border: 3px double var(--text) !important; background: var(--card) !important; }
