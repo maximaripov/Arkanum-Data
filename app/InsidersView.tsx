@@ -202,16 +202,16 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "funds" | "f
           <section className="kpis">
             <div className="kpi"><small>Bought · 30d</small><span className="mono up">${fmtBig(o.totals.value)}</span><em>{o.totals.buys.toLocaleString()} buys</em></div>
             <div className="kpi"><small>Insiders buying</small><span className="mono">{o.totals.people}</span><em>officers &amp; directors</em></div>
-            <div className="kpi"><small>Unusual buys</small><span className="mono up">{o.totals.strong}</span><em>how unusual 60+ (not a forecast)</em></div>
+            <div className="kpi"><small>Unusual buys</small><span className="mono up">{o.totals.strong}</span><em>Insider Activity Score 60+ (not a forecast)</em></div>
             <div className="kpi"><small>Large sales · 30d</small><span className="mono down">${fmtBig(o.totals.salesValue)}</span><em>{o.totals.sales.toLocaleString()} sales of $250K+</em></div>
             <div className="kpi d-only"><small>Companies</small><span className="mono">{o.totals.cos}</span><em>with insider buys</em></div>
           </section>
 
           <section className="card flush span8">
             <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
-            <p className="muted small card-note">How unusual (0 to 100) rates how far a buy is from routine: its size, who bought, a first buy in years, others buying at once. It describes the trade, not the outlook: in our tests high scores did no better (<Link href="/research/insider-buys/results">research</Link>).</p>
+            <p className="muted small card-note">The Insider Activity Score (0 to 100) rates how far a buy is from routine: its size, who bought, a first buy in years, others buying at once. It describes the trade, not the outlook: in our tests high scores did no better (<Link href="/research/insider-buys/results">research</Link>).</p>
             <div className="tscroll d-only"><table className="ttable ut">
-              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">How unusual</th><th>Why</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
+              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">Activity Score</th><th>Why</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
               <tbody>{o.strongest.slice(0, 8).map((t) => (
                 <tr key={t.accession}>
                   <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
@@ -308,7 +308,7 @@ function Why({ t }: { t: InsiderTrade }) {
 }
 
 function Ring({ score }: { score: number }) {
-  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`How unusual: ${score} of 100`}><b className="mono">{score}</b></span>;
+  return <span className="ring" style={{ background: `conic-gradient(var(--accent) ${score}%, var(--meter-off) 0)` }} aria-label={`Insider Activity Score: ${score} of 100`}><b className="mono">{score}</b></span>;
 }
 
 export default function InsidersView({ initial }: { initial?: Overview | null } = {}) {

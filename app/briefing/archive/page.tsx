@@ -5,7 +5,7 @@ import { digestIndex } from "@/lib/digestArchive";
 
 const description = "Every daily digest and Saturday week in review: the biggest insider buys, insiders buying together and big-fund filings, day by day.";
 export const metadata: Metadata = {
-  title: "Digest archive",
+  title: { absolute: "Digest archive · Arkanum Data" }, // the layout template did not reach this static page
   description,
   alternates: { canonical: "/briefing/archive" },
   openGraph: { title: "Digest archive · Arkanum Data", description, url: "/briefing/archive", images: "/opengraph-image" },

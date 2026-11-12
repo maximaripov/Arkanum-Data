@@ -26,10 +26,10 @@ function verdict(r: Row, sale: boolean): { text: string; tone: string } {
 const signed = (x: number) => { const v = p(x); return `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}%`; };
 
 // The names the site uses today (the papers keep the names they were tested under).
-const LABEL: Record<string, string> = { "Strong (60+)": "How unusual 60+", "Routine (<40)": "How unusual under 40 (routine)" };
+const LABEL: Record<string, string> = { "Strong (60+)": "Insider Activity Score 60+", "Routine (<40)": "Insider Activity Score under 40 (routine)" };
 function buys(): Row[] {
   const G: [string, string][] = [
-    ["Strong (60+)", "Shown as the most unusual buys (how unusual 60+)"],
+    ["Strong (60+)", "Shown as the most unusual buys (Insider Activity Score 60+)"],
     ["Routine (<40)", "Shown as routine buys"],
     ["Top executive (CEO/CFO/President/Chair)", "A CEO, CFO, President or Chair bought"],
     ["Director only", "A director bought"],

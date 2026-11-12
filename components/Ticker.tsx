@@ -14,6 +14,8 @@ const ago = (iso: string) => {
   return m < 60 ? `${m} min ago` : m < 48 * 60 ? `${Math.round(m / 60)} h ago` : new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 };
 
+const FRESH_MS = 4 * 3_600_000;
+
 export function Ticker() {
   const [d, setD] = useState<{ updated: string; trades: InsiderTrade[] } | null>(null);
   // On phones there's no hover: a finger on the tape stops it, so a tap lands on the trade
@@ -73,6 +75,9 @@ export function Ticker() {
   const nyDay = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const weekend = ["Sat", "Sun"].includes(new Date().toLocaleDateString("en-US", { weekday: "short", timeZone: "America/New_York" }));
   const holiday = !weekend && secClosed(nyDay);
+  // "Live" while the data is under four hours old (the job runs every two hours, so one late
+  // run still counts); after that the age is shown instead, without the live dot.
+  const fresh = Date.now() - Date.parse(d.updated) < FRESH_MS;
   // Rolls right to left like an exchange tape: the list is drawn twice and slides by one
   // copy's width, so the loop has no seam. A short list is repeated first so a copy is
   // wider than the screen. Speed stays the same whatever the length (~3.5 s per trade).
@@ -84,7 +89,7 @@ export function Ticker() {
   );
   return (
     <div className="ticker" aria-label="Today's insider trades">
-      {weekend ? <span className="ticker-live">This week</span> : holiday ? <span className="ticker-live" title="Federal holiday: SEC accepts no filings today">SEC closed today</span> : <span className="ticker-live"><i aria-hidden />Live · {ago(d.updated)}</span>}
+      {weekend ? <span className="ticker-live">This week</span> : holiday ? <span className="ticker-live" title="Federal holiday: SEC accepts no filings today">SEC closed today</span> : fresh ? <span className="ticker-live" title={`Updated ${ago(d.updated)}`}><i aria-hidden />Live</span> : <span className="ticker-live" title="The insider job runs every two hours on weekdays">Updated {ago(d.updated)}</span>}
       <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
         onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
         <div className="ticker-run" ref={runRef} style={{ animationDuration: `${run.length * 3.5}s` }}>

@@ -31,7 +31,8 @@ export async function POST(req: Request) {
       return { ok: true, on: true, owner: !!cur.owner };
     });
     return Response.json(r, { status: "error" in r ? 503 : 200 });
-  } catch (e: any) {
-    return Response.json({ error: e.message ?? "Server error" }, { status: 503 });
+  } catch (e) {
+    console.error("register", e); // storage errors stay in the logs, not in the response
+    return Response.json({ error: "Notifications are unavailable right now. Please try again later." }, { status: 503 });
   }
 }

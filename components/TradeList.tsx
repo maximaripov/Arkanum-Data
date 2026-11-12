@@ -27,7 +27,7 @@ export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["co
   const reasons = compact ? c.reasons.filter((r) => !r.neg).slice(0, 3) : c.reasons;
   return (
     <div className="signal">
-      <span className={`tier tier-${c.tier}`} title={`How unusual: ${c.score}/100 (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction: in our research, the most unusual buys did no better than routine ones.`}>{TIER_LABEL[c.tier]}</span>
+      <span className={`tier tier-${c.tier}`} title={`Insider Activity Score: ${c.score}/100 (who bought, how much of their own stake, how long since they last bought, whether other insiders are buying too). Not a prediction: in our research, the most unusual buys did no better than routine ones.`}>{TIER_LABEL[c.tier]}</span>
       {reasons.map((r) => <span key={r.text} className={`why${r.neg ? " neg" : ""}`}>{r.text}</span>)}
     </div>
   );

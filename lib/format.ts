@@ -11,3 +11,6 @@ export const fmtBig = (n: number | null | undefined) => {
   return n.toFixed(0);
 };
 export const tone = (n: number | null | undefined) => (n == null || n === 0 ? "" : n > 0 ? "up" : "down");
+
+/** A US ticker as the SEC lists it (BRK.B, BF-B): anything else is not looked up. */
+export const TICKER = /^[A-Z0-9][A-Z0-9.\-]{0,11}$/;

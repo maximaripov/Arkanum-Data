@@ -14,7 +14,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice
 const seat = (t) => `${t.state}${t.district ? "-" + t.district : ""}`;
 const r4 = (x) => (x == null ? null : Math.round(x * 10000) / 10000);
 // r: [stock since trade, S&P since trade, stock since public, S&P since public] (fractions; null = not available)
-const slim = (t) => ({ ...(t.ret ? { r: [r4(t.ret.trade?.[0]), r4(t.ret.trade?.[1]), r4(t.ret.pub?.[0]), r4(t.ret.pub?.[1])] } : {}), m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, du: t.dateUnclear || undefined, lo: t.min, hi: t.max, u: t.url });
+const slim = (t) => ({ ...(t.ret ? { r: [r4(t.ret.trade?.[0]), r4(t.ret.trade?.[1]), r4(t.ret.pub?.[0]), r4(t.ret.pub?.[1])] } : {}), m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, du: t.dateUnclear || undefined, lo: t.min, hi: t.max, u: t.url, ac: t.account || undefined, am: t.amendedIn ? 1 : undefined });
 const rank = (list, type) => {
   const by = new Map();
   for (const t of list.filter((x) => x.type === type)) { const r = by.get(t.ticker) ?? { t: t.ticker, a: t.asset, members: new Set(), n: 0, usd: 0 }; r.members.add(t.member); r.n++; r.usd += estAmount(t.min, t.max); by.set(t.ticker, r); }
@@ -81,7 +81,7 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
   }));
   // Every stock trade, for the Congress page's filters and sorting (fetched only when used).
   // Shortened asset names to keep it small; returns kept (the table shows them).
-  await writeFile("public/data/congress-trades.json", JSON.stringify({ trades: stocks.map((t) => { const x = slim(t); return { ...x, a: x.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "").slice(0, 40) }; }) }));
+  await writeFile("public/data/congress-trades.json", JSON.stringify({ trades: stocks.map((t) => { const { ac, ...x } = slim(t); return { ...x, a: x.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "").slice(0, 40) }; }) }));
   await mkdir(DIR, { recursive: true });
   for (const f of await readdir(DIR)) if (!bySlug.has(f.replace(/\.json$/, ""))) await rm(`${DIR}/${f}`);
   for (const { trades, ...m } of list) await writeFile(`${DIR}/${m.s}.json`, JSON.stringify({ member: m, returnsAsOf: asOf, trades }));

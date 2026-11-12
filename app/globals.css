@@ -381,8 +381,10 @@ a.person:hover strong { color: var(--accent); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .nav { background: var(--card); backdrop-filter: none; gap: 1.25rem; padding: .6rem 1.25rem; padding-top: max(.6rem, env(safe-area-inset-top)); }
 .nav .nav-links { display: flex; gap: .25rem; overflow: visible; }
-.nav .nav-links a { padding: .45rem .8rem; border-radius: 8px; color: var(--muted); font-weight: 600; }
+.nav .nav-links a { padding: .45rem .8rem; border-radius: 8px; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .nav .nav-links a.active { color: var(--text); background: var(--chip); }
+@media (max-width: 1100px) { .nav-long { display: none; } } /* narrow desktops: "Holdings", or the nav overflows */
+@media (max-width: 900px) { .nav .nav-links { gap: 0; } .nav .nav-links a { padding: .45rem .45rem; } }
 .search { margin-left: auto; flex: 0 1 340px; }
 .search input { background: var(--bg); border-radius: 10px; padding: .55rem .8rem; }
 .theme-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; flex: none; }

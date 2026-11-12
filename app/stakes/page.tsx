@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { StakesView } from "@/components/StakesView";
 
 export const metadata: Metadata = {
-  title: "Company holdings",
+  title: "Institutional holdings: what companies own",
   description: "What NVIDIA, Amazon, Alphabet and other companies own in other public companies, from their SEC filings: quarterly holdings and 5%+ stakes.",
-  openGraph: { title: "Company holdings · Arkanum Data", url: "/stakes", images: "/opengraph-image" },
+  openGraph: { title: "Institutional holdings · Arkanum Data", url: "/stakes", images: "/opengraph-image" },
   alternates: { canonical: "/stakes" },
 };
 

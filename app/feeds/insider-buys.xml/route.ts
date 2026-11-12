@@ -35,7 +35,7 @@ export async function GET() {
       const price = shares ? value / shares : null;
       const facts = (t.conv?.reasons ?? []).map((r) => r.text).join(" · ");
       const html = `<p>${esc(who)} (${esc(role)}) bought $${fmtBig(value)} of ${esc(co)} (${esc(t.symbol)})${shares ? `: ${shares.toLocaleString("en-US")} shares${price ? ` at about $${price.toFixed(2)}` : ""}` : ""}, traded ${day(t.date)}, filed ${day(t.filed || t.date)}.</p>`
-        + (facts ? `<p>${esc(facts)}. How unusual: ${t.conv?.score}/100 (a description, not a forecast).</p>` : "")
+        + (facts ? `<p>${esc(facts)}. Insider Activity Score: ${t.conv?.score}/100 (a description, not a forecast).</p>` : "")
         + `<p><a href="${esc(t.url)}">SEC filing</a></p>`;
       return { title: `${t.symbol}: ${who}, ${role}, bought $${fmtBig(value)}`, link: `/stock/${encodeURIComponent(t.symbol)}`, guid: `${t.accession}-${t.symbol}`, date: t.filed || t.date, html };
     });

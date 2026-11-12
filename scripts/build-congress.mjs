@@ -10,7 +10,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parsePtr, stateDistrict } from "./lib/congress.mjs";
+import { dedupeReports, parsePtr, stateDistrict } from "./lib/congress.mjs";
 import { writeSummaries } from "./lib/congress-summary.mjs";
 
 const UA = "Arkanum (free, non-commercial insider-trading site; arkanumdata.vercel.app)";
@@ -99,8 +99,9 @@ for (const f of filings.sort((a, b) => b.filed.localeCompare(a.filed))) {
 
 // 4. Keep two years of trades, newest first; one copy per report row.
 const cutoff = new Date(Date.now() - 730 * 86_400_000).toISOString().slice(0, 10);
-const uniq = new Map(trades.filter((t) => t.date >= cutoff).map((t, i) => [`${t.doc}|${t.ticker}|${t.asset}|${t.type}|${t.date}|${t.min}|${t.owner}|${i}`, t]));
-const keep = [...uniq.values()].sort((a, b) => b.filed.localeCompare(a.filed) || b.date.localeCompare(a.date));
+// One copy per trade across reports (amendments, re-listed trades). The stored file is
+// already merged, so running this again only folds in newly read reports.
+const keep = dedupeReports(trades.filter((t) => t.date >= cutoff)).sort((a, b) => b.filed.localeCompare(a.filed) || b.date.localeCompare(a.date));
 await mkdir("data", { recursive: true });
 await writeFile("data/congress-seen.json", JSON.stringify(seen));
 await writeFile("public/data/congress.json", JSON.stringify({ updated: new Date().toISOString(), source: "U.S. House Clerk, Periodic Transaction Reports", scannedSkipped: Object.values(seen).filter((s) => s === "scanned").length, trades: keep }));

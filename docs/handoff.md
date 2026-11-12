@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 87. Full history: `docs/build-log.md` (rounds 1-87); add new rounds there.
+Updated 2026-11-12, after round 88. Full history: `docs/build-log.md` (rounds 1-88); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -66,7 +66,7 @@ Updated 2026-11-12, after round 87. Full history: `docs/build-log.md` (rounds 1-
   - A note says "vs other insider buys" means the month's typical insider buy, not the market.
   - The overview lists are server-rendered: `app/page.tsx` fetches overview.json with revalidate 900 and passes it to `InsidersView`.
   - Tabs: Overview, Group buys, All trades, Big funds, Well-known.
-  - "How unusual" is a 0-100 score with a one-line explainer. It describes the trade, not the outlook.
+  - The "Insider Activity Score" (was "How unusual", round 88) is a 0-100 score with a one-line explainer. It describes the trade, not the outlook.
 - **Stocks and insiders:**
   - `/stock/[symbol]` and `/insider/[cik]` (Follow) are server-rendered.
   - Every trade shows a "Trades like this" evidence line (`components/Evidence.tsx`, from `lib/evidence.json`).
@@ -90,6 +90,7 @@ Updated 2026-11-12, after round 87. Full history: `docs/build-log.md` (rounds 1-
   - `/research/house-trades`: paper no. 4 (House trades vs the S&P 500 and the equal-weighted S&P 500). Numbers: `docs/backtest/congress.json`, a one-off run of `scripts/diagnose/congress-study.mjs` (runs locally: no SEC needed).
   - `/research/fund-copying`: paper no. 5 (13F funds). Numbers: `docs/backtest/funds.json` from `scripts/diagnose/funds-study.mjs` via `diagnose.yml`.
   - `/research/<paper>/print`: PDF version of each paper.
+- **Navigation:** Insiders, Congress, Research, Institutional Holdings (`/stakes`), Markets, Digest. Custom 404 page.
 - **Other pages:** `/open-data` (the research tables are "available on request"), `/about` (methodology, freshness, privacy, contact), `/terms`, `/markets`, `/stakes`.
 - **Search:** covers stocks, insiders (23k), House members and funds.
 
@@ -131,6 +132,8 @@ Updated 2026-11-12, after round 87. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phase 1 done in round 88; next is phase 2 (research up front, "reported / unusual / signal" explainer, homepage with screenshots first). The decisions list at its top needs the owner's answers before phase 3. Security status: `docs/security-audit.md`.
+- **Congress rebuild:** after round 88's parser change, run `congress.yml` once with rebuild on, so every report's account and filing status are read.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**

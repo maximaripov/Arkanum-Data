@@ -13,7 +13,7 @@ import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from 
 import { FollowButton } from "@/components/FollowButton";
 import { SectionIntro } from "@/components/SectionIntro";
 
-export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean };
+export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean; ac?: string; am?: 1 };
 /** usd, buyUsd, sellUsd: estimated dollars traded (midpoints of the reported ranges). */
 export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; usd?: number; buyUsd?: number; sellUsd?: number; last: string; ret?: { buys: RetSide; sells: RetSide }; w?: Record<string, [usd: number, n: number, buys: number, sells: number]> };
 /** What the member dropdown needs. */
@@ -30,6 +30,9 @@ export type Overview = {
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
 const range = amountRange;
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
+// Whose trade and which account: two otherwise identical rows are usually the same stock
+// bought in two accounts (an IRA and a brokerage account), so the account is shown.
+const whose = (t: CTrade) => [OWNER[t.o], t.ac, t.am ? "amended" : ""].filter(Boolean).join(" · ");
 const pctS = (x: number) => `${x > 0.0005 ? "+" : x < -0.0005 ? "−" : ""}${Math.abs(x * 100).toFixed(1)}%`;
 const traded = (t: CTrade) => (t.du ? "date unclear" : day(t.d));
 const delay = (t: CTrade) => Math.round((Date.parse(t.f) - Date.parse(t.d)) / 86_400_000);
@@ -49,7 +52,7 @@ export function CongressTrades({ trades, showMember = true, showStock = true, sh
             {showMember ? <td><Link className="linkish" href={`/congress/${memberSlug(t.m)}`}>{t.m}</Link> <Party p={t.p} sd={t.sd} /></td> : null}
             {showStock ? <td className="cstock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></Link></td> : null}
             <td><span className={`side ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span></td>
-            <td className="mono r">{range(t.lo, t.hi)}{OWNER[t.o] ? <div className="muted small">{OWNER[t.o]}</div> : null}</td>
+            <td className="mono r">{range(t.lo, t.hi)}{whose(t) ? <div className="muted small">{whose(t)}</div> : null}</td>
             <td className="mono muted r">{traded(t)}{t.du ? null : <div className="small">reported {delay(t)} days later</div>}{!showReturns && pairs(t)[1] ? <div className="small" title="The stock since the first close after the disclosure, and the S&P 500 over the same days">since public <span className={pairs(t)[1]![0] > pairs(t)[1]![1] ? "up" : "down"}>{pctS(pairs(t)[1]![0])}</span> vs {pctS(pairs(t)[1]![1])}</div> : null}</td>
             {showReturns ? <><td className="r"><ReturnCell p={pairs(t)[0]} /></td><td className="r"><ReturnCell p={pairs(t)[1]} /></td></> : null}
           </tr>
@@ -59,8 +62,8 @@ export function CongressTrades({ trades, showMember = true, showStock = true, sh
         <li key={t.u + t.t + t.d + i} className="lrow-split"><Link href={`/stock/${t.t}`}>
           <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
           <span className="lrow-main">{showMember
-            ? <><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small"><strong style={{ color: "var(--text)" }}>{t.t}</strong> · traded {traded(t)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></>
-            : <><span><strong>{t.t}</strong></span><span className="muted small">traded {traded(t)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></>}
+            ? <><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small"><strong style={{ color: "var(--text)" }}>{t.t}</strong> · traded {traded(t)}{whose(t) ? ` · ${whose(t)}` : ""}</span></>
+            : <><span><strong>{t.t}</strong></span><span className="muted small">traded {traded(t)}{whose(t) ? ` · ${whose(t)}` : ""}</span></>}
             {showReturns ? <span className="wraps"><ReturnLine trade={pairs(t)[0]} pub={pairs(t)[1]} sale={t.y !== "P"} /></span> : null}</span>
           <span className="lrow-v"><span className="mono">{range(t.lo, t.hi)}</span><span className="muted small">disclosed {day(t.f)}</span></span>
         </Link><a className="lrow-doc" href={t.u} target="_blank" rel="noreferrer" title="The member's disclosure report (PDF), from the House Clerk">Filing ↗</a></li>
@@ -271,7 +274,7 @@ function CongressTradesLinked({ trades }: { trades: CTrade[] }) {
     <ul className="lrows">{trades.map((t, i) => (
       <li key={t.u + t.d + i} className="lrow-split"><Link href={`/congress/${memberSlug(t.m)}`}>
         <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
-        <span className="lrow-main"><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {traded(t)} · disclosed {day(t.f)}{OWNER[t.o] ? ` · ${OWNER[t.o]}` : ""}</span></span>
+        <span className="lrow-main"><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small">traded {traded(t)} · disclosed {day(t.f)}{whose(t) ? ` · ${whose(t)}` : ""}</span></span>
         <span className="lrow-v mono">{range(t.lo, t.hi)}</span>
       </Link><a className="lrow-doc" href={t.u} target="_blank" rel="noreferrer" title="The member's disclosure report (PDF), from the House Clerk">Filing ↗</a></li>
     ))}</ul>

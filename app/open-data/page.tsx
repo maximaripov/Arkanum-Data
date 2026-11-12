@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const SITE = "https://arkanumdata.vercel.app";
 const FILES: [path: string, what: string, updated: string][] = [
-  ["/data/insiders.json", "Open-market buys, sales and other Form 4 transactions by insiders over the last 30 days, one row per filing and insider, with Arkanum's labels (how unusual, large unplanned sale).", "Daily, evenings"],
+  ["/data/insiders.json", "Open-market buys, sales and other Form 4 transactions by insiders over the last 30 days, one row per filing and insider, with Arkanum's labels (Insider Activity Score, large unplanned sale).", "Daily, evenings"],
   ["/data/insiders-today.json", "The same for filings since the last daily file.", "Hourly on weekdays"],
   ["/data/overview.json", "The homepage numbers and lists, including each listed trade's return since filing against the S&P 500 (since: s stock, m S&P, d trading days).", "Hourly on weekdays"],
   ["/data/people.json", "The insider directory: SEC ID, name, latest company and role.", "Daily"],
