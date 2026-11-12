@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { memberSlug, amountRange, estAmount } from "@/lib/congress.mjs";
 import { Picker, type PickerItem } from "@/components/Picker";
 import { fmtBig } from "@/lib/format";
-import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from "@/components/Returns";
+import { ReturnLine, ReturnsSummary, type RetSide, type Pair } from "@/components/Returns";
 import { FollowButton } from "@/components/FollowButton";
 import { SectionIntro } from "@/components/SectionIntro";
 import { KindsLine } from "@/components/KindsLine";
@@ -47,35 +47,37 @@ export const Party = ({ p, sd }: { p: string | null; sd: string }) => <span clas
 
 /** Desktop table and phone list of trades (also used on stock pages). */
 const pairs = (t: CTrade): [Pair, Pair] => [t.r && t.r[0] != null && t.r[1] != null ? [t.r[0], t.r[1]] : null, t.r && t.r[2] != null && t.r[3] != null ? [t.r[2], t.r[3]] : null];
-export function CongressTrades({ trades, showMember = true, showStock = true, showReturns = false, phoneMax = 40 }: { trades: CTrade[]; showMember?: boolean; showStock?: boolean; showReturns?: boolean; phoneMax?: number }) {
+export function CongressTrades({ trades, showMember = true, showStock = true }: { trades: CTrade[]; showMember?: boolean; showStock?: boolean; showReturns?: boolean; phoneMax?: number }) {
   if (!trades.length) return <p className="muted pad">No trades.</p>;
+  // One row per trade: stock and member to scan, buy or sale, the amount and how late it was
+  // reported; the dates, account, filing and returns open under the row.
   return (
-    <>
-      <div className="tscroll d-only"><table className="ttable">
-        <thead><tr><th>Disclosed</th>{showMember ? <th>Member</th> : null}{showStock ? <th>Stock</th> : null}<th><span className="sr-only">Buy or sale</span></th><th className="r">Amount</th><th className="r">Traded</th>{showReturns ? <><th className="r" title="Stock change since the trade date, and the S&P 500 over the same days">Since trade</th><th className="r" title="Stock change since the first trading day after it was disclosed, and the S&P 500">Since public</th></> : null}</tr></thead>
-        <tbody>{trades.map((t, i) => (
-          <tr key={t.u + t.t + t.d + i}>
-            <td className="mono"><a href={t.u} target="_blank" rel="noreferrer" className="muted" title="The member's report (PDF)">{day(t.f)} ↗</a></td>
-            {showMember ? <td><Link className="linkish" href={`/congress/${memberSlug(t.m)}`}>{t.m}</Link> <Party p={t.p} sd={t.sd} /></td> : null}
-            {showStock ? <td className="cstock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></Link></td> : null}
-            <td><span className={`side ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span></td>
-            <td className="mono r">{range(t.lo, t.hi)}{whose(t) ? <div className="muted small">{whose(t)}</div> : null}</td>
-            <td className="mono muted r">{traded(t)}{t.du ? null : <div className="small">reported {delay(t)} days later</div>}{!showReturns && pairs(t)[1] ? <div className="small" title="The stock since the first close after the disclosure, and the S&P 500 over the same days">since public <span className={pairs(t)[1]![0] > pairs(t)[1]![1] ? "up" : "down"}>{pctS(pairs(t)[1]![0])}</span> vs {pctS(pairs(t)[1]![1])}</div> : null}</td>
-            {showReturns ? <><td className="r"><ReturnCell p={pairs(t)[0]} /></td><td className="r"><ReturnCell p={pairs(t)[1]} /></td></> : null}
-          </tr>
-        ))}</tbody>
-      </table></div>
-      <ul className="lrows m-only">{trades.slice(0, phoneMax).map((t, i) => (
-        <li key={t.u + t.t + t.d + i} className="lrow-split"><Link href={`/stock/${t.t}`}>
-          <span className={`side ${t.y === "P" ? "up" : "down"}`}>{t.y === "P" ? "BUY" : "SELL"}</span>
-          <span className="lrow-main">{showMember
-            ? <><span className="wraps"><strong>{t.m}</strong> <Party p={t.p} sd={t.sd} /></span><span className="muted small"><strong style={{ color: "var(--text)" }}>{t.t}</strong> · traded {traded(t)}{whose(t) ? ` · ${whose(t)}` : ""}</span></>
-            : <><span><strong>{t.t}</strong></span><span className="muted small">traded {traded(t)}{whose(t) ? ` · ${whose(t)}` : ""}</span></>}
-            {showReturns ? <span className="wraps"><ReturnLine trade={pairs(t)[0]} pub={pairs(t)[1]} sale={t.y !== "P"} /></span> : null}</span>
-          <span className="lrow-v"><span className="mono">{range(t.lo, t.hi)}</span><span className="muted small">disclosed {day(t.f)}</span></span>
-        </Link><a className="lrow-doc" href={t.u} target="_blank" rel="noreferrer" title="The member's disclosure report (PDF), from the House Clerk">Filing ↗</a></li>
-      ))}</ul>
-    </>
+    <ul className="ctrows">{trades.map((t, i) => {
+      const late = t.du ? null : delay(t);
+      const [sinceTrade, sincePub] = pairs(t);
+      return (
+        <li key={t.u + t.t + t.d + i}>
+          <details className="ctrow">
+            <summary>
+              <span className={`side quiet ${t.y === "P" ? "up" : "down"}`} title={t.x ? "Partial sale" : undefined}>{t.y === "P" ? "BUY" : "SELL"}</span>
+              <span className="ctrow-main">
+                {showStock ? <span className="ctrow-stock"><Link href={`/stock/${t.t}`}><strong>{t.t}</strong></Link> <span className="muted">{t.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "")}</span></span> : null}
+                {showMember ? <span className="ctrow-who"><Link className="linkish" href={`/congress/${memberSlug(t.m)}`}><strong>{t.m}</strong></Link> <Party p={t.p} sd={t.sd} /></span> : null}
+              </span>
+              <span className="ctrow-amt mono">{range(t.lo, t.hi)}</span>
+              <span className={`ctrow-late${late == null ? "" : late > 45 ? " over" : late > 30 ? " slow" : ""}`} title={late == null ? "Trade date unclear in the filing" : `Traded ${traded(t)}, disclosed ${day(t.f)}. The law allows 45 days.`}>{late == null ? "date unclear" : `${late}d to disclose`}</span>
+              <span className="ctrow-more" aria-hidden>+</span>
+            </summary>
+            <div className="ctrow-detail small">
+              <span>Traded <strong>{traded(t)}</strong> · disclosed <strong>{day(t.f)}</strong></span>
+              {whose(t) ? <span className="muted">{whose(t)}</span> : null}
+              {sinceTrade || sincePub ? <span><ReturnLine trade={sinceTrade} pub={sincePub} sale={t.y !== "P"} /></span> : null}
+              <a href={t.u} target="_blank" rel="noreferrer">The member&apos;s filing (PDF) ↗</a>
+            </div>
+          </details>
+        </li>
+      );
+    })}</ul>
   );
 }
 const SIZES: [string, number][] = [["Any size", 0], ["$15K or more", 15_001], ["$50K or more", 50_001], ["$250K or more", 250_001], ["$1M or more", 1_000_001]];

@@ -210,26 +210,7 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "famous">; g
           <section className="card flush span8">
             <div className="card-title"><h2>Most unusual buys <span className="muted small">last 30 days</span></h2><button className="linkbtn" onClick={allStrong}>All unusual buys ›</button></div>
             <p className="muted small card-note">The Insider Activity Score (0 to 100) rates how far a buy is from routine: its size, who bought, a first buy in years, others buying at once. It describes the trade, not the outlook: in our tests high scores did no better (<Link href="/research/insider-buys/results">research</Link>).</p>
-            <div className="tscroll d-only"><table className="ttable ut">
-              <thead><tr><th>Stock</th><th>Insider</th><th title="Not a prediction: in our research, the most unusual buys did no better than routine ones.">Activity Score</th><th>Why</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
-              <tbody>{o.strongest.slice(0, 8).map((t) => (
-                <tr key={t.accession}>
-                  <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
-                  <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
-                  <td className="nowrap mono">{t.conv ? <>{t.conv.score}<span className="muted small">/100</span></> : null}</td>
-                  <td><Why t={t} /></td>
-                  <td className="r"><Since t={t} /></td>
-                  <td className="r"><span className="mono up"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.date)}</div></td>
-                </tr>
-              ))}</tbody>
-            </table></div>
-            <ul className="lrows m-only">{o.strongest.filter((t) => t.accession !== o.hero?.t.accession).slice(0, 5).map((t) => (
-              <li key={t.accession}><Link href={`/stock/${t.symbol}`}>
-                <Ring score={t.conv?.score ?? 0} />
-                <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.conv?.reasons.find((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text))?.text ?? roleLabel(t.role)}{t.since ? <> · since filing <SincePct x={t.since.s} /> (S&amp;P {pct1(t.since.m)}, {t.since.d}d)</> : null}</span></span>
-                <span className="lrow-v"><span className="mono up">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.date)}</span></span>
-              </Link></li>
-            ))}</ul>
+            <ul className="trows">{o.strongest.slice(0, 8).map((t) => <TradeRow key={t.accession} t={t} />)}</ul>
           </section>
 
           <section className="card flush span4">
@@ -243,12 +224,14 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "famous">; g
             ))}</ul> : <p className="muted pad">No stock had several insiders buying in the last 30 days.</p>}
           </section>
 
-          <section className="card span7 daycard">
-            <h2>Insider buying by day</h2>
-            <VBars cols={byDay} height={170} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
-          </section>
+          {o.notableSales.length ? (
+            <section className="card flush">
+              <div className="card-title"><h2>Large unplanned sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
+              <ul className="trows">{o.notableSales.slice(0, 6).map((t) => <TradeRow key={t.accession + t.code} t={t} />)}</ul>
+            </section>
+          ) : null}
 
-          <section className="card flush span5">
+          <section className="card flush span7">
             <div className="card-title"><h2>Latest filings</h2><button className="linkbtn" onClick={() => { setKind("all"); go("trades"); scrollTo({ top: 0 }); }}>All trades ›</button></div>
             <ul className="lrows">{o.latest.map((t, i) => (
               <li key={t.accession + t.code + i}><Link href={`/stock/${t.symbol}`}>
@@ -259,33 +242,38 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "famous">; g
             ))}</ul>
           </section>
 
-          {o.notableSales.length ? (
-            <section className="card flush">
-              <div className="card-title"><h2>Large unplanned sales <span className="muted small">not pre-planned · a top executive or half the stake · last 30 days</span></h2><button className="linkbtn" onClick={() => { setKind("sells"); go("trades"); scrollTo({ top: 0 }); }}>All sales ›</button></div>
-              <table className="ttable d-only">
-                <thead><tr><th>Stock</th><th>Insider</th><th>What stands out</th><th className="r" title={SINCE_HELP}>Since filing</th><th className="r">Value</th></tr></thead>
-                <tbody>{o.notableSales.map((t) => (
-                  <tr key={t.accession + t.code}>
-                    <td><Link href={`/stock/${t.symbol}`}><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link></td>
-                    <td>{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></td>
-                    <td className="muted small">{t.sale?.flags.filter((f) => !/^(CEO|CFO|President|Chair)$/.test(f.text)).map((f) => f.text).join(" · ")}</td>
-                    <td className="r"><Since t={t} /></td>
-                    <td className="r"><span className="mono down"><strong>${fmtBig(t.value ?? 0)}</strong></span><div className="muted small mono">{shortDay(t.filed || t.date)}</div></td>
-                  </tr>
-                ))}</tbody>
-              </table>
-              <ul className="lrows m-only">{o.notableSales.slice(0, 5).map((t) => (
-                <li key={t.accession + t.code}><Link href={`/stock/${t.symbol}`}>
-                  <span className="side down">SELL</span>
-                  <span className="lrow-main"><span><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></span><span className="muted small">{personName(t.owner)} · {t.sale?.flags.find((f) => /Sold/.test(f.text))?.text ?? roleLabel(t.role)}</span></span>
-                  <span className="lrow-v"><span className="mono down">${fmtBig(t.value ?? 0)}</span><span className="muted small">{shortDay(t.filed || t.date)}</span></span>
-                </Link></li>
-              ))}</ul>
-            </section>
-          ) : null}
+          <section className="card span5 daycard">
+            <h2>Insider buying by day</h2>
+            <VBars cols={byDay} height={170} selected={day} onPick={(k) => { setDay(k); if (k) { setKind("buys"); go("trades"); scrollTo({ top: 0 }); } }} />
+          </section>
+
+
         </div>
       ) : null}
     </>
+  );
+}
+
+/** One unusual buy or large sale. The stock and the insider lead, the score (buys) or the
+ *  sale size is the one thing that stands out, and the reason, return and value support them. */
+function TradeRow({ t }: { t: InsiderTrade }) {
+  const buy = t.code === "P";
+  const why = buy ? (t.conv?.reasons ?? []).filter((r) => !r.neg && !/^(CEO|CFO|President|Chair|COO)$/.test(r.text)).map((r) => r.text)
+    : (t.sale?.flags ?? []).filter((f) => !/^(CEO|CFO|President|Chair)$/.test(f.text)).map((f) => f.text);
+  return (
+    <li className="trow">
+      {buy ? <Ring score={t.conv?.score ?? 0} /> : <span className="side down">SELL</span>}
+      <div className="trow-main">
+        <Link href={`/stock/${t.symbol}`} className="trow-stock"><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></Link>
+        <div className="trow-who">{t.ownerCik ? <Link href={`/insider/${t.ownerCik}`} className="person">{personName(t.owner)}</Link> : personName(t.owner)} <span className="muted">· {roleLabel(t.role).split(/ & |, /)[0]}</span></div>
+        {why.length ? <div className="muted small trow-why" title={why.join(" · ")}>{why.slice(0, 2).join(" · ")}{why.length > 2 ? ` +${why.length - 2}` : ""}</div> : null}
+      </div>
+      <div className="trow-side">
+        <span className={`mono ${buy ? "up" : "down"}`}>${fmtBig(t.value ?? 0)}</span>
+        <span className="muted small mono">{shortDay(buy ? t.date : t.filed || t.date)}</span>
+        {t.since ? <span className="muted small" title={SINCE_HELP}>since filing <SincePct x={t.since.s} /> · S&amp;P {pct1(t.since.m)}</span> : null}
+      </div>
+    </li>
   );
 }
 

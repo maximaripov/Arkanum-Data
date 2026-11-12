@@ -862,3 +862,64 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .risk-tag { font-size: .72rem; border: 1px solid var(--line); padding: .05rem .4rem; cursor: help; }
 .risk-tag.warn { border-color: var(--down); color: var(--down); }
 @media (max-width: 760px) { .risk-groups > div { grid-template-columns: minmax(0, 1fr); gap: .15rem; } }
+/* Homepage (round 98): proof labels under the lead, one research finding as the focal point. */
+.hero-proof { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem 1.4rem; font-size: .8rem; }
+.hero-proof li::before { content: "\2713"; color: var(--accent); margin-right: .45rem; }
+.hero-proof a { color: var(--muted); text-decoration: none; }
+.hero-proof a:hover { color: var(--text); text-decoration: underline; }
+.home-explain.home-explain { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+.home-spot { gap: .45rem; }
+.home-spot .spot-fig { font-size: 3.2rem; line-height: 1; font-weight: 700; color: var(--down); text-decoration: none; }
+.home-spot .spot-head { margin: 0; font-size: 1.05rem; }
+.home-spot p { margin: 0; }
+.spot-more summary { cursor: pointer; font-size: .85rem; color: var(--text); }
+.spot-more ul { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .45rem; font-size: .85rem; }
+.spot-more a { color: var(--text); }
+.spot-more .mono { color: var(--down); margin-right: .35rem; }
+.spot-more .small { display: block; }
+@media (max-width: 1000px) { .home-explain.home-explain { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .home-spot .spot-fig { font-size: 2.6rem; } }
+/* Insider rows (round 98): stock and insider first, the score as the focal point, the rest small. */
+.trows { list-style: none; margin: 0; padding: 0; }
+.trow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .35rem 1rem; align-items: center; padding: .75rem 1rem; border-top: 1px solid var(--line); }
+.trow .ring { width: 44px; height: 44px; }
+.trow .side { width: 44px; text-align: center; }
+.trow-main { min-width: 0; display: grid; gap: .1rem; }
+.trow-stock { text-decoration: none; color: var(--text); font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow-stock:hover strong { text-decoration: underline; }
+.trow-who { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow-why { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow-side { display: grid; justify-items: end; gap: .1rem; text-align: right; }
+.trow-side .mono:first-child { font-weight: 700; }
+@media (max-width: 560px) { .trow { grid-template-columns: auto minmax(0, 1fr); } .trow-side { grid-column: 2; display: flex; flex-wrap: wrap; gap: .1rem .6rem; align-items: baseline; text-align: left; } .trow-side > :last-child { flex-basis: 100%; } }
+/* Congress rows (round 98): stock and member to scan, a quiet buy/sell mark, the disclosure delay
+   coloured past 30 days and past the 45-day legal limit; the rest opens under the row. */
+.ctrows { list-style: none; margin: 0; padding: 0; }
+.ctrows > li { border-top: 1px solid var(--line); }
+.ctrow summary { list-style: none; display: grid; grid-template-columns: 3rem minmax(0, 1fr) 9rem 8.5rem 1rem; gap: .25rem 1rem; align-items: center; padding: .65rem 1rem; cursor: pointer; }
+.ctrow summary::-webkit-details-marker { display: none; }
+.ctrow summary:hover { background: var(--card2); }
+.ctrow-main { min-width: 0; display: flex; flex-wrap: wrap; gap: .1rem 1rem; align-items: baseline; }
+.ctrow-stock, .ctrow-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctrow-stock a, .ctrow-who a { color: var(--text); text-decoration: none; }
+.ctrow-stock a:hover, .ctrow-who a:hover { text-decoration: underline; }
+.ctrow-amt { text-align: right; }
+.ctrow-late { text-align: right; font-size: .8rem; color: var(--muted); }
+.ctrow-late.slow { color: #f5a623; }
+.ctrow-late.over { color: var(--down); font-weight: 700; }
+.ctrow-more { color: var(--muted); text-align: center; }
+.ctrow[open] .ctrow-more { transform: rotate(45deg); }
+.ctrow-detail { display: flex; flex-wrap: wrap; gap: .35rem 1.2rem; padding: 0 1rem .75rem calc(3rem + 2rem); }
+.side.quiet.up, .side.quiet.down { background: transparent !important; font-weight: 600; }
+.filters .filt:last-of-type { margin-left: auto; }
+@media (max-width: 760px) {
+  .ctrow summary { grid-template-columns: 3rem minmax(0, 1fr) auto; grid-template-areas: "side main main" ". amt late"; padding: .6rem .8rem; gap: .2rem .7rem; }
+  .ctrow summary > .side { grid-area: side; align-self: start; }
+  .ctrow-main { grid-area: main; display: grid; gap: 0; }
+  .ctrow-who { white-space: normal; }
+  .ctrow-amt { grid-area: amt; text-align: left; }
+  .ctrow-late { grid-area: late; }
+  .ctrow-more { display: none; }
+  .ctrow-detail { padding: 0 .8rem .7rem 1rem; }
+  .filters .filt:last-of-type { margin-left: 0; }
+}
