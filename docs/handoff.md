@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 89. Full history: `docs/build-log.md` (rounds 1-89); add new rounds there.
+Updated 2026-11-12, after round 90. Full history: `docs/build-log.md` (rounds 1-90); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -70,6 +70,8 @@ Updated 2026-11-12, after round 89. Full history: `docs/build-log.md` (rounds 1-
   - The "Insider Activity Score" (was "How unusual", round 88) is a 0-100 score with a one-line explainer. It describes the trade, not the outlook.
 - **Stocks and insiders:**
   - `/stock/[symbol]` and `/insider/[cik]` (Follow) are server-rendered.
+  - Stock pages (round 90): chart with insider trades and 8-K announcements on the strip below it, then three bands: 1 The company (fundamentals, health chips, risk notes, announcements with press-release headlines), 2 What insiders did (month chart, trades with an Analysis panel each), 3 What the research says (`ResearchFor`).
+  - Press-release headlines: `pressHeadline` in `lib/news.ts`, cached for good per filing; parser `lib/pressRelease.mjs`; test it on real filings with `diagnose.yml` running `press-releases.mjs <tickers>`.
   - Every trade shows a "Trades like this" evidence line (`components/Evidence.tsx`, from `lib/evidence.json`).
   - Since-filing returns are shown alone and vs the S&P 500.
 - **Congress:**
@@ -133,7 +135,7 @@ Updated 2026-11-12, after round 89. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phase 1 done in round 88, phase 2 in round 89; next is phase 3 (stock pages, per-trade analysis, press releases and 8-K events). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-3 done (rounds 88-90); next is phase 4 (Congress: sectors, committees, overlap, member track records with ranges). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**

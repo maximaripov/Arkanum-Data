@@ -38,3 +38,8 @@ test("headline skips phone numbers, tables of contents and a name alone, and rej
   assert.equal(headline("<p>MATADOR RESOURCES COMPANY</p><p>MATADOR RESOURCES COMPANY INCREASES QUARTERLY CASH DIVIDEND</p>"), "MATADOR RESOURCES COMPANY INCREASES QUARTERLY CASH DIVIDEND");
   assert.equal(headline("<p>MATADOR RESOURCES COMPANY CLOSES PALOMA ACQUISITION AND</p><p>RAISES FULL-YEAR PRODUCTION GUIDANCE</p><p>DALLAS--Matador said...</p>"), "MATADOR RESOURCES COMPANY CLOSES PALOMA ACQUISITION AND RAISES FULL-YEAR PRODUCTION GUIDANCE");
 });
+
+test("headline keeps a company name printed above it, and skips bond terms", () => {
+  assert.equal(headline("<p>MATADOR RESOURCES COMPANY</p><p>REPORTS THIRD QUARTER 2026 RESULTS INCLUDING RECORD OIL PRODUCTION</p>"), "MATADOR RESOURCES COMPANY REPORTS THIRD QUARTER 2026 RESULTS INCLUDING RECORD OIL PRODUCTION");
+  assert.equal(headline("<p>Senior Notes Due 2036 (the “Notes”)</p>"), null);
+});

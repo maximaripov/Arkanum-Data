@@ -85,12 +85,12 @@ row read twice:
 | 2 | Accessibility pass: alt text audit, keyboard navigation (focus order, visible focus, skip link, tab widgets), re-run axe on both themes |
 | 2 | SEO and GEO: per-page structured data (Dataset on research files, Article on papers), FAQ-style plain answers on research pages that AI search can quote |
 
-## Phase 3: connected stock pages and per-trade analysis (rounds 90-91)
+## Phase 3: connected stock pages and per-trade analysis (round 90, done)
 
 | Notes | Item |
 |---|---|
 | 6 | Stock page in three distinct bands: Company fundamentals / What insiders did / What the research says about trades like these |
-| 6 | Insider trades marked on the price chart (own SVG chart from the existing daily closes; TradingView embeds can't take markers) |
+| 6 | Insider trades and 8-K announcements lined up on the strip under the TradingView chart (an own price chart was dropped: it would display Yahoo prices) |
 | 3, 6 | Per-trade analysis panel: conviction (score and reasons), how many insiders bought, financial health (from fundamentals already fetched), comparable past trades and how they did (from the research files, with ranges) |
 | 3 | 8-K events next to trades: officer changes (item 5.02) as "executive changes", other material events dated on the chart |
 | 3 | Risk notes per trade and per ticker, from facts already held: share price under $5, small market cap, low trading volume, recent reverse split, going-concern or late-filing notices, the research verdict for that kind of trade |
