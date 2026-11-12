@@ -78,7 +78,7 @@ export default function Research() {
           <li><strong>Re-checked every month:</strong> the tests are rerun on trades filed since January 2026, which the labels were never tuned on; a paper&apos;s text is updated only while its conclusions still hold.</li>
         </ul>
 
-        <p><Link href="/research/methodology"><strong>Full methodology ›</strong></Link> Where every number comes from, how prices are checked, how the ranges are worked out, the rule for calling a result changed, what we don&apos;t test, and every correction.</p>
+        <p><Link href="/research/methodology"><strong>Full methodology ›</strong></Link> Where every number comes from, how prices are checked, how the ranges are worked out, the rule for calling a result changed, and what we don&apos;t test.</p>
 
         <h2>The papers</h2>
       </section>

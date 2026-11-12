@@ -24,6 +24,7 @@ Updated 2026-11-12, after round 89. Full history: `docs/build-log.md` (rounds 1-
 - **No mention of GitHub on the site** (owner, 2026-11-09). Comments in the code are fine.
 - **Contact:** the owner's email is shown on About → Contact, at the owner's explicit request. Never put it in request headers, User-Agents or API calls.
 - **Secrets:** never store `ALERTS_PASSCODE`, `CRON_SECRET` or tokens in code. GitHub secret: `SEC_USER_AGENT`.
+- **No correction notes** anywhere on the site, including the methodology page (owner, rounds 81 and 89).
 - **Don't re-suggest** (declined):
   - archive pages of every buy;
   - Vercel Analytics traffic checks;

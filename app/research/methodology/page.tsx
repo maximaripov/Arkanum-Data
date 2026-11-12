@@ -1,12 +1,12 @@
 // How the research is done, in one place: sources, which trades, the price check, returns,
-// ranges, the verdict rule, the limits and the corrections. Counts come from the research
+// ranges, the verdict rule and the limits. Counts come from the research
 // files (lib/research.ts) so they follow the data.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 
 const title = "Methodology: how Arkanum tests insider and Congress trades";
-const description = "Where every number on Arkanum comes from, which trades are tested, how prices are checked, how returns and 90% ranges are worked out, when a result counts as changed, what isn't tested, and every correction.";
+const description = "Where every number on Arkanum comes from, which trades are tested, how prices are checked, how returns and 90% ranges are worked out, when a result counts as changed, and what isn't tested.";
 
 export const metadata: Metadata = {
   title, description,
@@ -69,12 +69,6 @@ export default function Methodology() {
           <li><strong>Risk:</strong> returns aren&apos;t adjusted for how volatile a stock is, beyond comparing with small-company stocks.</li>
           <li><strong>The Senate</strong> and scanned paper filings, as above.</li>
           <li><strong>Your portfolio:</strong> the research describes groups of past trades. It isn&apos;t advice about any stock.</li>
-        </ul>
-
-        <h2>9. Corrections</h2>
-        <ul>
-          <li><strong>2026-11-09, stock splits.</strong> The price check compared filing prices with split-adjusted closes, so trades before a later split or reverse split failed it and were dropped. Fixed and rerun: {n(SAMPLE.kept)} purchases kept (about 2,000 more) and {n(SALES.kept)} sales (about 5,300 more). The largest change: purchases of stocks under $5 moved from &minus;2.6% to &minus;6.4% against other insider buys, because many of the rescued trades were reverse-split penny stocks.</li>
-          <li><strong>2026-11-12, House reports.</strong> Trades re-listed in a later report, or amended, were counted twice (12 trades). Each now appears once, dated by its first public filing. Purchases of one stock in two accounts on the same day are separate trades and now show the account.</li>
         </ul>
 
         <p className="muted small">Research data tables are available on request. Questions or a number you think is wrong: see <Link href="/about#contact">Contact</Link>.</p>
