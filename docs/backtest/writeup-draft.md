@@ -1,80 +1,66 @@
-# Draft: backtest write-up (for the owner to edit and post)
+# Draft: long write-up (for the owner to edit and post, e.g. a blog, Substack or Medium)
 
-Every number below is from [results.md](results.md) (6-month returns unless noted). Nothing here is published yet.
+Rewritten 2026-11-12 (round 94) for Arkanum Data. Every number is from the published research files as of that date; the papers refresh monthly, so check the figures against the site before posting. No emoji.
 
 Suggested titles:
-- Hacker News: "Show HN: I scored 23,000 insider stock purchases; the popular signals didn't pick better buys"
-- Reddit (r/stocks, r/investing): "I tested the usual insider-buying rules on 23,000 purchases from 2023–2025. Most of them didn't work."
+- "I tested the insider-buying rules on 25,000 purchases. None of them beat the market."
+- "Other sites sell you insider signals. I tested them."
 
 ---
 
-## I scored 23,000 insider stock purchases. The signals people watch didn't pick better buys.
+## I tested the insider-buying rules on 25,000 purchases. None of them beat the market.
 
-I run a free site, Form4 (form4-insiders.vercel.app), that turns SEC insider filings into plain English: when a CEO or director buys their own company's stock, it usually shows up within an hour or two.
+When a CEO buys their own company's stock, it has to be reported to the SEC within two business days. Dozens of websites turn those filings into signals: the CEO bought, so should you; three insiders bought at once, so this is a strong buy. I run a free site that tracks the same filings, Arkanum Data (arkanumdata.vercel.app), and it used to rank purchases with exactly those rules.
 
-Like most insider-trading sites, it ranked each purchase with a score built from the usual advice:
+Before telling anyone the rankings meant something, I tested them.
 
-- a CEO or CFO buying counts for more than a director
-- a big purchase counts for more than a small one
-- a first purchase in years is a stronger sign
-- several insiders buying at once is a stronger sign
-- a large increase in their own stake is a stronger sign
-- purchases set up in advance (Rule 10b5-1 plans) count for less
+### How
 
-Before telling anyone those scores meant something, I tested them.
+Every open-market purchase by an officer or director filed with the SEC from January 2023 to December 2025: 24,922 purchases, after removing stocks with no price history and filings whose price didn't match the ticker. Each purchase is "bought" at the first close *after the filing was public*, when an outsider could actually act, and compared with the S&P 500 over the next one, three and six months, and with other insider purchases filed the same month.
 
-### What I tested
+Every result comes with a 90% range. Purchases filed in the same month move together (one market drop hits them all), so the range comes from resampling whole months, not single trades; counting trades one by one makes results look far more certain than they are.
 
-Every open-market purchase by an officer or director filed from January 2023 to December 2025: 22,969 purchases after removing stocks with no price history and filings whose price didn't match the ticker. Each was scored with exactly the formula the site used. Returns start at the first close *after the filing*, when the public could actually act, not the insider's own trade date.
+### What happened
 
-The main comparison is against **other insider purchases filed the same month**. That removes the market and the timing, so the only question left is: within insider buys, did a higher score pick the better ones?
+Over six months, against the S&P 500:
 
-### What I found
-
-Six months after the filing, compared with the month's typical insider buy:
-
-| Group | Purchases | Median vs. month | Share that beat the month |
+| Kind of purchase | Median vs S&P 500 | 90% range | Beat it |
 |---|---|---|---|
-| All officer/director buys | 22,784 | 0.0% | 50% |
-| Top-scored (60+) | 4,091 | −0.3% | 49% |
-| Lowest-scored (under 40) | 12,642 | 0.0% | 50% |
-| Highest-scored (80+) | 688 | −0.9% | 47% |
-| $1M+ purchases | 1,298 | −4.6% | 44% |
-| CEO, CFO, President or Chair | 7,790 | −1.2% | 47% |
-| Directors only | 11,945 | +0.6% | 51% |
-| 3+ insiders buying | 7,903 | +0.2% | 51% |
-| Buying alone | 9,997 | −0.3% | 49% |
-| Pre-planned (10b5-1) | 764 | −6.9% | 38% |
+| All officer and director purchases | −6.7% | −8.8% to −4.5% | 39% |
+| CEO, CFO, President or Chair | −8.7% | −10.8% to −6.6% | 37% |
+| Directors | −5.4% | −7.9% to −3.1% | 41% |
+| Three or more insiders buying | −5.6% | −9.1% to −2.7% | 41% |
+| $1 million or more | −11.0% | −13.3% to −8.8% | 36% |
+| Pre-planned (10b5-1) | −13.1% | −17.0% to −8.1% | 36% |
+| Stocks under $5 | −14.0% | −15.7% to −12.5% | 37% |
 
-In plain terms:
+Every group trailed the index, and every range is below zero. The best of the 28 groups I tested, routine purchases of stocks over $5, still trailed by 4.6%. The purchases my own score rated "most unusual" did no better than routine ones.
 
-- **The score didn't rank buys.** Top-scored purchases did no better than the lowest-scored ones at 1, 3 or 6 months. The very highest scores did slightly worse.
-- **The biggest buys did worst.** $1M+ purchases had the lowest median of any group: −4.6%, and only 44% beat the month's typical insider buy.
-- **CEO buys did worse than director buys**, the opposite of the usual advice.
-- **Several insiders buying, first buys in years, and big stake increases** made no real difference.
-- **The one rule that held up:** pre-planned purchases did badly (median −6.9%, 38% beat). Discounting them was right.
-- **Cheap stocks are lottery tickets.** Under $5, the median purchase lagged (−2.6%) but the average was +14.7%: most lost, a few soared.
+Two of the popular rules point the wrong way: CEO purchases did worse than directors', and the biggest purchases did worse than smaller ones. It isn't the reporting delay: a separate test on the site found the stock moves a little before a purchase is public (+2.4% for $1M+ purchases, +0.7% overall), which is small next to the six-month gap. The insiders' own purchases trailed the market too.
 
-And the bigger question: **did following insider buys beat the market at all?** Not in this period. Against small caps (IWM), the median purchase trailed by 2.8% over six months, and 46% beat it. Against the S&P 500 it was worse, mostly because small caps lagged large caps in 2023–2025.
+### Fresh data
 
-### What I changed
+A rule that worked in 2023 to 2025 could be a fluke of that period, so the site reruns every test each month on filings since January 2026, which the rules were never tuned on. So far, with nine months of data, purchases are at −5.2% against the S&P 500: the same direction, but too early to judge. The site's rule is to call a result "changed" only after twelve months, and only if the new range doesn't overlap the old one.
 
-The site no longer calls high scores "Strong signals." The labels now say what the score actually measures: **Unusual**, **Somewhat unusual**, **Routine**: how out of the ordinary a purchase is for that person, not how it will do. I also removed the line that called group buying "the strongest signal."
+### Congress
+
+The same test on 8,895 stock trades disclosed by members of the House since November 2024: purchases trailed the S&P 500 by 4.4% over six months from disclosure, and did no better than the members' own sales.
+
+### What changed on the site
+
+The site now keeps three things apart on every page:
+
+1. **Reported**: a trade someone disclosed. That's every row.
+2. **Unusual**: a trade out of the ordinary for that person. A reason to read the filing, not to buy.
+3. **Tested signal**: a kind of trade that held up across years of filings with a range above zero. Nothing it tracks has earned this yet.
+
+There's also a free lab where you can test your own rules (CEO only, three or more insiders, purchase size, company size, no pre-planned trades) on the same data, compare two strategies, and save one for phone alerts. Each alert carries the strategy's tested result. The lab counts how many rule sets you've tried, because test twenty and about one will look good by chance.
 
 ### Caveats
 
-- **One three-year period.** Older academic studies found insider buying beat the market, with the effect shrinking over time; a different period could differ.
-- **Survivorship.** 654 stocks had no price history, mostly delisted companies. Delistings usually mean losses, so the true results are probably a little worse, not better.
-- **Overlapping purchases.** Many buys overlap in time and cluster in the same stocks, so the statistical confidence is lower than the raw sample size suggests.
-- **This tests one formula.** It's possible a different combination of factors works; I haven't tested any reweighted version out of sample, and I'm not going to claim one does until I have.
+- One three-year period plus 2026 so far. Older academic studies found that insider purchases beat the market, with the edge shrinking over time.
+- Delisted stocks drop out of the data, which probably makes insiders look better than they were, not worse.
+- Returns are before trading costs and taxes, which hit hardest in the small, cheap stocks where insider buying is most common.
+- This describes past groups of trades. It isn't advice about any stock.
 
-Form4 is free, has no ads and no accounts. The filings are still interesting to read; I just no longer think a score tells you which ones to follow.
-
----
-
-## Before posting
-
-- **Read it as yourself.** It's written in your voice ("I"); change anything that doesn't sound like you.
-- **Price data source.** Returns were computed from Yahoo daily closes. The post publishes only aggregate statistics, not prices, which I believe is fine, but I'm not a lawyer.
-- **Where to host it.** Posting the full text as a page on the site (for example `/research/insider-buys`) and linking that from HN/Reddit sends readers to the site itself; a Reddit text post keeps them on Reddit. Reddit often removes posts that are just a link to your own site, so there: post the findings as text, with the site mentioned once.
-- **Wait for the insider-data fix** (round 33) to be live before posting, so visitors see the corrected numbers.
+The five papers, the methodology and the lab are at arkanumdata.vercel.app/research. It's free, with no ads and no account.

@@ -50,10 +50,12 @@ export function HomeIntro() {
             ))}
           </div>
           <p className="hi-note muted small">Six-month medians vs other insider buys that month (not the market), except the S&amp;P 500 one.</p>
-          <ul className="home-papers">
-            {PAPERS.map(([href, t]) => <li key={href}><Link href={href}>{t} ›</Link></li>)}
-          </ul>
         </section>
+        {/* The papers as one full-width strip under both cards, so neither card leaves empty space. */}
+        <nav className="home-papers" aria-label="Research papers">
+          <span className="kinds-title">The research</span>
+          <ul>{PAPERS.map(([href, t]) => <li key={href}><Link href={href}>{t} ›</Link></li>)}</ul>
+        </nav>
       </div>
 
       <h2 id="dashboard" className="home-dash-title">&gt; Live dashboard <span className="muted small">insider filings, updated every two hours on weekdays</span></h2>
