@@ -48,7 +48,7 @@ export function InsiderStrip({ trades, range, events }: { trades: InsiderTrade[]
     <div className="istrip">
       <div className="istrip-read small">
         {ev ? (
-          <><span className="ev-read">Company announcement</span> · <a href={ev.link} target="_blank" rel="noreferrer">{ev.items.join(" · ")}</a> · {full(at(ev.date))}</>
+          <><span className="ev-read">Company announcement</span> · <a href={ev.link} target="_blank" rel="noreferrer">{ev.headline ?? ev.items.join(" · ")}</a> · {full(at(ev.date))}</>
         ) : shown ? (
           <><span className={shown.buy ? "up" : "down"}>{shown.buy ? "Bought" : "Sold"} ${fmtBig(shown.value)}</span>{shown.trades.length > 1 ? ` · ${shown.trades.length} trades` : ""} · {who(shown)} · {full(at(shown.date))}{shown.trades.length === 1 && shown.trades[0].price ? ` at $${shown.trades[0].price.toFixed(2)}` : ""}</>
         ) : marks.length ? (

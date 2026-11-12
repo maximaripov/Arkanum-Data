@@ -1,8 +1,9 @@
 // The company's own SEC 8-K filings: official announcements of earnings, executive
 // changes, deals and other material events, translated into plain English. Public domain.
-import { cikForTicker, secJson } from "./sec";
+import { cikForTicker, secJson, secText } from "./sec";
+import { headline, pickExhibit } from "./pressRelease.mjs";
 
-export type Announcement = { date: string; items: string[]; link: string };
+export type Announcement = { date: string; items: string[]; link: string; headline?: string | null };
 
 const ITEMS: Record<string, string> = {
   "1.01": "Signed a material agreement", "1.02": "Ended a material agreement", "1.03": "Bankruptcy or receivership",
@@ -37,4 +38,14 @@ export async function announcements(symbol: string, limit = 10): Promise<Announc
     });
   }
   return out;
+}
+
+/** The headline of the press release filed with an 8-K (exhibit 99), or null when the filing
+ * has none or it can't be read. `link` is the 8-K's main document. Network errors throw, so a
+ * failed lookup is never cached as "no headline". */
+export async function pressHeadline(link: string): Promise<string | null> {
+  const dir = link.slice(0, link.lastIndexOf("/"));
+  const index = await secJson(`${dir}/index.json`, false);
+  const ex = pickExhibit((index?.directory?.item ?? []).map((x: { name: string }) => x.name));
+  return ex ? headline(await secText(`${dir}/${ex}`, false)) : null;
 }

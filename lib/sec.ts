@@ -27,6 +27,7 @@ async function secFetch(url: string, revalidate: number | false, as: "json" | "t
 }
 
 export const secJson = (url: string, revalidate: number | false) => secFetch(url, revalidate, "json");
+export const secText = (url: string, revalidate: number | false) => secFetch(url, revalidate, "text") as Promise<string>;
 
 export type Company = { cik: number; name: string; ticker: string; exchange: string | null };
 let tickerMap: { at: number; map: Map<string, Company>; list: Company[] } | null = null;

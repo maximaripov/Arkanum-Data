@@ -109,10 +109,10 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
         </section>
       ) : null}
       <section className="card">
-        <h2>Company announcements <span className="muted small">SEC 8-K filings, newest first</span></h2>
+        <h2>Company announcements <span className="muted small">press releases and 8-K filings to the SEC, newest first</span></h2>
         {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
           <ul className="news">{news.map((a) => (
-            <li key={a.link} className={a.items.includes("Executive or board change") ? "exec" : undefined}><a href={a.link} target="_blank" rel="noreferrer">{a.items.length ? a.items.join(" · ") : "Announcement"}</a><div className="muted small">{day(a.date, true)}</div></li>
+            <li key={a.link} className={a.items.includes("Executive or board change") ? "exec" : undefined}><a href={a.link} target="_blank" rel="noreferrer">{a.headline ?? (a.items.length ? a.items.join(" · ") : "Announcement")}</a><div className="muted small">{day(a.date, true)}{a.headline && a.items.length ? ` · ${a.items.join(" · ")}` : ""}</div></li>
           ))}</ul>
         )}
       </section>

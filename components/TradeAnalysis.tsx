@@ -71,7 +71,7 @@ export function TradeAnalysis({ t, ctx }: { t: InsiderTrade; ctx?: TradeContext 
         {events ? (
           <div>
             <dt>Around this trade</dt>
-            <dd>{events.length ? <ul className="an-events">{events.map((a: Announcement & { gap: number }) => <li key={a.link}><a href={a.link} target="_blank" rel="noreferrer">{a.items.join(" · ")}</a> <span className="muted">({ago(a.gap)})</span></li>)}</ul>
+            <dd>{events.length ? <ul className="an-events">{events.map((a: Announcement & { gap: number }) => <li key={a.link}><a href={a.link} target="_blank" rel="noreferrer">{a.headline ?? a.items.join(" · ")}</a> <span className="muted">({ago(a.gap)})</span></li>)}</ul>
               : <span className="muted">No 8-K announcements within 30 days.</span>}</dd>
           </div>
         ) : null}

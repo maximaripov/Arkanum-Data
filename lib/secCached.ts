@@ -6,8 +6,16 @@
 // limited. Revalidation times match the pages'.
 import { unstable_cache } from "next/cache";
 import { insidersForTicker, insiderTradesByOwner } from "./sec";
-import { announcements } from "./news";
+import { announcements, pressHeadline, type Announcement } from "./news";
 
 export const insidersForTickerCached = unstable_cache(async (symbol: string) => insidersForTicker(symbol), ["sec-insiders-for-ticker-v1"], { revalidate: 1800 });
 export const insiderTradesByOwnerCached = unstable_cache(async (cik: string) => insiderTradesByOwner(cik), ["sec-trades-by-owner-v1"], { revalidate: 3600 });
-export const announcementsCached = unstable_cache(async (symbol: string) => announcements(symbol), ["sec-announcements-v1"], { revalidate: 1800 });
+// A filing never changes, so each press-release headline is stored once, for good (a few
+// dozen bytes). Only "no headline" is cached; a network error throws and is retried next time.
+const headlineCached = unstable_cache(async (link: string) => pressHeadline(link), ["press-headline-v1"], { revalidate: false });
+/** The newest 8-Ks with their press-release headlines (the latest four; older ones keep their
+ * item labels only, to keep the first visit to a stock page quick). */
+export const announcementsCached = unstable_cache(async (symbol: string): Promise<Announcement[]> => {
+  const list = await announcements(symbol);
+  return Promise.all(list.map(async (a, i) => (i < 4 ? { ...a, headline: await headlineCached(a.link).catch(() => null) } : a)));
+}, ["sec-announcements-v2"], { revalidate: 1800 });
