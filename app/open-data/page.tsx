@@ -2,6 +2,7 @@
 // often it changes, and how to use it, so power users don't need an API.
 import Link from "next/link";
 import type { Metadata } from "next";
+import { JsonLd, PUBLISHER, SITE } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Open data",
@@ -9,7 +10,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/open-data" },
 };
 
-const SITE = "https://arkanumdata.vercel.app";
 const FILES: [path: string, what: string, updated: string][] = [
   ["/data/insiders.json", "Open-market buys, sales and other Form 4 transactions by insiders over the last 30 days, one row per filing and insider, with Arkanum's labels (Insider Activity Score, large unplanned sale).", "Daily, evenings"],
   ["/data/insiders-today.json", "The same for filings since the last daily file.", "Hourly on weekdays"],
@@ -28,6 +28,7 @@ const FILES: [path: string, what: string, updated: string][] = [
 export default function OpenData() {
   return (
     <div className="stack prose">
+      <JsonLd data={{ "@type": "Dataset", name: "Arkanum Data: insider, House member, fund and company-holdings trades", description: "Insider trades from SEC Form 4, House members' stock trades from their Periodic Transaction Reports, and fund and company holdings from 13F, 13D and 13G filings, with Arkanum's labels and research. JSON, updated through the day.", url: `${SITE}/open-data`, creator: PUBLISHER, isAccessibleForFree: true, distribution: FILES.map(([path, what]) => ({ "@type": "DataDownload", encodingFormat: "application/json", contentUrl: SITE + path, description: what })) }} />
       <section className="card">
         <h1>Open data</h1>
         <p>Every number on Arkanum comes from files anyone can download. No key and no sign-up: they are plain JSON on the same address as the site, and each has an <code>updated</code> time. The underlying filings are public domain; the labels, returns and research are Arkanum&apos;s own, free to use with credit to Arkanum Data.</p>

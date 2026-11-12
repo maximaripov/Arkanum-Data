@@ -88,7 +88,7 @@ export function Ticker() {
     </Link>
   );
   return (
-    <div className="ticker" aria-label="Today's insider trades">
+    <aside className="ticker" aria-label="Today's insider trades">
       {weekend ? <span className="ticker-live">This week</span> : holiday ? <span className="ticker-live" title="Federal holiday: SEC accepts no filings today">SEC closed today</span> : fresh ? <span className="ticker-live" title={`Updated ${ago(d.updated)}`}><i aria-hidden />Live</span> : <span className="ticker-live" title="The insider job runs every two hours on weekdays">Updated {ago(d.updated)}</span>}
       <div className={`ticker-tape${held ? " held" : ""}`} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd} onTouchCancel={onEnd}
         onClickCapture={(e) => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } }}>
@@ -97,6 +97,6 @@ export function Ticker() {
           <div className="ticker-copy" aria-hidden>{run.map((t, i) => chip(t, i, 1))}</div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

@@ -40,7 +40,7 @@ export function ReturnsSummary({ buys, sells, asOf, who = "their" }: { buys?: Re
     <section className="card flush">
       <div className="card-title"><h2>How {who} trades did <span className="muted small">median change to {asOf ? new Date(asOf + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "the latest close"}</span></h2></div>
       <table className="ttable fit">
-        <thead><tr><th></th><th>Since the trade</th><th>Since it was public</th></tr></thead>
+        <thead><tr><th><span className="sr-only">Trades</span></th><th>Since the trade</th><th>Since it was public</th></tr></thead>
         <tbody>{rows.map(([label, s]) => (
           <tr key={label}><td><strong>{label}</strong></td><td>{cell(s!.trade)}</td><td>{cell(s!.pub)}</td></tr>
         ))}</tbody>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
 import { TradeList } from "@/components/TradeList";
+import { KindsLine } from "@/components/KindsLine";
 import { InsiderStrip } from "@/components/InsiderStrip";
 import { HBars } from "@/components/Bars";
 import { isExecOrDirector } from "@/lib/insider";
@@ -108,6 +109,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
         <section className="card">
           <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
           <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out.</p>
+          <KindsLine />
           {insiders?.length ? (() => {
             const ex = insiders.filter(isExecOrDirector);
             const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);

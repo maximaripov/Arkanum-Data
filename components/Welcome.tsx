@@ -1,12 +1,24 @@
 "use client";
-// First-visit welcome: what Arkanum is, in one screen. Shown once per browser.
+// First-visit tour, shown once per browser: what the data is, what the research found, and
+// where to start. Three short steps; Skip at any point. The research figure comes from the
+// server (lib/findings.ts via the layout), so it follows the monthly refresh.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const KEY = "foresight.welcomed";
 
-export function Welcome() {
+const ICON = {
+  doc: <path d="M14 3H6v18h12V7zM14 3v4h4M9 12h6M9 16h6" />,
+  test: <><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /><path d="M7 15h10" /></>,
+  go: <path d="M5 12h14M13 6l6 6-6 6" />,
+};
+const Icon = ({ d }: { d: React.ReactNode }) => (
+  <span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg></span>
+);
+
+export function Welcome({ market }: { market?: string }) {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
   const [iosTip, setIosTip] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -24,24 +36,53 @@ export function Welcome() {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && close();
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
-  }, [open]);
+  }, [open, step]);
   const close = () => { try { localStorage.setItem(KEY, "1"); } catch {} setOpen(false); };
   if (!open) return null;
+
+  const steps = [
+    {
+      icon: ICON.doc, title: "What you'll see",
+      body: <>
+        <p>Trades disclosed in official filings, each linked to its source:</p>
+        <ul className="welcome-list">
+          <li><strong>Company insiders</strong>: executives and directors buying or selling their own company&apos;s stock (SEC Form 4).</li>
+          <li><strong>House members</strong>: the stock trades they must report (Senate not covered).</li>
+          <li><strong>Funds and companies</strong>: what big investors hold, from quarterly 13F reports.</li>
+        </ul>
+      </>,
+    },
+    {
+      icon: ICON.test, title: "What we found when we tested them",
+      body: <>
+        <p>Other sites sell insider trades as signals. We tested years of them{market ? <>: the median insider purchase did <strong>{market}</strong> against the S&amp;P 500 over the next six months</> : null}.</p>
+        <p>So Arkanum keeps three things apart: a <strong>reported</strong> trade, an <strong>unusual</strong> one, and a <strong>tested signal</strong>. Next to each trade you see how trades like it actually did.</p>
+      </>,
+    },
+    {
+      icon: ICON.go, title: "Where to start",
+      body: <>
+        <ul className="welcome-list">
+          <li><strong>A stock you own</strong>: search it at the top of any page.</li>
+          <li><Link href="/#dashboard" onClick={close}>Today&apos;s insider trades</Link> and <Link href="/congress" onClick={close}>Congress trades</Link>.</li>
+          <li><Link href="/research" onClick={close}>The research</Link>: what worked and what didn&apos;t.</li>
+          <li><Link href="/briefing#notify" onClick={close}>A daily digest</Link> on your phone, and alerts when people you follow trade.</li>
+        </ul>
+        {iosTip ? <p className="welcome-tip small">On iPhone, notifications need Arkanum on your Home Screen: Share, then &quot;Add to Home Screen&quot;.</p> : null}
+      </>,
+    },
+  ];
+  const s = steps[step], last = step === steps.length - 1;
   return (
     <div className="welcome-backdrop" onClick={close}>
       <div className="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
-        <h2 id="welcome-title">Welcome to Arkanum</h2>
-        <p>See what company insiders, members of Congress and big investment funds are doing with their own money, explained in plain English, from official filings.</p>
-        <ol className="welcome-steps">
-          <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg></span><div><strong>Follow your stocks</strong><span className="muted">Search a company at the top and tap &quot;Add to watchlist&quot;.</span></div></li>
-          <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8" /><path d="M15 7h6v6" /></svg></span><div><strong>See who&apos;s buying</strong><span className="muted">Executives buying their own company&apos;s stock, and what big funds bought.</span></div></li>
-          <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-6 10 6z" /></svg></span><div><strong>See what Congress trades</strong><span className="muted">Stock trades House members report, and how late. Not the Senate yet.</span></div></li>
-          <li><span className="welcome-icon" aria-hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10 21h4" /></svg></span><div><strong>Get a daily digest</strong><span className="muted">Each weekday at 5:00 PM ET: the day&apos;s biggest insider buys.</span></div></li>
-        </ol>
-        {iosTip ? <p className="welcome-tip small">On iPhone, notifications need Arkanum on your Home Screen: Share, then &quot;Add to Home Screen&quot;.</p> : null}
+        <p className="welcome-count muted small">Welcome to Arkanum · {step + 1} of {steps.length}</p>
+        <div className="welcome-head"><Icon d={s.icon} /><h2 id="welcome-title">{s.title}</h2></div>
+        <div className="welcome-body" aria-live="polite">{s.body}</div>
         <div className="welcome-actions">
-          <button ref={btn} className="btn primary big" onClick={close}>Get started</button>
-          <Link href="/briefing#notify" className="linkbtn" onClick={close}>Set up the daily digest</Link>
+          {step > 0 ? <button className="btn" onClick={() => setStep(step - 1)}>Back</button> : null}
+          <button ref={btn} className="btn primary big" onClick={() => (last ? close() : setStep(step + 1))}>{last ? "Get started" : "Next"}</button>
+          {!last ? <button className="linkbtn" onClick={close}>Skip</button> : null}
         </div>
         <p className="muted small">Free · no account · not investment advice</p>
       </div>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { oosState } from "./insider-sales/paper";
 import { findings } from "@/lib/findings";
+import { TradeKinds } from "@/components/TradeKinds";
+import { JsonLd } from "@/components/JsonLd";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TITLE as HOUSE_TITLE } from "./house-trades/paper";
 import { TITLE as DELAY_TITLE } from "./filing-delay/paper";
@@ -28,10 +30,21 @@ export const metadata: Metadata = {
   alternates: { canonical: "/research" },
 };
 
+const QUESTION: Record<string, string> = {
+  cheap: "Do insider purchases of stocks under $5 do well?",
+  size: "Do large insider purchases and CEO purchases beat other insider buys?",
+  planned: "Do pre-planned insider purchases do well?",
+  market: "Do insider purchases beat the S&P 500?",
+  unusual: "Do the most unusual insider purchases do better?",
+  sales: "Are large insider sales a warning sign?",
+};
+
 export default function Research() {
   const tested = SAMPLE.kept + OOS.kept + SALES.kept + SALES_OOS.kept;
   return (
     <article className="paper">
+      {/* The key findings as questions and answers, the form AI answer engines quote. */}
+      <JsonLd data={{ "@type": "FAQPage", mainEntity: findings().filter((f) => QUESTION[f.id]).map((f) => ({ "@type": "Question", name: QUESTION[f.id], acceptedAnswer: { "@type": "Answer", text: `${f.head}. ${f.body} Source: Arkanum Data research, ${f.figureNote}.` } })) }} />
       <header className="paper-head">
         <p className="paper-series">Arkanum Data Research</p>
         <h1 className="paper-title">What insider trades tell you, tested</h1>
@@ -54,6 +67,9 @@ export default function Research() {
 
         <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
 
+      </section>
+      <TradeKinds />
+      <section className="paper-body">
         <h2>How we test</h2>
         <ul>
           <li><strong>Every trade, not a selection:</strong> all open-market buys and sales by officers and directors in SEC&apos;s insider data sets, with the few whose ticker or price didn&apos;t match left out and counted.</li>
@@ -61,6 +77,8 @@ export default function Research() {
           <li><strong>Our own labels, unchanged:</strong> the buy score and the sale label are tested exactly as the site uses them, and the results stay up even where they don&apos;t work.</li>
           <li><strong>Re-checked every month:</strong> the tests are rerun on trades filed since January 2026, which the labels were never tuned on; a paper&apos;s text is updated only while its conclusions still hold.</li>
         </ul>
+
+        <p><Link href="/research/methodology"><strong>Full methodology ›</strong></Link> Where every number comes from, how prices are checked, how the ranges are worked out, the rule for calling a result changed, what we don&apos;t test, and every correction.</p>
 
         <h2>The papers</h2>
       </section>

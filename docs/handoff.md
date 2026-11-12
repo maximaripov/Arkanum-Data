@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 88. Full history: `docs/build-log.md` (rounds 1-88); add new rounds there.
+Updated 2026-11-12, after round 89. Full history: `docs/build-log.md` (rounds 1-89); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -57,7 +57,7 @@ Updated 2026-11-12, after round 88. Full history: `docs/build-log.md` (rounds 1-
 
 ## 4. Pages
 - **`/` (home):**
-  - Intro box with the tagline and three steps: look up (via the header search; the big search box is gone), follow, report card.
+  - Compact hero: "Follow the money. Test the signal.", value proposition, three use cases (round 89). Then the "three kinds of trade" explainer (reported / unusual / tested signal, `components/TradeKinds.tsx`) and the research findings with links to every paper, then "> Live dashboard".
   - "What actually mattered" strip, all six-month medians, computed by `lib/findings.ts` from the research files (so they follow the monthly refresh; don't hardcode them anywhere). As of 2026-11-10, after the split fix:
     - stocks under $5: −6.4%
     - $1M+ buys: −4.8%, and CEO-level buys also trailed (−1.6%)
@@ -132,8 +132,7 @@ Updated 2026-11-12, after round 88. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phase 1 done in round 88; next is phase 2 (research up front, "reported / unusual / signal" explainer, homepage with screenshots first). The decisions list at its top needs the owner's answers before phase 3. Security status: `docs/security-audit.md`.
-- **Congress rebuild:** after round 88's parser change, run `congress.yml` once with rebuild on, so every report's account and filing status are read.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phase 1 done in round 88, phase 2 in round 89; next is phase 3 (stock pages, per-trade analysis, press releases and 8-K events). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**

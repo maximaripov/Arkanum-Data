@@ -5,6 +5,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Nav, TabBar } from "@/components/Nav";
 import { Ticker } from "@/components/Ticker";
 import { Welcome } from "@/components/Welcome";
+import { findings } from "@/lib/findings";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { THEME_KEY, THEME_COLORS } from "@/lib/theme";
@@ -50,18 +51,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="dark" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} /></head>
       <body>
+        <a className="skip-link" href="#main">Skip to content</a>
         <ServiceWorker />
-        <Welcome />
+        <Welcome market={findings().find((f) => f.id === "market")?.figure} />
         <Analytics />
         <Nav />
         <Ticker />
-        <main>{children}</main>
+        <main id="main" tabIndex={-1}>{children}</main>
         <footer className="site-footer">
           <div className="foot-top">
             <Link href="/" className="foot-brand"><LogoMark size={20} /><span>Arkanum Data</span></Link>
             <nav className="foot-links" aria-label="About this site">
               <Link href="/about">About</Link>
-              <Link href="/about#methodology">Methodology</Link>
+              <Link href="/research/methodology">Methodology</Link>
               <Link href="/open-data">Open data</Link>
               <Link href="/about#privacy">Privacy</Link>
               <Link href="/research">Research</Link>

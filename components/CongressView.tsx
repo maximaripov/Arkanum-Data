@@ -12,6 +12,8 @@ import { fmtBig } from "@/lib/format";
 import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from "@/components/Returns";
 import { FollowButton } from "@/components/FollowButton";
 import { SectionIntro } from "@/components/SectionIntro";
+import { KindsLine } from "@/components/KindsLine";
+const HOUSE_KINDS = "These are reported trades: what House members disclosed, often weeks after trading. None is a tested signal: in our test, no group of House trades clearly beat the market.";
 
 export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean; ac?: string; am?: 1 };
 /** usd, buyUsd, sellUsd: estimated dollars traded (midpoints of the reported ranges). */
@@ -45,7 +47,7 @@ export function CongressTrades({ trades, showMember = true, showStock = true, sh
   return (
     <>
       <div className="tscroll d-only"><table className="ttable">
-        <thead><tr><th>Disclosed</th>{showMember ? <th>Member</th> : null}{showStock ? <th>Stock</th> : null}<th></th><th className="r">Amount</th><th className="r">Traded</th>{showReturns ? <><th className="r" title="Stock change since the trade date, and the S&P 500 over the same days">Since trade</th><th className="r" title="Stock change since the first trading day after it was disclosed, and the S&P 500">Since public</th></> : null}</tr></thead>
+        <thead><tr><th>Disclosed</th>{showMember ? <th>Member</th> : null}{showStock ? <th>Stock</th> : null}<th><span className="sr-only">Buy or sale</span></th><th className="r">Amount</th><th className="r">Traded</th>{showReturns ? <><th className="r" title="Stock change since the trade date, and the S&P 500 over the same days">Since trade</th><th className="r" title="Stock change since the first trading day after it was disclosed, and the S&P 500">Since public</th></> : null}</tr></thead>
         <tbody>{trades.map((t, i) => (
           <tr key={t.u + t.t + t.d + i}>
             <td className="mono"><a href={t.u} target="_blank" rel="noreferrer" className="muted" title="The member's report (PDF)">{day(t.f)} ↗</a></td>
@@ -154,6 +156,7 @@ export function MemberView({ member: sel, trades: shown, members, skipped, retur
       <ReturnsSummary buys={sel.ret?.buys} sells={sel.ret?.sells} asOf={returnsAsOf} who={`${sel.m}'s`} />
       <section className="card flush">
         <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
+        <KindsLine>{HOUSE_KINDS}</KindsLine>
         <CongressTrades trades={shown} showMember={false} showReturns />
       </section>
       <Note skipped={skipped} />
@@ -196,6 +199,7 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
 
       <section className="card flush span8">
         <div className="card-title"><h2>Trades <span className="muted small">House members, stocks only</span></h2></div>
+        <KindsLine>{HOUSE_KINDS}</KindsLine>
         <TradeBrowser initial={o.latest} states={[...new Set(o.members.map((x) => x.sd.split("-")[0]))].sort()} />
       </section>
 
@@ -264,6 +268,7 @@ export function CongressFor({ symbol }: { symbol: string }) {
   return (
     <section className="card flush">
       <div className="card-title"><h2>Congress trades in {symbol} <span className="muted small">House members, last 2 years</span></h2><Link href="/congress" className="linkbtn">All ›</Link></div>
+      <KindsLine>{HOUSE_KINDS}</KindsLine>
       <CongressTradesLinked trades={rows.slice(0, 12)} />
     </section>
   );

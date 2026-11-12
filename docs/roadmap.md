@@ -8,7 +8,15 @@ Order of work: first fix what is wrong or misleading, then what is cheap and vis
 big builds. Big builds that change how the site looks get screenshots for approval first
 (standing rule).
 
-## Decisions the owner should make before Phase 3
+## Owner's decisions (2026-11-12)
+
+1. Rankings: show track records with a 90% range and a minimum sample; "no clear edge" when the range includes zero; default sort stays by dollars.
+2. Backtester: go ahead as planned (every result shows its range and trade count).
+3. Tagline: "Follow the money. Test the signal." (no "Invest with evidence").
+4. News: breaking news and developments, not "exciting" judgements. Source: the company's own press releases filed with the SEC (8-K exhibit 99.1, same day, public domain, linked to the filing), plus the 8-K items already decoded in `lib/news.ts`. No third-party news feed (same licensing problem as the prices).
+5. Exports: CSV only, labelled "opens in Excel".
+
+## Decisions as first proposed
 
 These items in the notes conflict with the site's own research or with earlier decisions. I'll
 build them as written unless the owner says otherwise, but the risks are real:
@@ -66,7 +74,7 @@ row read twice:
   now reads the filing status, and the build keeps one copy per trade (the earliest public filing,
   which is the right start for "since public" returns), recording the later report on it.
 
-## Phase 2: research up front, and the three kinds of trade (round 89)
+## Phase 2: research up front, and the three kinds of trade (round 89, done)
 
 | Notes | Item |
 |---|---|

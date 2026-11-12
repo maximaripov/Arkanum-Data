@@ -191,7 +191,7 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "funds" | "f
       </section>
     </>
   );
-  const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); scrollTo({ top: 0 }); };
+  const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); (document.getElementById("dashboard") ?? document.body).scrollIntoView(); }; // the hero sits above the dashboard
   return (
     <>
       <h2 className="sr-only">What insiders are buying</h2>
@@ -322,10 +322,19 @@ export default function InsidersView({ initial }: { initial?: Overview | null } 
   const go = (v: View) => { setView(v); history.replaceState(null, "", v === "overview" ? location.pathname : `?view=${v}`); };
   return (
     <div className="stack">
-      <div className="tabs wrap-tabs" role="tablist">
-        {VIEWS.map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
+      {/* Tabs as the ARIA pattern expects: one tab stop, arrow keys (and Home/End) move between tabs. */}
+      <div className="tabs wrap-tabs" role="tablist" aria-label="Insider views" onKeyDown={(e) => {
+        const i = VIEWS.findIndex(([k]) => k === view), last = VIEWS.length - 1;
+        const j = e.key === "ArrowRight" ? (i + 1) % VIEWS.length : e.key === "ArrowLeft" ? (i + last) % VIEWS.length : e.key === "Home" ? 0 : e.key === "End" ? last : -1;
+        if (j < 0) return;
+        e.preventDefault(); go(VIEWS[j][0]);
+        (e.currentTarget.children[j] as HTMLElement | undefined)?.focus();
+      }}>
+        {VIEWS.map(([k, l]) => <button key={k} id={`tab-${k}`} role="tab" aria-selected={view === k} aria-controls="insider-panel" tabIndex={view === k ? 0 : -1} className={view === k ? "on" : ""} onClick={() => go(k)}>{l}</button>)}
       </div>
+      <div id="insider-panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
       {view === "funds" ? <FundsView /> : view === "famous" ? <FamousView /> : <InsiderTrades view={view} go={go} initial={initial} />}
+      </div>
     </div>
   );
 }
