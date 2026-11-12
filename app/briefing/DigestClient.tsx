@@ -28,17 +28,24 @@ function Notifications() {
   const [ownerSaving, setOwnerSaving] = useState(false);
   const [ownerMsg, setOwnerMsg] = useState("");
   useEffect(() => setOwnerMode(new URLSearchParams(location.search).has("owner")), []);
-  const [env, setEnv] = useState({ supported: true, ios: false, standalone: false });
+  const [env, setEnv] = useState({ supported: true, ios: false, standalone: false, desktop: false });
   useEffect(() => {
-    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    // iPads report a Mac browser; a touch screen gives them away. Both need the Home Screen app.
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    const desktop = !ios && !/Android|Mobi/.test(navigator.userAgent);
     const standalone = matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
-    setEnv({ supported: "serviceWorker" in navigator && "PushManager" in window && "Notification" in window, ios, standalone });
+    setEnv({ supported: "serviceWorker" in navigator && "PushManager" in window && "Notification" in window, ios, standalone, desktop });
     setOn(notificationsOn());
   }, []);
   async function enable() {
     try {
       setStatus("Asking for permission…");
-      if ((await Notification.requestPermission()) !== "granted") { setStatus("Notifications are blocked. Allow them for Arkanum in your phone's Settings → Notifications."); return; }
+      if ((await Notification.requestPermission()) !== "granted") {
+        setStatus(env.desktop
+          ? "Notifications are blocked for this site. Click the icon at the left of the address bar, set Notifications to Allow, then press the button again. If nothing shows after that, check that your computer allows notifications from this browser (Windows: Settings → System → Notifications; Mac: System Settings → Notifications)."
+          : "Notifications are blocked. Allow them for Arkanum in your phone's Settings → Notifications.");
+        return;
+      }
       const reg = await navigator.serviceWorker.ready;
       const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
       await register({ subscription: sub.toJSON(), instant });
@@ -58,7 +65,7 @@ function Notifications() {
   }
   return (
     <section className="card" id="notify">
-      <h2>{on ? "Daily notification is on" : "Get this on your phone"}</h2>
+      <h2>{on ? (env.desktop ? "Alerts are on for this computer" : "Alerts are on for this phone") : "Get alerts on your phone or computer"}</h2>
       {!env.supported || (env.ios && !env.standalone) ? (
         <div>
           <p className="muted">On iPhone, notifications work once Arkanum is on your Home Screen:</p>
@@ -67,7 +74,7 @@ function Notifications() {
         </div>
       ) : (
         <>
-          <p className="muted">One notification each weekday at 5:00 PM ET with the day&apos;s biggest insider buy, and a week in review on Saturdays.</p>
+          <p className="muted">One notification each weekday at 5:00 PM ET with the day&apos;s biggest insider buy, and a week in review on Saturdays.{env.desktop ? " On a computer they appear in the corner of your screen while your browser is open (Chrome, Edge, Firefox, or Safari on a Mac); turn them on in each browser and on each device you want them on." : ""}</p>
           <label className="check"><input type="checkbox" checked={instant} onChange={(e) => (on ? toggleInstant(e.target.checked) : setInstant(e.target.checked))} /> <span><strong>Instant alerts:</strong> also tell me within about an hour when a CEO, CFO or other top executive buys a stock on my watchlist (or anyone makes an unusual buy of it), and whenever someone I follow buys or makes a large sale.</span></label>
           <div className="toolbar">{on ? <><button className="btn" onClick={test}>Send a test</button><button className="btn" onClick={disable}>Turn off</button></> : <button className="btn primary big" onClick={enable}>Turn on notifications</button>}</div>
           <p className="muted small">No account, email or name. While it&apos;s on we keep your watchlist and the people you follow, for instant alerts; turning it off deletes them.</p>

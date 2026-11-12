@@ -923,3 +923,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   .ctrow-detail { padding: 0 .8rem .7rem 1rem; }
   .filters .filt:last-of-type { margin-left: 0; }
 }
+/* Alerts bell in the header (desktop; phones reach alerts from the Digest tab). */
+.alerts-btn { text-decoration: none; }
+@media (max-width: 760px) { .nav .alerts-btn { display: none; } }
