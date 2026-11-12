@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { TradingView } from "@/components/TradingView";
 import { TradeList } from "@/components/TradeList";
 import { KindsLine } from "@/components/KindsLine";
+import { MonthBars } from "@/components/MonthBars";
+import { ResearchFor } from "@/components/ResearchFor";
+import { companyRisks, health } from "@/lib/context.mjs";
 import { InsiderStrip } from "@/components/InsiderStrip";
 import { HBars } from "@/components/Bars";
 import { isExecOrDirector } from "@/lib/insider";
@@ -59,6 +62,14 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
     ["Dividends paid", fund.div ? "$" + fmtBig(fund.div) : fund.div === 0 ? "None" : "—"], ["Payout ratio", fund.payout != null ? `${fund.payout}%` : "—"],
   ] : [];
 
+  // The company's insider trades (executives and directors) and the facts used to read them.
+  const ex = (insiders ?? []).filter(isExecOrDirector);
+  const fin = health(fund) as { tone: string; text: string }[];
+  const risks = companyRisks(fund, news) as { tone: string; text: string; why?: string; link?: string }[];
+  const ctx = { trades: insiders ?? [], news, fund };
+
+  // Three bands, kept visibly apart: the company itself, what its insiders did, and what the
+  // research says about trades like theirs.
   return (
     <div className="stack">
       <section className="card">
@@ -78,40 +89,42 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
           interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
           hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
         }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
-        <InsiderStrip trades={insiders} range={range} />
-        <p className="muted small">Prices are delayed 15 minutes. Drag across the chart to see past prices.</p>
+        <InsiderStrip trades={insiders} range={range} events={news} />
+        <p className="muted small">Prices are delayed 15 minutes. Insider trades and company announcements are lined up under the chart for the same period.</p>
       </section>
 
-      {fund ? (
+      <h2 className="band"><span className="band-n">1</span> The company <span className="muted small">finances and announcements, from SEC filings</span></h2>
+      {fund || risks.length ? (
         <section className="card">
           <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
-          <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl>
-          <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p>
+          {fin.length ? <div className="an-chips">{fin.map((h) => <span key={h.text} className={`an-chip ${h.tone}`}>{h.text}</span>)}</div> : null}
+          {fund ? <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl> : null}
+          {risks.length ? (
+            <div className="risks">
+              <h3>Things to know</h3>
+              <ul>{risks.map((r) => <li key={r.text} className={r.tone}>{r.link ? <a href={r.link} target="_blank" rel="noreferrer">{r.text}</a> : r.text}{r.why ? <span className="muted"> {r.why}</span> : null}</li>)}</ul>
+            </div>
+          ) : null}
+          {fund ? <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses. Company finances weren&apos;t part of our research tests.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p> : null}
         </section>
       ) : null}
+      <section className="card">
+        <h2>Company announcements <span className="muted small">SEC 8-K filings, newest first</span></h2>
+        {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
+          <ul className="news">{news.map((a) => (
+            <li key={a.link} className={a.items.includes("Executive or board change") ? "exec" : undefined}><a href={a.link} target="_blank" rel="noreferrer">{a.items.length ? a.items.join(" · ") : "Announcement"}</a><div className="muted small">{day(a.date, true)}</div></li>
+          ))}</ul>
+        )}
+      </section>
 
-      <div>
-        <section className="card">
-          <h2>Company announcements <span className="muted small">SEC 8-K filings</span></h2>
-          {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
-            <ul className="news">{news.map((a) => (
-              <li key={a.link}><a href={a.link} target="_blank" rel="noreferrer">{a.items.length ? a.items.join(" · ") : "Announcement"}</a><div className="muted small">{day(a.date, true)}</div></li>
-            ))}</ul>
-          )}
-        </section>
-      </div>
-
-      <CongressFor symbol={symbol} />
-      <StakeHolders symbol={symbol} />
-      <FundHolders symbol={symbol} />
-
+      <h2 className="band"><span className="band-n">2</span> What insiders did <span className="muted small">executives, directors, House members and funds</span></h2>
       {insiders === null || insiders.length > 0 ? (
         <section className="card">
           <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
-          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out.</p>
+          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out. Open <strong>Analysis</strong> under a trade for its context.</p>
           <KindsLine />
-          {insiders?.length ? (() => {
-            const ex = insiders.filter(isExecOrDirector);
+          {ex.length ? <MonthBars trades={ex} note="from the filings loaded" /> : null}
+          {ex.length ? (() => {
             const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
             const b = sum("P"), sd = sum("S");
             return b || sd ? <HBars rows={[
@@ -119,9 +132,15 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
               { key: "s", label: <strong>Sold</strong>, sub: `${ex.filter((t) => t.code === "S").length} trades`, value: sd, text: `$${fmtBig(sd)}`, tone: "down" },
             ]} /> : null;
           })() : null}
-          {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} />}
+          {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} context={ctx} />}
         </section>
       ) : null}
+      <CongressFor symbol={symbol} />
+      <StakeHolders symbol={symbol} />
+      <FundHolders symbol={symbol} />
+
+      <h2 className="band"><span className="band-n">3</span> What the research says <span className="muted small">how trades like these did, 2023–25</span></h2>
+      <ResearchFor trades={insiders} />
     </div>
   );
 }

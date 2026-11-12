@@ -522,6 +522,10 @@ html[data-theme="light"] .tabs button.on { background: var(--card); }
 .imark.buy { background: var(--up); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .imark.sell { background: var(--down); clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .imark:hover, .imark.on { opacity: 1; transform: translate(-50%, -50%) scale(1.35); z-index: 1; }
+.imark.event { top: 6px; width: 7px; height: 7px; background: var(--muted); opacity: .7; }
+.imark.event:hover, .imark.event.on { transform: translate(-50%, -50%) scale(1.5); }
+.ev-key { display: inline-block; width: 7px; height: 7px; background: var(--muted); vertical-align: middle; }
+.ev-read { font-weight: 700; }
 .istrip-axis { display: flex; justify-content: space-between; gap: .5rem; margin-top: .2rem; }
 /* Congress */
 .party { display: inline-block; font: 600 .7rem var(--font-mono), monospace; padding: .05rem .4rem; border-radius: 5px; border: 1px solid var(--line); color: var(--muted); vertical-align: middle; }
@@ -761,3 +765,40 @@ section[id] { scroll-margin-top: 5rem; }
 .skip-link:focus { top: .5rem; }
 main:focus { outline: none; }
 a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Stock pages (round 90): three bands, the Analysis panel, month bars, research groups. */
+.band { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem; font-size: 1rem; margin: 1rem 0 0; padding-top: .9rem; border-top: 2px solid var(--line); }
+.band-n { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border: 1px solid var(--text); font-size: .85rem; }
+.risks h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; margin: 1rem 0 .4rem; }
+.risks ul, .an-notes, .an-events { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; }
+.risks li.warn, .an-notes li.warn { color: var(--warn, var(--text)); }
+.risks li.warn::marker, .an-notes li.warn::marker { color: var(--down); }
+.news li.exec a { font-weight: 700; }
+.an-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .6rem; }
+.an-chip { font-size: .75rem; border: 1px solid var(--line); padding: .15rem .5rem; }
+.an-chip.good { border-color: var(--up); color: var(--up); }
+.an-chip.weak { border-color: var(--down); color: var(--down); }
+.analysis { margin-top: .4rem; font-size: .85rem; }
+.analysis > summary { cursor: pointer; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; width: fit-content; }
+.analysis[open] > summary { color: var(--text); }
+.an-rows { display: grid; gap: .55rem; margin: .5rem 0 0; padding: .7rem .8rem; border: 1px solid var(--line); background: var(--card2); }
+.an-rows > div { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: .6rem; }
+.an-rows dt { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; padding-top: .1rem; }
+.an-rows dd { margin: 0; line-height: 1.5; }
+.an-meter { display: inline-block; width: 70px; height: 7px; background: var(--meter-off); vertical-align: middle; margin-right: .45rem; }
+.an-meter span { display: block; height: 100%; background: var(--accent); }
+.rangebar { display: block; width: 100%; max-width: 260px; height: 14px; margin: .3rem 0; }
+.rb-zero { stroke: var(--muted); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.rb-range { fill: var(--muted); opacity: .55; }
+.rangebar.up .rb-range, .rangebar.up .rb-mid { fill: var(--up); }
+.rangebar.down .rb-range, .rangebar.down .rb-mid { fill: var(--down); }
+.rb-mid { fill: var(--text); }
+.mbars { margin: .4rem 0 .9rem; }
+.mbars svg { display: block; width: 100%; height: 88px; }
+.mb-axis { stroke: var(--line); stroke-width: .5; vector-effect: non-scaling-stroke; }
+.mb-buy { fill: var(--up); } .mb-sell { fill: var(--down); }
+.mb-labels { display: flex; } .mb-labels span { flex: 1; text-align: center; font-size: .65rem; color: var(--muted); }
+.rf-list { list-style: none; margin: .6rem 0; padding: 0; display: grid; gap: .7rem; }
+.rf-list li { border: 1px solid var(--line); padding: .6rem .75rem; display: grid; gap: .3rem; }
+.rf-fig { display: grid; grid-template-columns: auto minmax(120px, 260px) 1fr; gap: .2rem .7rem; align-items: center; }
+@media (max-width: 760px) { .an-rows > div { grid-template-columns: minmax(0, 1fr); gap: .1rem; } .rf-fig { grid-template-columns: auto minmax(0, 1fr); } .rf-fig > .small { grid-column: 1 / -1; } }

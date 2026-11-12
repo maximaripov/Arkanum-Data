@@ -2,11 +2,14 @@
 // Under a stock's price chart: when executives and directors bought (green) and sold (red),
 // on a timeline matching the chart's range, so you can see whether insiders bought near
 // the lows. One mark per day and side, growing with the dollar amount; tap or hover for details.
+// The company's 8-K announcements sit on the same timeline as small grey squares, so a buy
+// right after quarterly results or an executive change is visible at a glance.
 import { useState } from "react";
 import { fmtBig } from "@/lib/format";
 import { isExecOrDirector } from "@/lib/insider";
 import { personName, roleLabel } from "@/lib/people.mjs";
 import type { InsiderTrade } from "@/lib/sec";
+import type { Announcement } from "@/lib/news";
 
 const DAYS: Record<string, number> = { "1M": 31, "6M": 183, "1Y": 365, "5Y": 1826 };
 const at = (d: string) => Date.parse(d + "T12:00:00Z");
@@ -14,7 +17,7 @@ const axis = (ms: number, year: boolean) => new Date(ms).toLocaleDateString(unde
 const full = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 type Mark = { key: string; buy: boolean; date: string; value: number; trades: InsiderTrade[] };
 
-export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null; range: string }) {
+export function InsiderStrip({ trades, range, events }: { trades: InsiderTrade[] | null; range: string; events?: Announcement[] | null }) {
   const [pick, setPick] = useState<string | null>(null);
   const days = DAYS[range];
   if (!days || !trades) return null;
@@ -34,6 +37,8 @@ export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null;
   const partial = !!oldest && at(oldest) > start;
   const max = Math.max(...marks.map((m) => m.value), 1);
   const shown = marks.find((m) => m.key === pick);
+  const evs = (events ?? []).filter((a) => at(a.date) >= start);
+  const ev = evs.find((a) => `e:${a.link}` === pick);
   const who = (m: Mark) => {
     const people = [...new Set(m.trades.map((t) => personName(t.owner)))];
     return people.length === 1 ? `${people[0]} (${roleLabel(m.trades[0].role)})` : `${people.length} insiders`;
@@ -42,15 +47,23 @@ export function InsiderStrip({ trades, range }: { trades: InsiderTrade[] | null;
   return (
     <div className="istrip">
       <div className="istrip-read small">
-        {shown ? (
+        {ev ? (
+          <><span className="ev-read">Company announcement</span> · <a href={ev.link} target="_blank" rel="noreferrer">{ev.items.join(" · ")}</a> · {full(at(ev.date))}</>
+        ) : shown ? (
           <><span className={shown.buy ? "up" : "down"}>{shown.buy ? "Bought" : "Sold"} ${fmtBig(shown.value)}</span>{shown.trades.length > 1 ? ` · ${shown.trades.length} trades` : ""} · {who(shown)} · {full(at(shown.date))}{shown.trades.length === 1 && shown.trades[0].price ? ` at $${shown.trades[0].price.toFixed(2)}` : ""}</>
         ) : marks.length ? (
-          <span className="muted">Insider buys <span className="up">▲</span> and sales <span className="down">▼</span> by executives and directors · tap one</span>
+          <span className="muted">Insider buys <span className="up">▲</span> and sales <span className="down">▼</span> by executives and directors{evs.length ? <>, company announcements <span className="ev-key" aria-hidden /></> : null} · tap one</span>
         ) : (
           <span className="muted">No buys or sales by executives or directors in this period{partial ? " (in the filings loaded)" : ""}.</span>
         )}
       </div>
       <div className="istrip-track" onPointerLeave={() => setPick(null)}>
+        {evs.map((a) => (
+          <button key={a.link} className={`imark event${`e:${a.link}` === pick ? " on" : ""}`}
+            style={{ left: `calc(12px + (100% - 24px) * ${(at(a.date) - start) / (end - start)})` }}
+            onPointerEnter={(e) => e.pointerType === "mouse" && setPick(`e:${a.link}`)} onClick={() => setPick(`e:${a.link}` === pick ? null : `e:${a.link}`)}
+            aria-label={`Company announcement, ${a.date}: ${a.items.join(", ")}`} />
+        ))}
         {marks.map((m) => {
           const size = 8 + 12 * Math.sqrt(m.value / max);
           return (

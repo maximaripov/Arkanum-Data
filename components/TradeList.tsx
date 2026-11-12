@@ -9,6 +9,7 @@ import { TIER_LABEL } from "@/lib/conviction.mjs";
 import { personName, roleLabel, companyName } from "@/lib/people.mjs";
 import { ReturnLine } from "@/components/Returns";
 import { EvidenceLine } from "@/components/Evidence";
+import { TradeAnalysis, type TradeContext } from "@/components/TradeAnalysis";
 
 export { personName, roleLabel };
 
@@ -33,7 +34,7 @@ export function Signal({ c, compact = false }: { c: NonNullable<InsiderTrade["co
   );
 }
 
-function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
+function Trade({ t, showCompany, ctx }: { t: InsiderTrade; showCompany: boolean; ctx?: TradeContext }) {
   const buy = t.code === "P", sell = t.code === "S";
   return (
     <li className="trade">
@@ -62,13 +63,15 @@ function Trade({ t, showCompany }: { t: InsiderTrade; showCompany: boolean }) {
         </div>
         {t.ret && (buy || sell) ? <ReturnLine trade={t.ret.trade} pub={t.ret.pub} sale={sell} /> : null}
         <EvidenceLine t={t} />
+        <TradeAnalysis t={t} ctx={ctx} />
       </div>
       <div className={`trade-value mono ${buy ? "up" : sell ? "down" : "muted"}`}>{t.value ? "$" + fmtBig(t.value) : "—"}</div>
     </li>
   );
 }
 
-export function TradeList({ trades, showCompany = true, pageSize = 40, empty = "No insider trades match." }: { trades: InsiderTrade[]; showCompany?: boolean; pageSize?: number; empty?: string }) {
+/** `context` (stock pages): the company's other filings, 8-K announcements and fundamentals, for each trade's Analysis panel. */
+export function TradeList({ trades, showCompany = true, pageSize = 40, empty = "No insider trades match.", context }: { trades: InsiderTrade[]; showCompany?: boolean; pageSize?: number; empty?: string; context?: TradeContext }) {
   const [shown, setShown] = useState(pageSize);
   if (!trades.length) return <p className="muted">{empty}</p>;
   // Group by the day the trade became public (filing date), newest first; biggest first within a day.
@@ -83,7 +86,7 @@ export function TradeList({ trades, showCompany = true, pageSize = 40, empty = "
       {[...groups].map(([d, list]) => (
         <div key={d}>
           <h3 className="dayhead">{dayLabel(d)}</h3>
-          <ul className="trades">{list.map((t, i) => <Trade key={t.accession + t.code + i} t={t} showCompany={showCompany} />)}</ul>
+          <ul className="trades">{list.map((t, i) => <Trade key={t.accession + t.code + i} t={t} showCompany={showCompany} ctx={context} />)}</ul>
         </div>
       ))}
       {trades.length > shown ? <button className="btn wide" onClick={() => setShown(shown + pageSize)}>Show more ({(trades.length - shown).toLocaleString()} left)</button> : null}
