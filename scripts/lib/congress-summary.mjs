@@ -8,13 +8,37 @@
 import { readFile, writeFile, mkdir, readdir, rm } from "node:fs/promises";
 import { memberSlug, estAmount } from "../../lib/congress.mjs";
 import { closesFor, dailyCloses, tradeReturns, summarize } from "../../lib/returns.mjs";
+import { COMMITTEE_SECTORS, committeesFor, inCommitteeSector, overlaps, sectorExposure, trackRecord } from "./congress-intel.mjs";
+
+const LEGIS = "https://unitedstates.github.io/congress-legislators";
+/** Committee seats by member name, and committee names, from the public-domain congress-legislators
+ * files. Empty when they can't be fetched: the pages then simply show no committees. */
+async function committeeData() {
+  try {
+    const get = async (f) => { const r = await fetch(`${LEGIS}/${f}`, { signal: AbortSignal.timeout(30_000) }); if (!r.ok) throw new Error(`${r.status} ${f}`); return r.json(); };
+    const [legis, membership, committees] = await Promise.all([get("legislators-current.json"), get("committee-membership-current.json"), get("committees-current.json")]);
+    const seats = new Map();
+    for (const l of legis) {
+      if (l.terms.at(-1).type !== "rep") continue;
+      const name = l.name.official_full || `${l.name.first} ${l.name.last}`;
+      seats.set(name, committeesFor(l.id.bioguide, membership));
+    }
+    const names = Object.fromEntries(committees.filter((c) => c.type === "house").map((c) => [c.thomas_id, c.name.replace(/^House Committee on (the )?/, "")]));
+    return { seats, names };
+  } catch (e) { console.log(`committees: skipped (${e.message})`); return { seats: new Map(), names: {} }; }
+}
+/** Sector by ticker from the screener (SEC industry codes mapped to broad sectors). */
+async function sectorMap() {
+  try { const d = JSON.parse(await readFile("public/data/screener.json", "utf8")); const i = d.fields.indexOf("sector"); return new Map(d.rows.map((r) => [r[0], r[i]])); }
+  catch { return new Map(); }
+}
 
 const DIR = "public/data/congress";
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 const seat = (t) => `${t.state}${t.district ? "-" + t.district : ""}`;
 const r4 = (x) => (x == null ? null : Math.round(x * 10000) / 10000);
 // r: [stock since trade, S&P since trade, stock since public, S&P since public] (fractions; null = not available)
-const slim = (t) => ({ ...(t.ret ? { r: [r4(t.ret.trade?.[0]), r4(t.ret.trade?.[1]), r4(t.ret.pub?.[0]), r4(t.ret.pub?.[1])] } : {}), m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, du: t.dateUnclear || undefined, lo: t.min, hi: t.max, u: t.url, ac: t.account || undefined, am: t.amendedIn ? 1 : undefined });
+const slim = (t) => ({ ...(t.ret ? { r: [r4(t.ret.trade?.[0]), r4(t.ret.trade?.[1]), r4(t.ret.pub?.[0]), r4(t.ret.pub?.[1])] } : {}), m: t.member, p: t.party?.[0] ?? null, sd: seat(t), f: t.filed, d: t.date, o: t.owner, t: t.ticker, a: t.asset, y: t.type, x: t.partial || undefined, du: t.dateUnclear || undefined, lo: t.min, hi: t.max, u: t.url, ac: t.account || undefined, am: t.amendedIn ? 1 : undefined, jx: t.jx || undefined });
 const rank = (list, type) => {
   const by = new Map();
   for (const t of list.filter((x) => x.type === type)) { const r = by.get(t.ticker) ?? { t: t.ticker, a: t.asset, members: new Set(), n: 0, usd: 0 }; r.members.add(t.member); r.n++; r.usd += estAmount(t.min, t.max); by.set(t.ticker, r); }
@@ -42,6 +66,9 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
   const stocks = keep.filter((t) => t.ticker && (t.assetType === "ST" || !t.assetType) && t.type !== "E");
   const asOf = returns ? await addReturns(stocks) : null;
   const recent90 = stocks.filter((t) => t.date >= daysAgo(90));
+  const [{ seats, names }, sectors] = await Promise.all([committeeData(), sectorMap()]);
+  // A trade in a sector one of the member's committees covers (a fact, not an accusation).
+  for (const t of stocks) if (inCommitteeSector(t, seats.get(t.member), sectors)) t.jx = 1;
   const members = new Map();
   for (const t of stocks) {
     const m = members.get(t.member) ?? { m: t.member, s: memberSlug(t.member), p: t.party?.[0] ?? null, sd: seat(t), current: t.current, n: 0, buys: 0, sells: 0, usd: 0, buyUsd: 0, sellUsd: 0, last: "", trades: [] };
@@ -69,7 +96,12 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
     for (const k of ["usd", "buyUsd", "sellUsd"]) m[k] = Math.round(m[k]);
     // How the stocks did after this member's buys and after their sales.
     if (asOf) m.ret = { buys: summary(stocks.filter((t) => t.member === m.m && t.type === "P")), sells: summary(stocks.filter((t) => t.member === m.m && t.type !== "P")) };
+    // Track record of their purchases since each became public, with a 90% range (see congress-intel.mjs).
+    if (asOf) { const tr = trackRecord(stocks.filter((t) => t.member === m.m && t.type === "P").map((t) => ({ filed: t.filed, ret: t.ret?.pub }))); if (tr) m.tr = tr; }
+    const cm = seats.get(m.m); if (cm?.length) m.cm = cm;
   }
+  const yearAgo = daysAgo(365);
+  const lastYear = stocks.filter((t) => t.date >= yearAgo);
   const list = [...members.values()].sort((a, b) => b.usd - a.usd || b.n - a.n); // by estimated dollars traded
   await writeFile("public/data/congress-overview.json", JSON.stringify({
     updated: new Date().toISOString(),
@@ -77,6 +109,10 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
     stats: { trades30: last30.length, members30: new Set(last30.map((t) => t.member)).size, buys30: last30.filter((t) => t.type === "P").length, sells30: last30.filter((t) => t.type === "S").length, medianDelay: lag.length ? Math.round(lag[Math.floor(lag.length / 2)]) : null, scannedSkipped, total: stocks.length },
     latest: stocks.slice(0, 60).map(slim),
     bought: rank(recent90, "P"), sold: rank(recent90, "S"), windows,
+    // Stocks several members bought within 30 days of each other (last year), and sectors traded.
+    overlap: overlaps(lastYear, { days: 30 }).slice(0, 15),
+    sectors: sectorExposure(lastYear, sectors).slice(0, 12),
+    committees: names, committeeSectors: COMMITTEE_SECTORS,
     members: list.map(({ trades, ...m }) => m),
   }));
   // Every stock trade, for the Congress page's filters and sorting (fetched only when used).
@@ -84,7 +120,11 @@ export async function writeSummaries(keep, scannedSkipped, { returns = true } = 
   await writeFile("public/data/congress-trades.json", JSON.stringify({ trades: stocks.map((t) => { const { ac, ...x } = slim(t); return { ...x, a: x.a.replace(/\s*-?\s*(Common Stock|Class [A-C] Common Stock|Ordinary Shares).*$/i, "").slice(0, 40) }; }) }));
   await mkdir(DIR, { recursive: true });
   for (const f of await readdir(DIR)) if (!bySlug.has(f.replace(/\.json$/, ""))) await rm(`${DIR}/${f}`);
-  for (const { trades, ...m } of list) await writeFile(`${DIR}/${m.s}.json`, JSON.stringify({ member: m, returnsAsOf: asOf, trades }));
+  for (const { trades, ...m } of list) {
+    const own = stocks.filter((t) => t.member === m.m);
+    const cm = (m.cm ?? []).map((id) => ({ id, name: names[id] ?? id, sectors: COMMITTEE_SECTORS[id] ?? [] }));
+    await writeFile(`${DIR}/${m.s}.json`, JSON.stringify({ member: m, returnsAsOf: asOf, sectors: sectorExposure(own, sectors), committees: cm, trades }));
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

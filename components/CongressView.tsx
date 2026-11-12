@@ -13,11 +13,12 @@ import { ReturnCell, ReturnLine, ReturnsSummary, type RetSide, type Pair } from 
 import { FollowButton } from "@/components/FollowButton";
 import { SectionIntro } from "@/components/SectionIntro";
 import { KindsLine } from "@/components/KindsLine";
+import { BoughtTogether, ByTrackRecord, Committees, Sectors, TrackRecord, type Committee, type Overlap, type SectorRow, type Track } from "@/components/CongressIntel";
 const HOUSE_KINDS = "These are reported trades: what House members disclosed, often weeks after trading. None is a tested signal: in our test, no group of House trades clearly beat the market.";
 
-export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean; ac?: string; am?: 1 };
+export type CTrade = { r?: (number | null)[]; m: string; p: string | null; sd: string; f: string; d: string; o: string; t: string; a: string; y: string; x?: boolean; lo: number | null; hi: number | null; u: string; du?: boolean; ac?: string; am?: 1; jx?: 1 };
 /** usd, buyUsd, sellUsd: estimated dollars traded (midpoints of the reported ranges). */
-export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; usd?: number; buyUsd?: number; sellUsd?: number; last: string; ret?: { buys: RetSide; sells: RetSide }; w?: Record<string, [usd: number, n: number, buys: number, sells: number]> };
+export type Member = { m: string; s: string; p: string | null; sd: string; current: boolean; n: number; buys: number; sells: number; usd?: number; buyUsd?: number; sellUsd?: number; last: string; ret?: { buys: RetSide; sells: RetSide }; w?: Record<string, [usd: number, n: number, buys: number, sells: number]>; tr?: Track; cm?: string[] };
 /** What the member dropdown needs. */
 export type PickerMember = Pick<Member, "m" | "p" | "sd" | "n" | "usd">;
 type Ranked = { t: string; a: string; members: number; n: number; usd?: number };
@@ -27,6 +28,7 @@ export type Overview = {
   latest: CTrade[]; bought: Ranked[]; sold: Ranked[]; members: Member[];
   /** The same lists by trade date over 30, 90, 365 and 730 days. */
   windows?: Record<string, { bought: Ranked[]; sold: Ranked[] }>;
+  overlap?: Overlap[]; sectors?: SectorRow[]; committees?: Record<string, string>;
 };
 
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.slice(0, 4) === String(new Date().getFullYear()) ? undefined : "numeric" });
@@ -34,7 +36,7 @@ const range = amountRange;
 const OWNER: Record<string, string> = { SP: "spouse", JT: "joint", DC: "child" };
 // Whose trade and which account: two otherwise identical rows are usually the same stock
 // bought in two accounts (an IRA and a brokerage account), so the account is shown.
-const whose = (t: CTrade) => [OWNER[t.o], t.ac, t.am ? "amended" : ""].filter(Boolean).join(" · ");
+const whose = (t: CTrade) => [OWNER[t.o], t.ac, t.am ? "amended" : "", t.jx ? "committee sector" : ""].filter(Boolean).join(" · ");
 const pctS = (x: number) => `${x > 0.0005 ? "+" : x < -0.0005 ? "−" : ""}${Math.abs(x * 100).toFixed(1)}%`;
 const traded = (t: CTrade) => (t.du ? "date unclear" : day(t.d));
 const delay = (t: CTrade) => Math.round((Date.parse(t.f) - Date.parse(t.d)) / 86_400_000);
@@ -140,7 +142,7 @@ export function MemberPicker({ members, current = "" }: { members: PickerMember[
 const Note = ({ skipped }: { skipped: number }) => <p className="muted small span12">From House members&apos; STOCK Act reports (U.S. House Clerk), checked daily. Amounts are the ranges members report; trades can be disclosed up to 45 days later. {skipped} paper filings are scanned images and can&apos;t be read. Senate not included yet.</p>;
 
 /** One member's page; rendered on the server so search engines can read it. */
-export function MemberView({ member: sel, trades: shown, members, skipped, returnsAsOf }: { member: Member; trades: CTrade[]; members: PickerMember[]; skipped: number; returnsAsOf?: string | null }) {
+export function MemberView({ member: sel, trades: shown, members, skipped, returnsAsOf, sectors = [], committees = [] }: { member: Member; trades: CTrade[]; members: PickerMember[]; skipped: number; returnsAsOf?: string | null; sectors?: SectorRow[]; committees?: Committee[] }) {
   return (
     <div className="ov">
       <h1 className="sr-only">{sel.m} stock trades</h1>
@@ -154,6 +156,9 @@ export function MemberView({ member: sel, trades: shown, members, skipped, retur
       </section>
       <section className="card span12"><FollowButton cik={`house:${memberSlug(sel.m)}`} name={sel.m} /></section>
       <ReturnsSummary buys={sel.ret?.buys} sells={sel.ret?.sells} asOf={returnsAsOf} who={`${sel.m}'s`} />
+      <TrackRecord tr={sel.tr} who={`${sel.m}'s`} />
+      <Committees list={committees} who={`${sel.m}'s`} />
+      <Sectors rows={sectors} title={`What ${sel.m} trades, by sector`} note="Last two years." />
       <section className="card flush">
         <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
         <KindsLine>{HOUSE_KINDS}</KindsLine>
@@ -169,6 +174,7 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
   const router = useRouter();
   const [o, setO] = useState<Overview | null | undefined>(initial ?? undefined);
   const [win, setWin] = useState("365"); // time window for the ranked lists
+  const [rankBy, setRankBy] = useState<"usd" | "record">("usd"); // members by dollars traded (default) or track record
   useEffect(() => {
     // Old links (/congress?member=Name) go to the member's page.
     const m = new URLSearchParams(location.search).get("member");
@@ -220,15 +226,20 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
       </div>
 
       <section className="card flush">
-        <div className="card-title"><h2>Most active members <span className="muted small">estimated $ traded, {winLabel}{win !== "730" ? " · returns over 2 years" : ""}</span></h2>{o.windows ? <WindowPick win={win} setWin={setWin} /> : null}</div>
+        <div className="card-title"><h2>{rankBy === "usd" ? "Most active members" : "Members by track record"} <span className="muted small">{rankBy === "usd" ? `estimated $ traded, ${winLabel}${win !== "730" ? " · returns over 2 years" : ""}` : "purchases vs the S&P 500 since disclosure, 2 years"}</span></h2>
+          <div className="winpick" role="group" aria-label="Rank members by"><button className={rankBy === "usd" ? "on" : ""} aria-pressed={rankBy === "usd"} onClick={() => setRankBy("usd")}>$ traded</button><button className={rankBy === "record" ? "on" : ""} aria-pressed={rankBy === "record"} onClick={() => setRankBy("record")}>Track record</button></div>
+          {o.windows && rankBy === "usd" ? <WindowPick win={win} setWin={setWin} /> : null}</div>
+        {rankBy === "record" ? <ByTrackRecord members={o.members} /> : <>
         {!active.length ? <p className="muted pad">No member reported a stock trade in this window.</p> : null}
         <ul className="lrows">{active.slice(0, 12).map((x) => (
           <li key={x.m}><Link href={`/congress/${memberSlug(x.m)}`}>
             <span className="lrow-main"><span className="wraps"><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small wraps">{(x.w ? x.w[win][1] : x.n).toLocaleString("en-US")} trades · latest {day(x.last)}{x.ret?.buys?.trade ? <> · buys {pctS(x.ret.buys.trade.stock)} vs S&amp;P {pctS(x.ret.buys.trade.spy)}</> : null}</span></span>
             <span className="lrow-v"><span className="mono">{x.w ? `~$${fmtBig(x.w[win][0])}` : x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.n.toLocaleString("en-US")} trades`}</span><span className="muted small"><span className="up">{x.w ? x.w[win][2] : x.buys} buys</span> · <span className="down">{x.w ? x.w[win][3] : x.sells} sales</span></span></span>
           </Link></li>
-        ))}</ul>
+        ))}</ul></>}
       </section>
+      <BoughtTogether rows={o.overlap ?? []} />
+      <Sectors rows={o.sectors ?? []} title="What House members trade, by sector" note="Last year, all members." />
       <Note skipped={s.scannedSkipped} />
     </div>
   );

@@ -1,3 +1,4 @@
+import type { Committee, SectorRow } from "@/components/CongressIntel";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MemberView, type CTrade, type Member, type Overview } from "@/components/CongressView";
@@ -9,7 +10,7 @@ import { readCongressMember } from "@/lib/congressFiles";
 export const revalidate = 3600;
 export async function generateStaticParams() { return []; }
 // Read from the deployment's own copy, not fetched through the runtime cache (its writes are limited).
-const load = (slug: string) => readCongressMember(slug) as Promise<{ member: Member; trades: CTrade[]; returnsAsOf?: string | null } | null>;
+const load = (slug: string) => readCongressMember(slug) as Promise<{ member: Member; trades: CTrade[]; returnsAsOf?: string | null; sectors?: SectorRow[]; committees?: Committee[] } | null>;
 
 export async function generateMetadata({ params }: { params: Promise<{ member: string }> }): Promise<Metadata> {
   const slug = (await params).member;
@@ -26,5 +27,5 @@ export default async function Page({ params }: { params: Promise<{ member: strin
   const slug = (await params).member;
   const [d, o] = await Promise.all([load(slug), readCongressOverview() as Promise<Overview | null>]);
   if (!d) notFound();
-  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n, usd }) => ({ m, p, sd, n, usd }))} skipped={o?.stats.scannedSkipped ?? 0} returnsAsOf={d.returnsAsOf} />;
+  return <MemberView member={d.member} trades={d.trades.slice(0, 200)} members={(o?.members ?? [d.member]).map(({ m, p, sd, n, usd }) => ({ m, p, sd, n, usd }))} skipped={o?.stats.scannedSkipped ?? 0} returnsAsOf={d.returnsAsOf} sectors={d.sectors ?? []} committees={d.committees ?? []} />;
 }

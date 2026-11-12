@@ -802,3 +802,9 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .rf-list li { border: 1px solid var(--line); padding: .6rem .75rem; display: grid; gap: .3rem; }
 .rf-fig { display: grid; grid-template-columns: auto minmax(120px, 260px) 1fr; gap: .2rem .7rem; align-items: center; }
 @media (max-width: 760px) { .an-rows > div { grid-template-columns: minmax(0, 1fr); gap: .1rem; } .rf-fig { grid-template-columns: auto minmax(0, 1fr); } .rf-fig > .small { grid-column: 1 / -1; } }
+/* Congress intelligence (round 91). */
+.tr-verdict { margin: 0 0 .5rem; }
+.cm-list { margin: 0 0 .6rem; padding-left: 1.1rem; display: grid; gap: .3rem; }
+.tr-cell { display: grid; justify-items: end; gap: .1rem; min-width: 140px; }
+.tr-cell .rangebar { width: 140px; margin: 0; }
+.card-title .winpick + .winpick { margin-left: .4rem; }

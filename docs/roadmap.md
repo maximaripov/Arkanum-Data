@@ -96,7 +96,7 @@ row read twice:
 | 3 | Risk notes per trade and per ticker, from facts already held: share price under $5, small market cap, low trading volume, recent reverse split, going-concern or late-filing notices, the research verdict for that kind of trade |
 | 3 | More charts: buy and sell value over time per company and per insider |
 
-## Phase 4: Congress intelligence (round 92)
+## Phase 4: Congress intelligence (round 91, done)
 
 | Notes | Item |
 |---|---|

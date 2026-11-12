@@ -1,6 +1,6 @@
 # Arkanum Data: handoff (paste or attach this to start a new chat)
 
-Updated 2026-11-12, after round 90. Full history: `docs/build-log.md` (rounds 1-90); add new rounds there.
+Updated 2026-11-12, after round 91. Full history: `docs/build-log.md` (rounds 1-91); add new rounds there.
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
@@ -79,7 +79,8 @@ Updated 2026-11-12, after round 90. Full history: `docs/build-log.md` (rounds 1-
   - Time windows: 30d, 90d, 1y, 2y.
   - Lists are ranked by estimated dollars (range midpoints, marked as estimated).
   - Filters: size, party, date, state.
-  - `/congress/[member]` (101 members) has Follow and returns.
+  - `/congress/[member]` (101 members) has Follow and returns, a track record with a 90% range and verdict, committees and the sectors they trade (round 91).
+  - Congress page: rank members by $ traded or track record (with the chance baseline), stocks bought by several members, sectors traded. Logic in `scripts/lib/congress-intel.mjs`.
 - **Digest:**
   - `/briefing` shows the latest digest only. Past digests are on `/briefing/archive`, linked from the digest page and the footer.
   - Dated pages live at `/briefing/[date]`.
@@ -135,7 +136,7 @@ Updated 2026-11-12, after round 90. Full history: `docs/build-log.md` (rounds 1-
 - **Usage:** Vercel Functions Storage once hit its limit. It was fixed by leaving out sharp and keeping deployments for 1 day.
 
 ## 8. Open items and ideas
-- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-3 done (rounds 88-90); next is phase 4 (Congress: sectors, committees, overlap, member track records with ranges). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
+- **Roadmap (round 88):** `docs/roadmap.md` is the plan from the owner's master notes. Phases 1-4 done (rounds 88-91); next is phase 5 (follow funds, a Watching page, CSV exports, funds under Institutional Holdings, more funds). The owner's decisions are at its top. Security status: `docs/security-audit.md`.
 - **Waiting on the owner:**
   - delete the stale branches `proto-news`, `proto-track` and `round2`.
 - **Owner was told:**
