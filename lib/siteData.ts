@@ -12,6 +12,8 @@ export const readOverview = () => read(path.join(process.cwd(), "public/data/ove
 export const readScreener = () => read(path.join(process.cwd(), "public/data/screener.json"));
 export const readCongressOverview = () => read(path.join(process.cwd(), "public/data/congress-overview.json"));
 export const readFamous = () => read(path.join(process.cwd(), "public/data/famous.json"));
+/** Shares outstanding by ticker (scripts/build-shares.mjs), for market value in risk flags. */
+export const readShares = () => read(path.join(process.cwd(), "public/data/shares.json")) as Promise<Record<string, number> | null>;
 /** The 30-day insider file plus today's, merged (as loadInsiders does over HTTP). */
 export async function readInsiders(): Promise<InsiderData> {
   const [main, today] = await Promise.all([

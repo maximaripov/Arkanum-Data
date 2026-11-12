@@ -38,3 +38,13 @@ test("monthly sums buys and sales by month, oldest first", () => {
   const m = monthly([t({ value: 10 }), t({ code: "S", value: 5 }), t({ date: "2025-01-01", value: 99 })], 3, "2026-11-12");
   assert.deepEqual(m, [{ month: "2026-09", buy: 0, sell: 0 }, { month: "2026-10", buy: 10, sell: 5 }, { month: "2026-11", buy: 0, sell: 0 }]);
 });
+
+test("companyRisks: small company, under $5, heavy selling, old financials", () => {
+  const r = companyRisks({ ni: 5, de: 1, growth: -20 }, [], "2026-11-12", {
+    price: 3, shares: 50e6, basis: "Fiscal year to Dec 2024",
+    trades: [{ code: "S", date: "2026-10-01", value: 2e6 }, { code: "P", date: "2026-10-02", value: 10_000 }, { code: "S", date: "2025-01-01", value: 9e6 }],
+  });
+  assert.deepEqual(r.map((x) => [x.kind, x.tone]), [["Finances", "info"], ["Finances", "info"], ["Stock", "warn"], ["Stock", "warn"], ["Insiders", "info"]]);
+  assert.ok(r.find((x) => x.kind === "Insiders").text.includes("$2.0M"));
+  assert.deepEqual(companyRisks(null, [], "2026-11-12", { price: 40, shares: 1e9 }), []);
+});
