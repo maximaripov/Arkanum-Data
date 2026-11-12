@@ -27,13 +27,18 @@ async function secFetch(url: string, revalidate: number | false, as: "json" | "t
 }
 
 export const secJson = (url: string, revalidate: number | false) => secFetch(url, revalidate, "json");
-/** The first 64 KB of a document (SEC serves byte ranges): enough for a press release's
- * headline, without downloading a 6 MB exhibit. Not cached here; callers cache the result. */
+/** The first 64 KB of a document: enough for a press release's headline. SEC ignores byte
+ * ranges, so the download is cut off after 64 KB instead of fetching a 6 MB exhibit. Not
+ * cached here; callers cache the result. */
 export async function secTextHead(url: string): Promise<string> {
   return gate(async () => {
-    const res = await fetch(url, { headers: { "User-Agent": UA, Range: "bytes=0-65535" }, cache: "no-store" });
-    if (!res.ok) throw new Error(`SEC ${res.status} for ${url}`);
-    return (await res.text()).slice(0, 65_536);
+    const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+    if (!res.ok || !res.body) throw new Error(`SEC ${res.status} for ${url}`);
+    const reader = res.body.getReader(), parts: Uint8Array[] = [];
+    let size = 0;
+    while (size < 65_536) { const { done, value } = await reader.read(); if (done) break; parts.push(value); size += value.length; }
+    await reader.cancel().catch(() => {});
+    return new TextDecoder().decode(Buffer.concat(parts)).slice(0, 65_536);
   });
 }
 

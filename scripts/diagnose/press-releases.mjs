@@ -12,14 +12,18 @@ async function get(url, as = "json") {
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return as === "json" ? r.json() : r.text();
 }
-// The site's path (lib/news.ts pressHeadline): first 64 KB only.
-let ranged = 0, full = 0;
+// The site's path (lib/sec.ts secTextHead): the download stops after 64 KB.
+let kb = 0;
 async function head(url) {
   await sleep(150);
-  const r = await fetch(url, { headers: { "User-Agent": UA, Range: "bytes=0-65535" } });
+  const r = await fetch(url, { headers: { "User-Agent": UA } });
   if (!r.ok) throw new Error(`${r.status} ${url}`);
-  if (r.status === 206) ranged++; else full++;
-  return (await r.text()).slice(0, 65536);
+  const reader = r.body.getReader(), parts = [];
+  let size = 0;
+  while (size < 65536) { const { done, value } = await reader.read(); if (done) break; parts.push(value); size += value.length; }
+  await reader.cancel().catch(() => {});
+  kb += size / 1024;
+  return new TextDecoder().decode(Buffer.concat(parts)).slice(0, 65536);
 }
 const tickers = await get("https://www.sec.gov/files/company_tickers.json");
 const byTicker = new Map(Object.values(tickers).map((c) => [c.ticker, c.cik_str]));
@@ -43,4 +47,4 @@ for (const sym of process.argv.slice(2)) {
     console.log(`${sym} ${r.filingDate[i]} [${r.items[i]}] ${ex} -> ${h ?? "NO HEADLINE"}`);
   }
 }
-console.log(`\n8-Ks: ${total}; with exhibit 99: ${withEx}; headline found: ${withHead}; byte-range answers: ${ranged} partial, ${full} full`);
+console.log(`\n8-Ks: ${total}; with exhibit 99: ${withEx}; headline found: ${withHead}; downloaded ${Math.round(kb)} KB in all`);

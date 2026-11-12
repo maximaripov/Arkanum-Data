@@ -31,3 +31,10 @@ test("headline gives up on the body, agreements and financial statements", () =>
   assert.equal(headline("<p>INDEX TO CONSOLIDATED FINANCIAL STATEMENTS</p>"), null);
   assert.equal(headline(""), null);
 });
+
+test("headline skips phone numbers, tables of contents and a name alone, and rejoins a wrapped line", () => {
+  assert.equal(headline("<p>Victor H. Mendelson (305) 374-1745 ext. 7590</p><p>HEICO Corporation Reports Record Results for Third Quarter</p>"), "HEICO Corporation Reports Record Results for Third Quarter");
+  assert.equal(headline("<p>Highlights 03 Financial Summary 04 Operational Summary 05 Outlook 09</p><p>Tesla Reports Third Quarter 2026 Financial Results</p>"), "Tesla Reports Third Quarter 2026 Financial Results");
+  assert.equal(headline("<p>MATADOR RESOURCES COMPANY</p><p>MATADOR RESOURCES COMPANY INCREASES QUARTERLY CASH DIVIDEND</p>"), "MATADOR RESOURCES COMPANY INCREASES QUARTERLY CASH DIVIDEND");
+  assert.equal(headline("<p>MATADOR RESOURCES COMPANY CLOSES PALOMA ACQUISITION AND</p><p>RAISES FULL-YEAR PRODUCTION GUIDANCE</p><p>DALLAS--Matador said...</p>"), "MATADOR RESOURCES COMPANY CLOSES PALOMA ACQUISITION AND RAISES FULL-YEAR PRODUCTION GUIDANCE");
+});
