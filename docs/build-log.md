@@ -778,3 +778,10 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Tabs instead of long scrolls** (`components/PageTabs.tsx`): stock (Overview, Company, Announcements, Insider trades, Congress and funds, Research), insider (Buys and sales, Track record, Companies), House member (Trades, Track record, Committees and sectors), fund (Largest holdings, Changes this quarter), Congress (Trades, Members, Bought together, Sectors), Research (Key findings, Papers, How we test), About and Watching. The open tab is in the address (`?tab=`); Back works; old `#section` links open the tab holding the section; every panel stays in the HTML for search engines. Empty tabs are hidden.
 - The owner chose to keep the current visual design (the redesign mockups were not used).
 - On this branch only (not shipped): the Risk tab on stock pages (RiskCard and red-flag count) and the "What we stand on" tab on About, carried over from round 95.
+
+## Round 97 (2026-11-13): homepage split, risk analytics, tab links (shipped d61a052, 7e8faff)
+
+- **Homepage is the intro only**, reached from the logo; the insider dashboard moved to `/insiders` (the Insiders tab). Old `/?view=`, `/?q=` etc. redirect there with their query (next.config.mjs); `/#dashboard` links are sent there by `components/HomeLinks.tsx`.
+- **Risk analytics shipped** (built in round 95): red-flag count by the company name, a Risk tab on stock pages, risk tags on every insider trade. `build-shares.mjs` now writes `public/data/shares.json` (read by stock pages for the market-value flag); until the next data run writes it, the small-company flag doesn't show.
+- **Tabs follow client navigation** (`PageTabs` reads `useSearchParams` in its own Suspense boundary, so panels still render on the server): links to `?tab=` on the same page, such as "How we test" in the three-kinds card (now `/research?tab=method`), switch the tab.
+- Still on this branch only: the "What Arkanum stands on" tab on About and the methodology intro.
