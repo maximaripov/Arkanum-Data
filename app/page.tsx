@@ -1,22 +1,15 @@
-import InsidersView, { type Overview } from "./InsidersView";
 import { HomeIntro } from "@/components/HomeIntro";
-import { readOverview } from "@/lib/siteData";
+import { HomeLinks } from "@/components/HomeLinks";
 
 export const metadata = { alternates: { canonical: "/" } };
-// The overview lists are rendered here so the page arrives with them (crawlers included).
-export const revalidate = 900;
 
-async function overview(): Promise<Overview | null> {
-  const d = await readOverview();
-  return d?.totals ? (d as Overview) : null;
-}
-
-// The homepage: what Arkanum is and what its research found, then the insider overview.
-export default async function Home() {
+// The homepage, reached from the logo: what Arkanum is and what its research found. The live
+// insider dashboard is on /insiders.
+export default function Home() {
   return (
     <>
+      <HomeLinks />
       <HomeIntro />
-      <InsidersView initial={await overview()} />
     </>
   );
 }

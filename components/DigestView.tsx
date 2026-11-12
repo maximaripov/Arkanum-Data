@@ -34,7 +34,7 @@ export function DigestView({ d, latest = false }: { d: Digest; latest?: boolean 
       </section>
       <div className="twocol">
         <section className="card">
-          <div className="card-head"><h2>Biggest insider buys</h2><Link href="/?view=trades" className="small">All trades ›</Link></div>
+          <div className="card-head"><h2>Biggest insider buys</h2><Link href="/insiders?view=trades" className="small">All trades ›</Link></div>
           <p className="muted small">{d.totals.buys ? `${d.totals.buys} ${d.totals.buys === 1 ? "buy" : "buys"} filed ${when}, $${fmtBig(d.totals.value)} in total.` : `None filed ${when}.`}</p>
           {d.buys.length ? <ul className="rows">{d.buys.map((t, i) => (
             <li key={i}><Link href={`/stock/${t.symbol}`} className="row-link">
@@ -48,7 +48,7 @@ export function DigestView({ d, latest = false }: { d: Digest; latest?: boolean 
           ))}</ul> : null}
         </section>
         <section className="card">
-          <div className="card-head"><h2>Buying together</h2><Link href="/?view=groups" className="small">More ›</Link></div>
+          <div className="card-head"><h2>Buying together</h2><Link href="/insiders?view=groups" className="small">More ›</Link></div>
           <p className="muted small">2+ executives or directors buying the same stock {week ? "this week" : "over the past week"}.</p>
           {d.clusters.length ? <ul className="rows">{d.clusters.map((c) => (
             <li key={c.symbol}><Link href={`/stock/${c.symbol}`} className="row-link">

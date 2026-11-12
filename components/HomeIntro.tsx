@@ -1,11 +1,10 @@
-// The top of the homepage, kept apart from the live dashboard below it: a compact hero (what
+// The homepage (the insider dashboard is on /insiders): a compact hero (what
 // Arkanum is, what it's for), the three kinds of trade, and the research with its findings and
 // papers. Server-rendered; every figure comes from the research files (lib/findings.ts).
 import Link from "next/link";
 import { findings } from "@/lib/findings";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TradeKinds } from "./TradeKinds";
-import { KindsLine } from "./KindsLine";
 import { OpenSearch } from "./OpenSearch";
 
 const PAPERS: [string, string][] = [
@@ -34,7 +33,7 @@ export function HomeIntro() {
           <li><Link href="/research"><strong>See what has worked</strong></Link> <span className="muted">{(Math.floor(tested / 1000) * 1000).toLocaleString("en-US")}+ trades tested</span></li>
         </ul>
         <div className="hero-actions">
-          <a className="btn primary" href="#dashboard">Today&apos;s trades ↓</a>
+          <Link className="btn primary" href="/insiders">Today&apos;s trades ›</Link>
           <Link className="btn" href="/research">Read the research ›</Link>
         </div>
       </section>
@@ -59,8 +58,6 @@ export function HomeIntro() {
         </nav>
       </div>
 
-      <h2 id="dashboard" className="home-dash-title">&gt; Live dashboard <span className="muted small">insider filings, updated every two hours on weekdays</span></h2>
-      <KindsLine />
     </>
   );
 }
