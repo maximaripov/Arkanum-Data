@@ -64,7 +64,7 @@ export function Welcome({ market }: { market?: string }) {
       body: <>
         <ul className="welcome-list">
           <li><strong>A stock you own</strong>: search it at the top of any page.</li>
-          <li><Link href="/#dashboard" onClick={close}>Today&apos;s insider trades</Link> and <Link href="/congress" onClick={close}>Congress trades</Link>.</li>
+          <li><Link href="/insiders" onClick={close}>Today&apos;s insider trades</Link> and <Link href="/congress" onClick={close}>Congress trades</Link>.</li>
           <li><Link href="/research" onClick={close}>The research</Link>: what worked and what didn&apos;t.</li>
           <li><Link href="/briefing#notify" onClick={close}>A daily digest</Link> on your phone, and alerts when people you follow trade.</li>
         </ul>

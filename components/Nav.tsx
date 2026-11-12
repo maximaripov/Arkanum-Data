@@ -8,7 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 // [address, label, phone tab label]: the phone tab bar has about 53px per tab, too narrow for
 // "Institutional Holdings", so it keeps the short name there.
-const LINKS: [string, string, string][] = [["/", "Insiders", "Insiders"], ["/congress", "Congress", "Congress"], ["/research", "Research", "Research"], ["/stakes", "Institutional Holdings", "Holdings"], ["/markets", "Markets", "Markets"], ["/briefing", "Digest", "Digest"]];
+const LINKS: [string, string, string][] = [["/insiders", "Insiders", "Insiders"], ["/congress", "Congress", "Congress"], ["/research", "Research", "Research"], ["/stakes", "Institutional Holdings", "Holdings"], ["/markets", "Markets", "Markets"], ["/briefing", "Digest", "Digest"]];
 
 const ICONS: Record<string, React.ReactNode> = {
   Insiders: <><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>,
@@ -20,7 +20,7 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 // Stock and insider pages belong to the Insiders section.
-const current = (path: string, href: string) => (href === "/" ? path === "/" || path.startsWith("/stock") || path.startsWith("/insider") : path.startsWith(href));
+const current = (path: string, href: string) => (href === "/insiders" ? path.startsWith("/stock") || path.startsWith("/insider") : path.startsWith(href));
 
 export function Nav() {
   const path = usePathname();

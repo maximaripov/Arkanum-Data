@@ -191,7 +191,7 @@ function InsiderTrades({ view, go, initial }: { view: Exclude<View, "famous">; g
       </section>
     </>
   );
-  const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); (document.getElementById("dashboard") ?? document.body).scrollIntoView(); }; // the hero sits above the dashboard
+  const allStrong = () => { setStrongOnly(true); setKind("buys"); go("trades"); window.scrollTo(0, 0); };
   return (
     <>
       <h2 className="sr-only">What insiders are buying</h2>

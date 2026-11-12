@@ -28,10 +28,12 @@ const nextConfig = {
       ],
     }];
   },
-  // Insiders moved to the homepage; old links (with their filters) still work.
+  // The insider dashboard has its own page again (/insiders); old homepage links with a view
+  // or filter (?view=trades, ?q=...) go there, keeping the query.
   async redirects() {
+    const old = ["view", "show", "q", "min", "everyone"].map((key) => ({ source: "/", has: [{ type: "query", key }], destination: "/insiders", permanent: false }));
     return [
-      { source: "/insiders", destination: "/", permanent: true },
+      ...old,
       // The screener and calendar were retired; send old links somewhere useful.
       { source: "/screener", destination: "/stakes", permanent: false },
       { source: "/calendar", destination: "/markets", permanent: false },
