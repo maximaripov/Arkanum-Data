@@ -844,3 +844,21 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 @media (max-width: 760px) { .home-papers { display: none; } } /* phones: the Research tab is one tap away */
 .linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--text); cursor: pointer; text-align: left; }
 .linklike:hover strong, .hero-uses a:hover strong { text-decoration: underline; }
+/* Risk (round 95): a count by the company name, a card in the company band, tags on every trade. */
+.risk-badge { display: inline-block; vertical-align: middle; margin-left: .5rem; font-size: .7rem; font-weight: 700; letter-spacing: .04em; padding: .15rem .45rem; border: 1px solid var(--line); text-decoration: none; text-shadow: none; }
+.risk-badge.warn { border-color: var(--down); color: var(--down); }
+.risk-badge.ok { color: var(--muted); }
+.risk-card h2 .small { text-transform: none; letter-spacing: 0; }
+.risk-groups { display: grid; gap: .6rem; margin: .4rem 0 .6rem; }
+.risk-groups > div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: .6rem; }
+.risk-groups dt { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; padding-top: .15rem; }
+.risk-groups dd { margin: 0; }
+.risk-groups ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.risk-groups li { display: flex; gap: .5rem; align-items: baseline; }
+.risk-dot { flex: none; width: 8px; height: 8px; border: 1px solid var(--muted); display: inline-block; }
+.risk-dot.warn { background: var(--down); border-color: var(--down); }
+.risk-tags { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin: .25rem 0; }
+.risk-tags-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.risk-tag { font-size: .72rem; border: 1px solid var(--line); padding: .05rem .4rem; cursor: help; }
+.risk-tag.warn { border-color: var(--down); color: var(--down); }
+@media (max-width: 760px) { .risk-groups > div { grid-template-columns: minmax(0, 1fr); gap: .15rem; } }

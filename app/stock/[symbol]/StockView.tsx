@@ -7,6 +7,7 @@ import { CsvButton } from "@/components/CsvButton";
 import { INSIDER_COLS, insiderRows } from "@/lib/csvColumns";
 import { MonthBars } from "@/components/MonthBars";
 import { ResearchFor } from "@/components/ResearchFor";
+import { RiskBadge, RiskCard, redFlags, type Risk } from "@/components/RiskCard";
 import { companyRisks, health } from "@/lib/context.mjs";
 import { InsiderStrip } from "@/components/InsiderStrip";
 import { HBars } from "@/components/Bars";
@@ -29,7 +30,7 @@ const RANGES: [string, string, string][] = [["1D", "1D", "5"], ["1M", "1M", "60"
 const day = (d: string, year = false) => new Date(d + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
 
 /** Data the server already loaded (so the page arrives filled in and search engines can read it). */
-export type StockInitial = { co: Company | null; fund: Record<string, any> | null; insiders: InsiderTrade[] | null; news: Announcement[] | null };
+export type StockInitial = { co: Company | null; fund: Record<string, any> | null; insiders: InsiderTrade[] | null; news: Announcement[] | null; shares?: number | null };
 
 /** True when the figures' period ended more than 15 months ago ("Fiscal year to Dec 2023"). */
 const staleBasis = (basis?: string | null) => {
@@ -68,7 +69,10 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
   // The company's insider trades (executives and directors) and the facts used to read them.
   const ex = (insiders ?? []).filter(isExecOrDirector);
   const fin = health(fund) as { tone: string; text: string }[];
-  const risks = companyRisks(fund, news) as { tone: string; text: string; why?: string; link?: string }[];
+  // Latest price an insider paid or received (no quote feed here), for the under-$5 and size flags.
+  const price = [...(insiders ?? [])].filter((t) => t.price && (t.code === "P" || t.code === "S")).sort((x, y) => y.date.localeCompare(x.date))[0]?.price ?? null;
+  const risks = companyRisks(fund, news, undefined, { price, shares: initial?.shares ?? null, trades: ex, basis: fund?.basis }) as Risk[];
+  const checked = ["8-K events (bankruptcy, delisting notices, restatements, auditor changes, cyber incidents, layoffs)", "leadership changes", ...(fund ? ["profit, cash flow, debt, revenue trend"] : []), ...(price ? ["share price"] : []), ...(price && initial?.shares ? ["company size"] : []), "insider selling"];
   const ctx = { trades: insiders ?? [], news, fund };
 
   const buys = ex.filter((t) => t.code === "P").length, sales = ex.filter((t) => t.code === "S").length;
@@ -81,7 +85,7 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
       <section className="card">
         <div className="stock-head">
           <div>
-            <h1>{co?.name ? titleCase(co.name, symbol) : symbol}</h1>
+            <h1>{co?.name ? titleCase(co.name, symbol) : symbol} <RiskBadge risks={risks} /></h1>
             <div className="muted">{symbol}{co?.exchange ? ` · ${co.exchange}` : ""}{fund?.sector ? ` · ${fund.sector}` : ""} · insider trades, fund holdings and fundamentals</div>
           </div>
           <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "On your watchlist" : "Add to watchlist"}</button>
@@ -103,17 +107,12 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
             <p className="muted small">Prices are delayed 15 minutes. Insider trades and company announcements are lined up under the chart for the same period.</p>
           </section>
         ) },
-        { key: "company", label: "Company", content: fund || risks.length ? (
+        { key: "risk", label: <>Risk{redFlags(risks) ? <span className="down"> {redFlags(risks)}</span> : null}</>, content: <RiskCard risks={risks} checked={checked} /> },
+        { key: "company", label: "Company", content: fund ? (
           <section className="card">
             <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
             {fin.length ? <div className="an-chips">{fin.map((h) => <span key={h.text} className={`an-chip ${h.tone}`}>{h.text}</span>)}</div> : null}
             {fund ? <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl> : null}
-            {risks.length ? (
-              <div className="risks">
-                <h3>Things to know</h3>
-                <ul>{risks.map((r) => <li key={r.text} className={r.tone}>{r.link ? <a href={r.link} target="_blank" rel="noreferrer">{r.text}</a> : r.text}{r.why ? <span className="muted"> {r.why}</span> : null}</li>)}</ul>
-              </div>
-            ) : null}
             {fund ? <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses. Company finances weren&apos;t part of our research tests.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p> : null}
           </section>
         ) : <section className="card"><p className="muted">No financial figures in SEC&apos;s data for this company.</p></section> },

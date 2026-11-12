@@ -5,7 +5,7 @@ import { cikForTicker } from "@/lib/sec";
 import { announcementsCached, insidersForTickerCached } from "@/lib/secCached";
 import { withConviction } from "@/lib/conviction.mjs";
 import { withHistory } from "@/lib/insiderData";
-import { readInsiders, readScreener } from "@/lib/siteData";
+import { readInsiders, readScreener, readShares } from "@/lib/siteData";
 import { companyName } from "@/lib/people.mjs";
 
 // Rebuilt at most every 30 minutes: the page arrives with its insider trades, fundamentals
@@ -30,12 +30,13 @@ export async function generateMetadata({ params }: { params: Promise<{ symbol: s
 
 async function load(symbol: string): Promise<{ initial: StockInitial; known: boolean }> {
   const quiet = <T,>(p: Promise<T>) => p.catch(() => null);
-  const [c, ins, news, sc, site] = await Promise.all([
+  const [c, ins, news, sc, site, sh] = await Promise.all([
     cikForTicker(symbol).catch(() => undefined), // null: SEC doesn't list it; undefined: SEC couldn't be reached
     quiet(insidersForTickerCached(symbol)),
     quiet(announcementsCached(symbol)),
     readScreener(),
     readInsiders(),
+    readShares(),
   ]);
   const row = sc?.rows?.find((r: unknown[]) => r[0] === symbol);
   // A ticker SEC doesn't list and the site has no data for is not a stock page.
@@ -50,6 +51,7 @@ async function load(symbol: string): Promise<{ initial: StockInitial; known: boo
     fund: row ? Object.fromEntries(sc.fields.map((f: string, i: number) => [f, row[i]])) : null,
     insiders: ins ? withConviction(withHistory(ins, site)) : null,
     news,
+    shares: sh?.[symbol] ?? null,
   } };
 }
 

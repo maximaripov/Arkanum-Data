@@ -3,7 +3,7 @@
 // alerts (instant-alerts.mjs) multiply it by the purchase price. From SEC's XBRL frames, the
 // latest of the last three quarters for each company (cover-page figure first). Foreign
 // filers (20-F) aren't in the frames, so their market cap stays unknown, as in the lab.
-//   node scripts/build-shares.mjs   -> data/shares.json { ticker: shares }
+//   node scripts/build-shares.mjs   -> public/data/shares.json { ticker: shares } (also read by stock pages for market value)
 import { writeFile } from "node:fs/promises";
 import { getJson } from "./lib/sec.mjs";
 
@@ -21,5 +21,5 @@ const tickers = await getJson("https://www.sec.gov/files/company_tickers.json");
 const out = {};
 for (const c of Object.values(tickers ?? {})) { const v = byCik.get(c.cik_str); if (v) out[c.ticker] = v; }
 if (Object.keys(out).length < 1000) throw new Error(`Only ${Object.keys(out).length} tickers with shares outstanding: SEC data looks incomplete, keeping the old file`);
-await writeFile("data/shares.json", JSON.stringify(out));
+await writeFile("public/data/shares.json", JSON.stringify(out));
 console.log(`shares.json: ${Object.keys(out).length} tickers (quarters ${quarters.join(", ")})`);

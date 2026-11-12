@@ -34,7 +34,7 @@ for (const t of newTrades) if (t.ownerCik) { if (!byOwner.has(t.ownerCik)) byOwn
 // Purchases a saved lab strategy could match: officers and directors only, as in the lab.
 const candidates = newTrades.filter((t) => t.code === "P" && roleKind(t.role) !== "owner");
 const buyers = buyersBySymbol(all);
-const shares = await load("data/shares.json", {}); // shares outstanding by ticker (build-shares.mjs), for market cap
+const shares = await load("public/data/shares.json", {}); // shares outstanding by ticker (build-shares.mjs), for market cap
 const ctxFor = (t) => ({ insiders: buyers.get(t.symbol) ?? 1, shares: shares[t.symbol] ?? null });
 console.log(`${newTrades.length} new trade(s): ${alertable.length} watchlist-worthy buys, ${byOwner.size} insider(s) who could be followed, ${candidates.length} purchase(s) for saved strategies`);
 

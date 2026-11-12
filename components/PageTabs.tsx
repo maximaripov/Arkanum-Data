@@ -3,7 +3,8 @@
 // (?tab=key; the first tab has none), so a shared link opens the right tab and Back returns to
 // the previous one. Every panel is rendered (hidden when closed), so the full page is still in
 // the HTML for search engines and nothing reloads when switching.
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 
 export type PageTab = { key: string; label: ReactNode; content: ReactNode };
 
@@ -16,16 +17,20 @@ const fromUrl = (tabs: PageTab[]) => {
   return tabs.some((t) => t.key === h) ? h! : tabs[0].key;
 };
 
+/** Re-reads the tab when the address changes without a reload (a link to ?tab= on the same
+ *  page, Back and Forward). In its own Suspense boundary so the panels still render on the server. */
+function UrlSync({ sync }: { sync: () => void }) {
+  const q = useSearchParams().toString();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(sync, [q]);
+  return null;
+}
+
 export function PageTabs({ tabs, label }: { tabs: PageTab[]; label: string }) {
   const list = tabs.filter((t) => t.content);
   const [tab, setTab] = useState(list[0]?.key);
   useEffect(() => {
-    setTab(fromUrl(list));
     if (location.hash.length > 1) requestAnimationFrame(() => document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView());
-    const back = () => setTab(fromUrl(list));
-    addEventListener("popstate", back);
-    return () => removeEventListener("popstate", back);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (!list.length) return null;
   const go = (k: string) => {
@@ -37,6 +42,7 @@ export function PageTabs({ tabs, label }: { tabs: PageTab[]; label: string }) {
   };
   return (
     <>
+      <Suspense fallback={null}><UrlSync sync={() => setTab(fromUrl(list))} /></Suspense>
       <div className="tabs wrap-tabs page-tabs" role="tablist" aria-label={label} onKeyDown={(e) => {
         const i = list.findIndex((t) => t.key === tab);
         const j = e.key === "ArrowRight" ? (i + 1) % list.length : e.key === "ArrowLeft" ? (i - 1 + list.length) % list.length

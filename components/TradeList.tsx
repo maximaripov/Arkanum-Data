@@ -10,6 +10,7 @@ import { personName, roleLabel, companyName } from "@/lib/people.mjs";
 import { ReturnLine } from "@/components/Returns";
 import { EvidenceLine } from "@/components/Evidence";
 import { TradeAnalysis, type TradeContext } from "@/components/TradeAnalysis";
+import { tradeNotes } from "@/lib/context.mjs";
 
 export { personName, roleLabel };
 
@@ -54,6 +55,11 @@ function Trade({ t, showCompany, ctx }: { t: InsiderTrade; showCompany: boolean;
             {t.sale.flags.map((f) => <span key={f.text} className="why">{f.text}</span>)}
           </div>
         ) : null}
+        {(() => {
+          // Risk, visible on every trade (the same facts as the Analysis panel's notes).
+          const notes = tradeNotes(t) as { tone: string; text: string; why: string }[];
+          return notes.length ? <div className="risk-tags"><span className="risk-tags-label">Risk</span>{notes.map((n) => <span key={n.text} className={`risk-tag ${n.tone}`} title={n.why}>{n.text}</span>)}</div> : null;
+        })()}
         <div className="muted small">
           {t.planned && !t.conv ? <span className="badge" title="Scheduled in advance under a trading plan (Rule 10b5-1), so it says less about the insider's current view.">Planned</span> : null}
           {t.date && t.date !== t.filed ? `traded ${dayLabel(t.date)} · ` : ""}
