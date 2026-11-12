@@ -6,6 +6,7 @@ import { oosState } from "./insider-sales/paper";
 import { findings } from "@/lib/findings";
 import { TradeKinds } from "@/components/TradeKinds";
 import { JsonLd } from "@/components/JsonLd";
+import { PageTabs } from "@/components/PageTabs";
 import { OOS, SALES, SALES_OOS, SAMPLE } from "@/lib/research";
 import { TITLE as HOUSE_TITLE } from "./house-trades/paper";
 import { TITLE as DELAY_TITLE } from "./filing-delay/paper";
@@ -51,48 +52,55 @@ export default function Research() {
         <p className="paper-authors">{tested.toLocaleString("en-US")} trades by company officers and directors, 2023 to 2026, checked against what the stock did next</p>
       </header>
 
-      <section className="paper-body">
-        <h2>Key findings</h2>
-        <ol className="findings">
-          {findings().map((f) => (
-            <li key={f.id}>
-              <span className="find-fig mono">{f.figure}</span>
-              <div>
-                <strong>{f.head}</strong>
-                <p>{f.body} <Link href={f.href}>Evidence ›</Link></p>
-              </div>
-            </li>
-          ))}
-        </ol>
+      <PageTabs label="Research" tabs={[
+        { key: "findings", label: "Key findings", content: (
+          <>
+          <section className="paper-body">
+            <ol className="findings">
+              {findings().map((f) => (
+                <li key={f.id}>
+                  <span className="find-fig mono">{f.figure}</span>
+                  <div>
+                    <strong>{f.head}</strong>
+                    <p>{f.body} <Link href={f.href}>Evidence ›</Link></p>
+                  </div>
+                </li>
+              ))}
+            </ol>
 
-        <p><Link href="/research/lab"><strong>Research lab ›</strong></Link> Test your own rules (CEOs only, 3+ insiders, $100K+, company size, no pre-planned trades) on every purchase from 2023 to 2025 and since January 2026, with the same ranges the papers use.</p>
+            <p><Link href="/research/lab"><strong>Research lab ›</strong></Link> Test your own rules (CEOs only, 3+ insiders, $100K+, company size, no pre-planned trades) on every purchase from 2023 to 2025 and since January 2026, with the same ranges the papers use.</p>
 
-        <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
+            <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
 
-      </section>
-      <TradeKinds />
-      <section className="paper-body">
-        <h2>How we test</h2>
-        <ul>
-          <li><strong>Every trade, not a selection:</strong> all open-market buys and sales by officers and directors in SEC&apos;s insider data sets, with the few whose ticker or price didn&apos;t match left out and counted.</li>
-          <li><strong>From when the public could act:</strong> returns start at the first close after the filing became public, and are compared with other insider trades filed the same month, small-company stocks and the S&amp;P 500.</li>
-          <li><strong>Our own labels, unchanged:</strong> the buy score and the sale label are tested exactly as the site uses them, and the results stay up even where they don&apos;t work.</li>
-          <li><strong>Re-checked every month:</strong> the tests are rerun on trades filed since January 2026, which the labels were never tuned on; a paper&apos;s text is updated only while its conclusions still hold.</li>
-        </ul>
+          </section>
+          <TradeKinds />
+          </>
+        ) },
+        { key: "papers", label: <>Papers<span className="muted"> {PAPERS.length}</span></>, content: (
+          <ol className="research-list">
+            {PAPERS.map((x) => (
+              <li key={x.no}>
+                <p className="paper-series">Working paper no. {x.no} · {x.date}</p>
+                <Link href={x.href} className="research-title">{x.title}</Link>
+                <p>{x.summary}</p>
+              </li>
+            ))}
+          </ol>
+        ) },
+        { key: "method", label: "How we test", content: (
+          <section className="paper-body">
+            <ul>
+              <li><strong>Every trade, not a selection:</strong> all open-market buys and sales by officers and directors in SEC&apos;s insider data sets, with the few whose ticker or price didn&apos;t match left out and counted.</li>
+              <li><strong>From when the public could act:</strong> returns start at the first close after the filing became public, and are compared with other insider trades filed the same month, small-company stocks and the S&amp;P 500.</li>
+              <li><strong>Our own labels, unchanged:</strong> the buy score and the sale label are tested exactly as the site uses them, and the results stay up even where they don&apos;t work.</li>
+              <li><strong>Re-checked every month:</strong> the tests are rerun on trades filed since January 2026, which the labels were never tuned on; a paper&apos;s text is updated only while its conclusions still hold.</li>
+            </ul>
 
-        <p><Link href="/research/methodology"><strong>Full methodology ›</strong></Link> Where every number comes from, how prices are checked, how the ranges are worked out, the rule for calling a result changed, and what we don&apos;t test.</p>
+            <p><Link href="/research/methodology"><strong>Full methodology ›</strong></Link> Where every number comes from, how prices are checked, how the ranges are worked out, the rule for calling a result changed, and what we don&apos;t test.</p>
 
-        <h2>The papers</h2>
-      </section>
-      <ol className="research-list">
-        {PAPERS.map((x) => (
-          <li key={x.no}>
-            <p className="paper-series">Working paper no. {x.no} · {x.date}</p>
-            <Link href={x.href} className="research-title">{x.title}</Link>
-            <p>{x.summary}</p>
-          </li>
-        ))}
-      </ol>
+          </section>
+        ) },
+      ]} />
     </article>
   );
 }

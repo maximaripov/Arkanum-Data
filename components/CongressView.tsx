@@ -3,6 +3,7 @@
 // most-bought and most-sold stocks, and the most active members; each member has a page
 // (/congress/<slug>). Data: public/data/congress-overview.json, public/data/congress/<slug>.json,
 // /api/congress for stock pages.
+import { PageTabs } from "@/components/PageTabs";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -157,16 +158,30 @@ export function MemberView({ member: sel, trades: shown, members, skipped, retur
         <div className="kpi d-only"><small>Latest trade</small><span className="mono">{day(sel.last)}</span><em>trade date</em></div>
       </section>
       <section className="card span12"><FollowButton cik={`house:${memberSlug(sel.m)}`} name={sel.m} /></section>
-      <ReturnsSummary buys={sel.ret?.buys} sells={sel.ret?.sells} asOf={returnsAsOf} who={`${sel.m}'s`} />
-      <TrackRecord tr={sel.tr} who={`${sel.m}'s`} />
-      <Committees list={committees} who={`${sel.m}'s`} />
-      <Sectors rows={sectors} title={`What ${sel.m} trades, by sector`} note="Last two years." />
-      <section className="card flush">
-        <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
-        <KindsLine>{HOUSE_KINDS}</KindsLine>
-        <CsvButton rows={houseRows(shown)} cols={HOUSE_COLS} file={`${memberSlug(sel.m)}-trades`} />
-        <CongressTrades trades={shown} showMember={false} showReturns />
-      </section>
+      <div className="span12 stack">
+      <PageTabs label={sel.m} tabs={[
+        { key: "trades", label: <>Trades<span className="muted"> {sel.n.toLocaleString("en-US")}</span></>, content: (
+          <section className="card flush">
+            <div className="card-title"><h2>{sel.m}&apos;s trades <span className="muted small">newest disclosures first{sel.n > shown.length ? ` · latest ${shown.length}` : ""}</span></h2><Link href="/congress" className="linkbtn">All members ›</Link></div>
+            <KindsLine>{HOUSE_KINDS}</KindsLine>
+            <CsvButton rows={houseRows(shown)} cols={HOUSE_COLS} file={`${memberSlug(sel.m)}-trades`} />
+            <CongressTrades trades={shown} showMember={false} showReturns />
+          </section>
+        ) },
+        { key: "record", label: "Track record", content: sel.ret || sel.tr ? (
+          <>
+          <ReturnsSummary buys={sel.ret?.buys} sells={sel.ret?.sells} asOf={returnsAsOf} who={`${sel.m}'s`} />
+          <TrackRecord tr={sel.tr} who={`${sel.m}'s`} />
+          </>
+        ) : null },
+        { key: "committees", label: "Committees and sectors", content: committees.length || sectors.length ? (
+          <>
+          <Committees list={committees} who={`${sel.m}'s`} />
+          <Sectors rows={sectors} title={`What ${sel.m} trades, by sector`} note="Last two years." />
+          </>
+        ) : null },
+      ]} />
+      </div>
       <Note skipped={skipped} />
     </div>
   );
@@ -206,43 +221,56 @@ export function CongressView({ initial }: { initial?: Overview | null }) {
         <div className="kpi d-only"><small>Days to disclose</small><span className="mono">{s.medianDelay ?? "—"}</span><em>median; the law allows 45</em></div>
       </section>
 
-      <section className="card flush span8">
-        <div className="card-title"><h2>Trades <span className="muted small">House members, stocks only</span></h2></div>
-        <KindsLine>{HOUSE_KINDS}</KindsLine>
-        <TradeBrowser initial={o.latest} states={[...new Set(o.members.map((x) => x.sd.split("-")[0]))].sort()} />
-      </section>
-
-      <div className="stack span4" style={{ alignContent: "start" }}>
-        {o.windows ? <WindowPick win={win} setWin={setWin} /> : null}
-        {[["Most bought", bought, "up"], ["Most sold", sold, "down"]].map(([title, list, tone]) => (
-          <section key={title as string} className="card flush">
-            <div className="card-title"><h2>{title as string} <span className="muted small">{winLabel} · estimated $</span></h2></div>
-            <ul className="lrows">{(list as Overview["bought"]).slice(0, 6).map((x) => (
-              <li key={x.t}><Link href={`/stock/${x.t}`}>
-                <strong className="lrow-sym">{x.t}</strong>
-                <span className="lrow-main"><span className="muted small">{x.a.replace(/\s*-?\s*(Common Stock|Ordinary Shares).*$/i, "")}</span></span>
-                <span className="lrow-v"><span className={`mono ${tone}`}>{x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.members} members`}</span><span className="muted small">{x.members} {x.members === 1 ? "member" : "members"} · {x.n} {x.n === 1 ? "trade" : "trades"}</span></span>
-              </Link></li>
-            ))}</ul>
+      <div className="span12 stack">
+      <PageTabs label="Congress" tabs={[
+        { key: "trades", label: "Trades", content: (
+          <div className="ov">
+          <section className="card flush span8">
+            <div className="card-title"><h2>Trades <span className="muted small">House members, stocks only</span></h2></div>
+            <KindsLine>{HOUSE_KINDS}</KindsLine>
+            <TradeBrowser initial={o.latest} states={[...new Set(o.members.map((x) => x.sd.split("-")[0]))].sort()} />
           </section>
-        ))}
-      </div>
 
-      <section className="card flush">
-        <div className="card-title"><h2>{rankBy === "usd" ? "Most active members" : "Members by track record"} <span className="muted small">{rankBy === "usd" ? `estimated $ traded, ${winLabel}${win !== "730" ? " · returns over 2 years" : ""}` : "purchases vs the S&P 500 since disclosure, 2 years"}</span></h2>
-          <div className="winpick" role="group" aria-label="Rank members by"><button className={rankBy === "usd" ? "on" : ""} aria-pressed={rankBy === "usd"} onClick={() => setRankBy("usd")}>$ traded</button><button className={rankBy === "record" ? "on" : ""} aria-pressed={rankBy === "record"} onClick={() => setRankBy("record")}>Track record</button></div>
-          {o.windows && rankBy === "usd" ? <WindowPick win={win} setWin={setWin} /> : null}</div>
-        {rankBy === "record" ? <ByTrackRecord members={o.members} /> : <>
-        {!active.length ? <p className="muted pad">No member reported a stock trade in this window.</p> : null}
-        <ul className="lrows">{active.slice(0, 12).map((x) => (
-          <li key={x.m}><Link href={`/congress/${memberSlug(x.m)}`}>
-            <span className="lrow-main"><span className="wraps"><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small wraps">{(x.w ? x.w[win][1] : x.n).toLocaleString("en-US")} trades · latest {day(x.last)}{x.ret?.buys?.trade ? <> · buys {pctS(x.ret.buys.trade.stock)} vs S&amp;P {pctS(x.ret.buys.trade.spy)}</> : null}</span></span>
-            <span className="lrow-v"><span className="mono">{x.w ? `~$${fmtBig(x.w[win][0])}` : x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.n.toLocaleString("en-US")} trades`}</span><span className="muted small"><span className="up">{x.w ? x.w[win][2] : x.buys} buys</span> · <span className="down">{x.w ? x.w[win][3] : x.sells} sales</span></span></span>
-          </Link></li>
-        ))}</ul></>}
-      </section>
-      <BoughtTogether rows={o.overlap ?? []} />
-      <Sectors rows={o.sectors ?? []} title="What House members trade, by sector" note="Last year, all members." />
+          <div className="stack span4" style={{ alignContent: "start" }}>
+            {o.windows ? <WindowPick win={win} setWin={setWin} /> : null}
+            {[["Most bought", bought, "up"], ["Most sold", sold, "down"]].map(([title, list, tone]) => (
+              <section key={title as string} className="card flush">
+                <div className="card-title"><h2>{title as string} <span className="muted small">{winLabel} · estimated $</span></h2></div>
+                <ul className="lrows">{(list as Overview["bought"]).slice(0, 6).map((x) => (
+                  <li key={x.t}><Link href={`/stock/${x.t}`}>
+                    <strong className="lrow-sym">{x.t}</strong>
+                    <span className="lrow-main"><span className="muted small">{x.a.replace(/\s*-?\s*(Common Stock|Ordinary Shares).*$/i, "")}</span></span>
+                    <span className="lrow-v"><span className={`mono ${tone}`}>{x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.members} members`}</span><span className="muted small">{x.members} {x.members === 1 ? "member" : "members"} · {x.n} {x.n === 1 ? "trade" : "trades"}</span></span>
+                  </Link></li>
+                ))}</ul>
+              </section>
+            ))}
+          </div>
+          </div>
+        ) },
+        { key: "members", label: "Members", content: (
+          <section className="card flush">
+            <div className="card-title"><h2>{rankBy === "usd" ? "Most active members" : "Members by track record"} <span className="muted small">{rankBy === "usd" ? `estimated $ traded, ${winLabel}${win !== "730" ? " · returns over 2 years" : ""}` : "purchases vs the S&P 500 since disclosure, 2 years"}</span></h2>
+              <div className="winpick" role="group" aria-label="Rank members by"><button className={rankBy === "usd" ? "on" : ""} aria-pressed={rankBy === "usd"} onClick={() => setRankBy("usd")}>$ traded</button><button className={rankBy === "record" ? "on" : ""} aria-pressed={rankBy === "record"} onClick={() => setRankBy("record")}>Track record</button></div>
+              {o.windows && rankBy === "usd" ? <WindowPick win={win} setWin={setWin} /> : null}</div>
+            {rankBy === "record" ? <ByTrackRecord members={o.members} /> : <>
+            {!active.length ? <p className="muted pad">No member reported a stock trade in this window.</p> : null}
+            <ul className="lrows">{active.slice(0, 12).map((x) => (
+              <li key={x.m}><Link href={`/congress/${memberSlug(x.m)}`}>
+                <span className="lrow-main"><span className="wraps"><strong>{x.m}</strong> <Party p={x.p} sd={x.sd} />{x.current ? null : <span className="muted small"> · former</span>}</span><span className="muted small wraps">{(x.w ? x.w[win][1] : x.n).toLocaleString("en-US")} trades · latest {day(x.last)}{x.ret?.buys?.trade ? <> · buys {pctS(x.ret.buys.trade.stock)} vs S&amp;P {pctS(x.ret.buys.trade.spy)}</> : null}</span></span>
+                <span className="lrow-v"><span className="mono">{x.w ? `~$${fmtBig(x.w[win][0])}` : x.usd != null ? `~$${fmtBig(x.usd)}` : `${x.n.toLocaleString("en-US")} trades`}</span><span className="muted small"><span className="up">{x.w ? x.w[win][2] : x.buys} buys</span> · <span className="down">{x.w ? x.w[win][3] : x.sells} sales</span></span></span>
+              </Link></li>
+            ))}</ul></>}
+          </section>
+        ) },
+        { key: "together", label: "Bought together", content: o.overlap?.length ? (
+          <BoughtTogether rows={o.overlap ?? []} />
+        ) : null },
+        { key: "sectors", label: "Sectors", content: o.sectors?.length ? (
+          <Sectors rows={o.sectors ?? []} title="What House members trade, by sector" note="Last year, all members." />
+        ) : null },
+      ]} />
+      </div>
       <Note skipped={s.scannedSkipped} />
     </div>
   );

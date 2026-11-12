@@ -11,6 +11,7 @@ import { withConviction } from "@/lib/conviction.mjs";
 import { withHistory } from "@/lib/insiderData";
 import { readInsiders } from "@/lib/siteData";
 import { TradeList } from "@/components/TradeList";
+import { PageTabs } from "@/components/PageTabs";
 import { FollowButton } from "@/components/FollowButton";
 import { personName, roleLabel } from "@/lib/people.mjs";
 import { fmtBig } from "@/lib/format";
@@ -90,29 +91,31 @@ export default async function InsiderPage({ params }: { params: Promise<{ cik: s
         </dl>
       </section>
 
-      {companies.size ? (
-        <section className="card">
-          <h2>Companies</h2>
-          <ul className="rows">{[...companies.values()].map((t) => (
-            <li key={t.symbol}><Link href={`/stock/${t.symbol}`} className="row-link">
-              <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></div><div className="small muted">{roleLabel(t.role)}</div></div>
-              <div className="small muted">latest {day(t.date)}</div>
-            </Link></li>
-          ))}</ul>
-        </section>
-      ) : null}
-
-      {asOf ? <ReturnsSummary buys={side(market.filter((t) => t.code === "P"))} sells={side(market.filter((t) => t.code === "S"))} asOf={asOf} /> : null}
-
-      <section className="card">
-        <h2>Buys and sales</h2>
-        <p className="muted small">Open-market purchases and sales only; grants, option exercises and tax withholding are routine pay and left out.</p>
-        <KindsLine />
-        <MonthBars trades={market} months={24} />
-        <CsvButton rows={insiderRows(market)} cols={INSIDER_COLS} file={`${d.name.replace(/[^A-Za-z0-9]+/g, "-")}-trades`} />
-        <TradeList trades={market} pageSize={20} empty="No open-market buys or sales in their recent filings." />
-        <p className="small muted"><a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=4&dateb=&owner=include&count=40`} target="_blank" rel="noreferrer">All their filings on SEC EDGAR ↗</a></p>
-      </section>
+      <PageTabs label={d.name} tabs={[
+        { key: "trades", label: <>Buys and sales<span className="muted"> {market.length}</span></>, content: (
+          <section className="card">
+            <h2>Buys and sales</h2>
+            <p className="muted small">Open-market purchases and sales only; grants, option exercises and tax withholding are routine pay and left out.</p>
+            <KindsLine />
+            <MonthBars trades={market} months={24} />
+            <CsvButton rows={insiderRows(market)} cols={INSIDER_COLS} file={`${d.name.replace(/[^A-Za-z0-9]+/g, "-")}-trades`} />
+            <TradeList trades={market} pageSize={20} empty="No open-market buys or sales in their recent filings." />
+            <p className="small muted"><a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=4&dateb=&owner=include&count=40`} target="_blank" rel="noreferrer">All their filings on SEC EDGAR ↗</a></p>
+          </section>
+        ) },
+        { key: "record", label: "Track record", content: asOf ? <ReturnsSummary buys={side(market.filter((t) => t.code === "P"))} sells={side(market.filter((t) => t.code === "S"))} asOf={asOf} /> : null },
+        { key: "companies", label: <>Companies<span className="muted"> {companies.size}</span></>, content: companies.size ? (
+            <section className="card">
+              <h2>Companies</h2>
+              <ul className="rows">{[...companies.values()].map((t) => (
+                <li key={t.symbol}><Link href={`/stock/${t.symbol}`} className="row-link">
+                  <div className="row-main"><div><strong>{t.symbol}</strong> <span className="muted">{titleCase(t.issuer, t.symbol)}</span></div><div className="small muted">{roleLabel(t.role)}</div></div>
+                  <div className="small muted">latest {day(t.date)}</div>
+                </Link></li>
+              ))}</ul>
+            </section>
+        ) : null },
+      ]} />
     </div>
   );
 }
