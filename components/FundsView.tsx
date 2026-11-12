@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { PageTabs } from "@/components/PageTabs";
 import { Picker } from "@/components/Picker";
 import { FollowButton } from "@/components/FollowButton";
 import { CsvButton } from "@/components/CsvButton";
@@ -127,12 +128,21 @@ export function FundsView() {
         <FollowButton cik={`fund:${f.cik}`} name={f.name} />
       </section>
 
-      <section className="card">
-        <h2>Largest holdings <span className="muted small">{q(f.period)}, filed {new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></h2>
-        <CsvButton rows={[...new Map([...f.top, ...f.new, ...f.added, ...f.reduced, ...f.sold].map((h) => [h.cusip, { ...h, pct: Math.round(h.pct * 100) / 100, chgPct: h.chgPct == null ? null : Math.round(h.chgPct * 10) / 10 }])).values()]} cols={FUND_COLS} file={`${f.name.replace(/[^A-Za-z0-9]+/g, "-")}-13F-${f.period}`} />
-        <HoldingRows items={f.top} max={25} maxPct={f.top[0]?.pct} />
-        {f.prevPeriod ? <ChangeLines c={f} since={q(f.prevPeriod)} /> : null}
-      </section>
+      <PageTabs label={f.name} tabs={[
+        { key: "holdings", label: "Largest holdings", content: (
+          <section className="card">
+            <h2>Largest holdings <span className="muted small">{q(f.period)}, filed {new Date(f.filed + "T12:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span></h2>
+            <CsvButton rows={[...new Map([...f.top, ...f.new, ...f.added, ...f.reduced, ...f.sold].map((h) => [h.cusip, { ...h, pct: Math.round(h.pct * 100) / 100, chgPct: h.chgPct == null ? null : Math.round(h.chgPct * 10) / 10 }])).values()]} cols={FUND_COLS} file={`${f.name.replace(/[^A-Za-z0-9]+/g, "-")}-13F-${f.period}`} />
+            <HoldingRows items={f.top} max={25} maxPct={f.top[0]?.pct} />
+          </section>
+        ) },
+        { key: "changes", label: "Changes this quarter", content: f.prevPeriod ? (
+          <section className="card">
+            <h2>Changes this quarter <span className="muted small">{q(f.period)} against {q(f.prevPeriod)}</span></h2>
+            <ChangeLines c={f} since={q(f.prevPeriod)} />
+          </section>
+        ) : null },
+      ]} />
       </> : null}
     </>
   );

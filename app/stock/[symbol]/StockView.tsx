@@ -20,6 +20,7 @@ import { tvSymbol } from "@/lib/tv";
 import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement } from "@/lib/news";
 import { companyName } from "@/lib/people.mjs";
+import { PageTabs } from "@/components/PageTabs";
 
 type Company = { ticker: string; name: string | null; exchange: string | null };
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
@@ -70,8 +71,11 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
   const risks = companyRisks(fund, news) as { tone: string; text: string; why?: string; link?: string }[];
   const ctx = { trades: insiders ?? [], news, fund };
 
-  // Three bands, kept visibly apart: the company itself, what its insiders did, and what the
-  // research says about trades like theirs.
+  const buys = ex.filter((t) => t.code === "P").length, sales = ex.filter((t) => t.code === "S").length;
+  const count = (n: number) => n ? <span className="muted"> {n}</span> : null;
+
+  // The page in tabs, one screen each: the price, the company, what insiders and others did,
+  // and what the research says about trades like theirs.
   return (
     <div className="stack">
       <section className="card">
@@ -82,68 +86,74 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
           </div>
           <button className={`btn follow${has(symbol) ? " on" : ""}`} onClick={() => toggle(symbol)} aria-pressed={has(symbol)}>{has(symbol) ? "On your watchlist" : "Add to watchlist"}</button>
         </div>
-        <div className="chart-bar">
-          <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => setRange(l)}>{l}</button>)}</div>
-          <button className="linkbtn" onClick={() => setTools(!tools)}>{tools ? "Simple chart" : "Indicators & compare"}</button>
-        </div>
-        {tv ? <TradingView key={`${tv}${range}${tools}`} widget="advanced-chart" height={tools ? 520 : 380} blend config={{
-          symbol: tv, autosize: true, timezone: "America/New_York", allow_symbol_change: false, save_image: false, calendar: false,
-          interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
-          hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
-        }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
-        <InsiderStrip trades={insiders} range={range} events={news} />
-        <p className="muted small">Prices are delayed 15 minutes. Insider trades and company announcements are lined up under the chart for the same period.</p>
       </section>
-
-      <h2 className="band"><span className="band-n">1</span> The company <span className="muted small">finances and announcements, from SEC filings</span></h2>
-      {fund || risks.length ? (
-        <section className="card">
-          <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
-          {fin.length ? <div className="an-chips">{fin.map((h) => <span key={h.text} className={`an-chip ${h.tone}`}>{h.text}</span>)}</div> : null}
-          {fund ? <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl> : null}
-          {risks.length ? (
-            <div className="risks">
-              <h3>Things to know</h3>
-              <ul>{risks.map((r) => <li key={r.text} className={r.tone}>{r.link ? <a href={r.link} target="_blank" rel="noreferrer">{r.text}</a> : r.text}{r.why ? <span className="muted"> {r.why}</span> : null}</li>)}</ul>
+      <PageTabs label={co?.name ? titleCase(co.name, symbol) : symbol} tabs={[
+        { key: "overview", label: "Overview", content: (
+          <section className="card">
+            <div className="chart-bar">
+              <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => setRange(l)}>{l}</button>)}</div>
+              <button className="linkbtn" onClick={() => setTools(!tools)}>{tools ? "Simple chart" : "Indicators & compare"}</button>
             </div>
-          ) : null}
-          {fund ? <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses. Company finances weren&apos;t part of our research tests.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p> : null}
-        </section>
-      ) : null}
-      <section className="card">
-        <h2>Company announcements <span className="muted small">press releases and 8-K filings to the SEC, newest first</span></h2>
-        {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
-          <ul className="news">{news.map((a) => (
-            <li key={a.link} className={a.items.includes("Executive or board change") ? "exec" : undefined}><a href={a.link} target="_blank" rel="noreferrer">{a.headline ?? (a.items.length ? a.items.join(" · ") : "Announcement")}</a><div className="muted small">{day(a.date, true)}{a.headline && a.items.length ? ` · ${a.items.join(" · ")}` : ""}</div></li>
-          ))}</ul>
-        )}
-      </section>
-
-      <h2 className="band"><span className="band-n">2</span> What insiders did <span className="muted small">executives, directors, House members and funds</span></h2>
-      {insiders === null || insiders.length > 0 ? (
-        <section className="card">
-          <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
-          <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out. Open <strong>Analysis</strong> under a trade for its context.</p>
-          <KindsLine />
-          {ex.length ? <MonthBars trades={ex} note="from the filings loaded" /> : null}
-          {ex.length ? (() => {
-            const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
-            const b = sum("P"), sd = sum("S");
-            return b || sd ? <HBars rows={[
-              { key: "b", label: <strong>Bought</strong>, sub: `${ex.filter((t) => t.code === "P").length} trades`, value: b, text: `$${fmtBig(b)}`, tone: "up" },
-              { key: "s", label: <strong>Sold</strong>, sub: `${ex.filter((t) => t.code === "S").length} trades`, value: sd, text: `$${fmtBig(sd)}`, tone: "down" },
-            ]} /> : null;
-          })() : null}
-          {insiders?.length ? <CsvButton rows={insiderRows(insiders)} cols={INSIDER_COLS} file={`${symbol}-insider-trades`} /> : null}
-          {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} context={ctx} />}
-        </section>
-      ) : null}
-      <CongressFor symbol={symbol} />
-      <StakeHolders symbol={symbol} />
-      <FundHolders symbol={symbol} />
-
-      <h2 className="band"><span className="band-n">3</span> What the research says <span className="muted small">how trades like these did, 2023–25</span></h2>
-      <ResearchFor trades={insiders} />
+            {tv ? <TradingView key={`${tv}${range}${tools}`} widget="advanced-chart" height={tools ? 520 : 380} blend config={{
+              symbol: tv, autosize: true, timezone: "America/New_York", allow_symbol_change: false, save_image: false, calendar: false,
+              interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
+              hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
+            }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
+            <InsiderStrip trades={insiders} range={range} events={news} />
+            <p className="muted small">Prices are delayed 15 minutes. Insider trades and company announcements are lined up under the chart for the same period.</p>
+          </section>
+        ) },
+        { key: "company", label: "Company", content: fund || risks.length ? (
+          <section className="card">
+            <h2>Fundamentals <span className="muted small">SEC filings</span></h2>
+            {fin.length ? <div className="an-chips">{fin.map((h) => <span key={h.text} className={`an-chip ${h.tone}`}>{h.text}</span>)}</div> : null}
+            {fund ? <dl className="stats">{stats.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>)}</dl> : null}
+            {risks.length ? (
+              <div className="risks">
+                <h3>Things to know</h3>
+                <ul>{risks.map((r) => <li key={r.text} className={r.tone}>{r.link ? <a href={r.link} target="_blank" rel="noreferrer">{r.text}</a> : r.text}{r.why ? <span className="muted"> {r.why}</span> : null}</li>)}</ul>
+              </div>
+            ) : null}
+            {fund ? <p className="muted small">{fund.basis}. Dividends and free cash flow cover the last fiscal year. Reported net income includes one-time gains and losses. Company finances weren&apos;t part of our research tests.{staleBasis(fund.basis) ? <> <strong>These are over a year old: the newest figures in SEC&apos;s data for this company.</strong></> : null}</p> : null}
+          </section>
+        ) : <section className="card"><p className="muted">No financial figures in SEC&apos;s data for this company.</p></section> },
+        { key: "announcements", label: <>Announcements{count(news?.length ?? 0)}</>, content: (
+          <section className="card">
+          <h2>Company announcements <span className="muted small">press releases and 8-K filings to the SEC, newest first</span></h2>
+          {news === null ? <p className="muted">Loading…</p> : !news.length ? <p className="muted">No recent 8-K filings.</p> : (
+            <ul className="news">{news.map((a) => (
+              <li key={a.link} className={a.items.includes("Executive or board change") ? "exec" : undefined}><a href={a.link} target="_blank" rel="noreferrer">{a.headline ?? (a.items.length ? a.items.join(" · ") : "Announcement")}</a><div className="muted small">{day(a.date, true)}{a.headline && a.items.length ? ` · ${a.items.join(" · ")}` : ""}</div></li>
+            ))}</ul>
+          )}
+          </section>
+        ) },
+        { key: "insiders", label: <>Insider trades{count(buys + sales)}</>, content: insiders === null || insiders.length > 0 ? (
+          <section className="card">
+            <h2>Insider trades <span className="muted small">latest 25 SEC filings</span></h2>
+            <p className="muted small">Executives and directors must report trades in their own company&apos;s stock within 2 business days. Grants and option exercises are routine pay and left out. Open <strong>Analysis</strong> under a trade for its context.</p>
+            <KindsLine />
+            {ex.length ? <MonthBars trades={ex} note="from the filings loaded" /> : null}
+            {ex.length ? (() => {
+              const sum = (code: string) => ex.filter((t) => t.code === code).reduce((a, t) => a + (t.value ?? 0), 0);
+              const b = sum("P"), sd = sum("S");
+              return b || sd ? <HBars rows={[
+                { key: "b", label: <strong>Bought</strong>, sub: `${ex.filter((t) => t.code === "P").length} trades`, value: b, text: `$${fmtBig(b)}`, tone: "up" },
+                { key: "s", label: <strong>Sold</strong>, sub: `${ex.filter((t) => t.code === "S").length} trades`, value: sd, text: `$${fmtBig(sd)}`, tone: "down" },
+              ]} /> : null;
+            })() : null}
+            {insiders?.length ? <CsvButton rows={insiderRows(insiders)} cols={INSIDER_COLS} file={`${symbol}-insider-trades`} /> : null}
+            {insiders === null ? <p className="muted">Loading from SEC…</p> : <TradeList trades={insiders.map((t) => ({ ...t, filed: t.filed || t.date }))} showCompany={false} pageSize={12} context={ctx} />}
+          </section>
+        ) : <section className="card"><p className="muted">No insider trades in the latest SEC filings.</p></section> },
+        { key: "holders", label: "Congress and funds", content: (
+          <>
+          <CongressFor symbol={symbol} />
+          <StakeHolders symbol={symbol} />
+          <FundHolders symbol={symbol} />
+          </>
+        ) },
+        { key: "research", label: "Research", content: <ResearchFor trades={insiders} /> },
+      ]} />
     </div>
   );
 }

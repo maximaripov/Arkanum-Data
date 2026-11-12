@@ -4,6 +4,7 @@
 // device except the watchlist lookup (no accounts); the last-visit time is kept in localStorage.
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { PageTabs } from "@/components/PageTabs";
 import { useWatchlist } from "@/components/useWatchlist";
 import { useFollowing, type Followed } from "@/components/useFollowing";
 import { fmtBig } from "@/lib/format";
@@ -63,72 +64,70 @@ export function WatchingView() {
         {nothing ? <p>Nothing yet. Add a stock to your watchlist from its page, or press <strong>Follow</strong> on an insider, a <Link href="/congress">House member</Link> or a <Link href="/stakes?view=funds">fund</Link>.</p> : null}
       </section>
 
-      {tickers.length ? (
-        <section className="card flush">
-          <div className="card-title"><h2>Stocks <span className="muted small">insider trades in the last 30 days, and what tracked funds did</span></h2><Link href="/markets" className="linkbtn">Edit watchlist ›</Link></div>
-          {stocks === null ? <p className="muted pad">Loading…</p> : (
-            <ul className="lrows">{stocks.map((s) => (
-              <li key={s.t}><Link href={`/stock/${s.t}`}>
-                <strong className="lrow-sym">{s.t}</strong>
-                <span className="lrow-main"><span className="muted small">{s.name ?? ""}</span>
-                  <span className="small">{s.insiders.buys || s.insiders.sells ? <>{s.insiders.buys ? <span className="up">{s.insiders.buys} buys ${fmtBig(s.insiders.buyValue)}</span> : null}{s.insiders.buys && s.insiders.sells ? " · " : ""}{s.insiders.sells ? <span className="down">{s.insiders.sells} sales ${fmtBig(s.insiders.sellValue)}</span> : null}</> : <span className="muted">No insider buys or sales</span>}
-                  {s.funds.bought.length ? <span className="muted"> · bought by {s.funds.bought.join(", ")}</span> : null}{s.funds.sold.length ? <span className="muted"> · cut by {s.funds.sold.join(", ")}</span> : null}</span></span>
-              </Link></li>
+      <PageTabs label="Watching" tabs={[
+        { key: "stocks", label: <>Stocks<span className="muted"> {tickers.length}</span></>, content: tickers.length ? (
+          <section className="card flush">
+            <div className="card-title"><h2>Stocks <span className="muted small">insider trades in the last 30 days, and what tracked funds did</span></h2><Link href="/markets" className="linkbtn">Edit watchlist ›</Link></div>
+            {stocks === null ? <p className="muted pad">Loading…</p> : (
+              <ul className="lrows">{stocks.map((s) => (
+                <li key={s.t}><Link href={`/stock/${s.t}`}>
+                  <strong className="lrow-sym">{s.t}</strong>
+                  <span className="lrow-main"><span className="muted small">{s.name ?? ""}</span>
+                    <span className="small">{s.insiders.buys || s.insiders.sells ? <>{s.insiders.buys ? <span className="up">{s.insiders.buys} buys ${fmtBig(s.insiders.buyValue)}</span> : null}{s.insiders.buys && s.insiders.sells ? " · " : ""}{s.insiders.sells ? <span className="down">{s.insiders.sells} sales ${fmtBig(s.insiders.sellValue)}</span> : null}</> : <span className="muted">No insider buys or sales</span>}
+                    {s.funds.bought.length ? <span className="muted"> · bought by {s.funds.bought.join(", ")}</span> : null}{s.funds.sold.length ? <span className="muted"> · cut by {s.funds.sold.join(", ")}</span> : null}</span></span>
+                </Link></li>
+              ))}</ul>
+            )}
+          </section>
+        ) : null },
+        { key: "insiders", label: <>Insiders<span className="muted"> {people.length}</span></>, content: people.length ? (
+          <section className="card flush">
+            <div className="card-title"><h2>Insiders <span className="muted small">executives and directors you follow</span></h2></div>
+            <ul className="lrows">{people.map((p) => (
+              <li key={p.cik}><Link href={`/insider/${p.cik}`}><span className="lrow-main"><strong>{p.name}</strong><span className="muted small">their buys and sales ›</span></span></Link></li>
             ))}</ul>
-          )}
-        </section>
-      ) : null}
-
-      {houses.length ? (
-        <section className="card flush">
-          <div className="card-title"><h2>House members <span className="muted small">latest disclosed trade</span></h2></div>
-          <ul className="lrows">{houses.map((h: Followed) => {
-            const d = members[h.cik.slice(6)];
-            const latest = d?.trades?.[0];
-            const fresh = d ? d.trades.filter((t) => isNew(t.f)).length : 0;
-            return (
-              <li key={h.cik}><Link href={`/congress/${h.cik.slice(6)}`}>
-                <span className="lrow-main"><strong>{h.name} {fresh ? <New /> : null}</strong>
-                  <span className="muted small">{d === undefined ? "Loading…" : !latest ? "No recent stock trades" : <>{fresh ? `${fresh} new disclosure${fresh === 1 ? "" : "s"} · ` : ""}latest: {latest.y === "P" ? "bought" : "sold"} {latest.t}, disclosed {day(latest.f)}</>}</span></span>
-              </Link></li>
-            );
-          })}</ul>
-        </section>
-      ) : null}
-
-      {fundIds.length ? (
-        <section className="card flush">
-          <div className="card-title"><h2>Funds <span className="muted small">latest quarterly report (13F)</span></h2></div>
-          <ul className="lrows">{fundIds.map((cik) => {
-            const f = funds?.find((x) => x.cik === cik);
-            const name = following.find((x) => x.cik === `fund:${cik}`)?.name ?? "Fund";
-            return (
-              <li key={cik}><Link href={`/stakes?view=funds&fund=${cik}`}>
-                <span className="lrow-main"><strong>{name} {f && isNew(f.filed) ? <New /> : null}</strong>
-                  <span className="muted small">{!f ? (funds === null ? "Loading…" : "Not in the tracked funds any more") : <>{quarter(f.period)}, filed {day(f.filed)}{f.new.length ? ` · new: ${f.new.slice(0, 3).map((h) => h.t ?? h.name).join(", ")}` : ""}{f.sold.length ? ` · sold out: ${f.sold.slice(0, 3).map((h) => h.t ?? h.name).join(", ")}` : ""}</>}</span></span>
-              </Link></li>
-            );
-          })}</ul>
-        </section>
-      ) : null}
-
-      {strategies.length ? (
-        <section className="card flush">
-          <div className="card-title"><h2>Saved strategies <span className="muted small">an alert when a new purchase meets every rule</span></h2><Link href="/research/lab" className="linkbtn">Research lab ›</Link></div>
-          <ul className="lrows">{strategies.map((x) => (
-            <li key={x.id}><Link href="/research/lab"><span className="lrow-main"><strong>{x.name}</strong><span className="muted small">saved {day(x.saved)}{x.med != null ? ` · tested ${x.period === "2026" ? "2026" : "2023-25"}: ${x.med > 0 ? "+" : x.med < 0 ? "−" : ""}${Math.abs(x.med * 100).toFixed(1)}% vs the S&P 500 over 6 months` : ""}</span></span></Link></li>
-          ))}</ul>
-        </section>
-      ) : null}
-
-      {people.length ? (
-        <section className="card flush">
-          <div className="card-title"><h2>Insiders <span className="muted small">executives and directors you follow</span></h2></div>
-          <ul className="lrows">{people.map((p) => (
-            <li key={p.cik}><Link href={`/insider/${p.cik}`}><span className="lrow-main"><strong>{p.name}</strong><span className="muted small">their buys and sales ›</span></span></Link></li>
-          ))}</ul>
-        </section>
-      ) : null}
+          </section>
+        ) : null },
+        { key: "house", label: <>House members<span className="muted"> {houses.length}</span></>, content: houses.length ? (
+          <section className="card flush">
+            <div className="card-title"><h2>House members <span className="muted small">latest disclosed trade</span></h2></div>
+            <ul className="lrows">{houses.map((h: Followed) => {
+              const d = members[h.cik.slice(6)];
+              const latest = d?.trades?.[0];
+              const fresh = d ? d.trades.filter((t) => isNew(t.f)).length : 0;
+              return (
+                <li key={h.cik}><Link href={`/congress/${h.cik.slice(6)}`}>
+                  <span className="lrow-main"><strong>{h.name} {fresh ? <New /> : null}</strong>
+                    <span className="muted small">{d === undefined ? "Loading…" : !latest ? "No recent stock trades" : <>{fresh ? `${fresh} new disclosure${fresh === 1 ? "" : "s"} · ` : ""}latest: {latest.y === "P" ? "bought" : "sold"} {latest.t}, disclosed {day(latest.f)}</>}</span></span>
+                </Link></li>
+              );
+            })}</ul>
+          </section>
+        ) : null },
+        { key: "funds", label: <>Funds<span className="muted"> {fundIds.length}</span></>, content: fundIds.length ? (
+          <section className="card flush">
+            <div className="card-title"><h2>Funds <span className="muted small">latest quarterly report (13F)</span></h2></div>
+            <ul className="lrows">{fundIds.map((cik) => {
+              const f = funds?.find((x) => x.cik === cik);
+              const name = following.find((x) => x.cik === `fund:${cik}`)?.name ?? "Fund";
+              return (
+                <li key={cik}><Link href={`/stakes?view=funds&fund=${cik}`}>
+                  <span className="lrow-main"><strong>{name} {f && isNew(f.filed) ? <New /> : null}</strong>
+                    <span className="muted small">{!f ? (funds === null ? "Loading…" : "Not in the tracked funds any more") : <>{quarter(f.period)}, filed {day(f.filed)}{f.new.length ? ` · new: ${f.new.slice(0, 3).map((h) => h.t ?? h.name).join(", ")}` : ""}{f.sold.length ? ` · sold out: ${f.sold.slice(0, 3).map((h) => h.t ?? h.name).join(", ")}` : ""}</>}</span></span>
+                </Link></li>
+              );
+            })}</ul>
+          </section>
+        ) : null },
+        { key: "strategies", label: <>Strategies<span className="muted"> {strategies.length}</span></>, content: strategies.length ? (
+          <section className="card flush">
+            <div className="card-title"><h2>Saved strategies <span className="muted small">an alert when a new purchase meets every rule</span></h2><Link href="/research/lab" className="linkbtn">Research lab ›</Link></div>
+            <ul className="lrows">{strategies.map((x) => (
+              <li key={x.id}><Link href="/research/lab"><span className="lrow-main"><strong>{x.name}</strong><span className="muted small">saved {day(x.saved)}{x.med != null ? ` · tested ${x.period === "2026" ? "2026" : "2023-25"}: ${x.med > 0 ? "+" : x.med < 0 ? "−" : ""}${Math.abs(x.med * 100).toFixed(1)}% vs the S&P 500 over 6 months` : ""}</span></span></Link></li>
+            ))}</ul>
+          </section>
+        ) : null },
+      ]} />
     </div>
   );
 }
