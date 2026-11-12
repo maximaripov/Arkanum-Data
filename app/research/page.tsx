@@ -65,6 +65,8 @@ export default function Research() {
           ))}
         </ol>
 
+        <p><Link href="/research/lab"><strong>Research lab ›</strong></Link> Test your own rules (CEOs only, 3+ insiders, $100K+, company size, no pre-planned trades) on every purchase from 2023 to 2025 and since January 2026, with the same ranges the papers use.</p>
+
         <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
 
       </section>

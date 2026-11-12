@@ -811,3 +811,23 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .holdings-title { font-size: 1.1rem; margin: 0; }
 .new-tag { display: inline-block; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .05rem .35rem; margin-left: .35rem; background: var(--accent); color: var(--bg); vertical-align: middle; }
 .csv-btn { display: inline-block; margin: .2rem 0 .6rem; font-size: .8rem; }
+/* Research lab (round 93). */
+.lab-period { display: flex; gap: .4rem; margin: .6rem 0 1rem; }
+.lab-period button { border: 1px solid var(--line); background: var(--chip); padding: .35rem .8rem; cursor: pointer; }
+.lab-period button.on { background: var(--text); color: var(--bg); }
+.lab-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.lab-rules { border: 0; padding: 0; margin: 0 0 .8rem; display: grid; gap: .45rem; }
+.lab-rules legend { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .8rem; margin-bottom: .3rem; }
+.lab-presets { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .2rem; }
+.lab-presets .chip { font-size: .72rem; border: 1px solid var(--line); background: transparent; color: var(--text); padding: .15rem .5rem; cursor: pointer; }
+.lab-rules .sel { display: grid; gap: .2rem; font-size: .85rem; }
+.lab-rules select { background: var(--card2); color: var(--text); border: 1px solid var(--line); padding: .3rem; }
+.lab-results h3 { font-size: .9rem; margin: .4rem 0; }
+.lab-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+.lab-list li { border-top: 1px solid var(--line); padding-top: .55rem; display: grid; gap: .15rem; min-width: 0; }
+.lab-line { display: flex; flex-wrap: wrap; gap: .2rem .8rem; align-items: baseline; }
+.lab-verdict { margin-left: auto; }
+.lab-grid > .card { min-width: 0; }
+.lab-rules select { max-width: 100%; }
+@media (max-width: 900px) { .lab-grid { grid-template-columns: minmax(0, 1fr); } }
+.lab-compare { border: 1px solid var(--line); padding: .7rem .9rem; margin: 14px 0; } .lab-compare.apart { border-color: var(--accent); }

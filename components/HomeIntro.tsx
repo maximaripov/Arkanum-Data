@@ -14,6 +14,7 @@ const PAPERS: [string, string][] = [
   ["/research/house-trades", "Do House members' trades beat the market?"],
   ["/research/fund-copying", "Does copying famous funds work?"],
   ["/research/report-card", "Report card: do the labels still hold?"],
+  ["/research/lab", "Research lab: test your own strategy"],
 ];
 
 export function HomeIntro() {
