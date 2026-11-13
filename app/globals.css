@@ -950,7 +950,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 @media (max-width: 760px) { .dev-endpoints > div, .dev-plans { grid-template-columns: minmax(0, 1fr); } }
 /* "Get API" next to the search box (desktop; phones reach it from the footer). */
 .nav .api-btn { flex: none; text-decoration: none; padding: .45rem .8rem; font-size: .85rem; background: #fff; color: #000; white-space: nowrap; }
-@media (max-width: 760px) { .nav .api-btn { display: none; } }
+@media (max-width: 760px) {
+  .nav .api-btn { margin-left: auto; padding: .4rem .6rem; font-size: .8rem; }
+  .nav .api-btn + .search-btn { margin-left: 0; }
+  .nav.searching .api-btn { display: none; }
+  .nav.searching .api-btn + .search-btn { margin-left: auto; }
+}
+@media (max-width: 340px) { .nav .api-btn { padding: .35rem .45rem; } .nav .wordmark { font-size: 1rem; } }
 /* Laptop widths: the search box folds into its icon (as on phones) so the links, Get API and
    the alerts bell fit; pressing the icon swaps the links for the search box. */
 @media (min-width: 761px) and (max-width: 1280px) {
