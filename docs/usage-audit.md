@@ -4,7 +4,7 @@ From the Vercel usage API (`/v2/usage`, types requests, data_cache, builds, stor
 
 ## Headline
 
-**An incident today, now fixed.** From 19:00 to 22:00 UTC, 214 function calls ran until Vercel stopped them at the time limit: 36.5 GB-hours of timeouts, about 110 times the 0.33 GB-hours-a-day target. They began right after the press-release headlines shipped (18:58). The likely cause: an SEC download that stalled held one of the five slots in the SEC request queue for good, so later SEC lookups in that server waited until killed. Fixed at 22:04 (`lib/sec.ts`): every SEC request now gives up after 15 seconds, the headline reader aborts instead of waiting, and a page waits at most 8 seconds for headlines. The runtime logs can't be read with this token (403), so the cause is inferred from timing and code, not confirmed in logs. The 22:00-23:00 hour shows whether it held (re-check scheduled).
+**An incident today, now fixed.** From 19:00 to 22:00 UTC, 214 function calls ran until Vercel stopped them at the time limit: 36.5 GB-hours of timeouts, about 110 times the 0.33 GB-hours-a-day target. They began right after the press-release headlines shipped (18:58). The likely cause: an SEC download that stalled held one of the five slots in the SEC request queue for good, so later SEC lookups in that server waited until killed. Fixed at 22:04 (`lib/sec.ts`): every SEC request now gives up after 15 seconds, the headline reader aborts instead of waiting, and a page waits at most 8 seconds for headlines. The runtime logs can't be read with this token (403), so the cause is inferred from timing and code, not confirmed in logs. **Confirmed held:** zero timeouts in every hour since (23:00, 00:00, 01:00 and 02:00 UTC), with 48-389 successful calls an hour.
 
 Visitors saw this as stock pages that didn't load, which is probably why tapping a ticker seemed to do nothing.
 
@@ -38,6 +38,10 @@ Visitors saw this as stock pages that didn't load, which is probably why tapping
 ## Recommendations
 
 1. Done: time limits on every SEC request (the incident).
-2. Watch function time and timeouts daily for two weeks; the usage routine already reports function GB-hours. Add timeouts to it (`function_invocation_timeout_count`), which it doesn't check today.
+2. Watch function time and timeouts daily for two weeks; the usage routine already reports function GB-hours. Add timeouts to it (`function_invocation_timeout_count`), which it doesn't check today. (First four hours after the fix: 0 timeouts.)
 3. Keep pushes batched (owner rule): builds are the closest limit on busy days.
 4. If traffic grows after the launch, first visits to stock pages are what scale function time; the per-stock caches (`lib/secCached.ts`) are the lever.
+
+## Visitors (Vercel Web Analytics, Oct 14 - Nov 13)
+
+About 60 visitors (counted daily, so repeat visitors on different days count again) and 913 page views; 98% with no referrer (typed or bookmarked), 3 from search engines. Top pages: home 327 views, Digest 103, stock pages 77, Markets 73, Congress 66, Holdings 61, Research 42. Mobile and desktop about even. Read: traffic is still mostly the owner and people sent the link; nothing here measures how strangers use the site yet.
