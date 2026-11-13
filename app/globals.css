@@ -948,3 +948,17 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .waitlist button { justify-self: start; }
 .waitlist-done { border: 1px solid var(--up); padding: 1rem; }
 @media (max-width: 760px) { .dev-endpoints > div, .dev-plans { grid-template-columns: minmax(0, 1fr); } }
+/* "Get API" next to the search box (desktop; phones reach it from the footer). */
+.nav .api-btn { flex: none; text-decoration: none; padding: .45rem .8rem; font-size: .85rem; background: #fff; color: #000; white-space: nowrap; }
+@media (max-width: 760px) { .nav .api-btn { display: none; } }
+/* Laptop widths: the search box folds into its icon (as on phones) so the links, Get API and
+   the alerts bell fit; pressing the icon swaps the links for the search box. */
+@media (min-width: 761px) and (max-width: 1280px) {
+  .nav .search { display: none; }
+  .nav .search-btn { display: grid; margin-left: auto; }
+  .nav.searching .nav-links { display: none; }
+  .nav.searching .search { display: block; flex: 1 1 auto; margin: 0; }
+  .nav.searching .search-btn { margin-left: 0; }
+}
+@media (min-width: 761px) and (max-width: 960px) { .nav { gap: .5rem; } .nav .nav-links a { padding-left: .45rem; padding-right: .45rem; } .nav .alerts-btn { display: none; } .nav .api-btn { padding: .4rem .55rem; } }
+@media (min-width: 761px) and (max-width: 840px) { .nav .nav-links a { font-size: .82rem; padding-left: .35rem; padding-right: .35rem; } .nav .wordmark { font-size: 1.05rem; } }
