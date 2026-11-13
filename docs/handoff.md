@@ -4,7 +4,7 @@ Updated 2026-11-12, after round 94. Full history: `docs/build-log.md` (rounds 1-
 
 ## 1. What it is
 - **Arkanum Data**: free insider-trade and House-member trade site with tested evidence next to each trade. Tagline: "Other sites sell you insider signals. We test them." No accounts, no income, must stay free.
-- **Live:** https://arkanumdata.vercel.app (Vercel Hobby). **Repo:** github.com/maximaripov/Arkanum-Data. It is **public** so GitHub Actions minutes are unlimited; there's no LICENSE file, so all rights are reserved.
+- **Live:** https://arkanumdata.com (Vercel Hobby; domain bought through Vercel, DNS on Vercel; `www` redirects to it; the old arkanumdata.vercel.app still serves the API, data and service worker for the jobs and old alert subscriptions, and redirects pages, see `proxy.ts`). Site address in code: `lib/site.ts`. **Repo:** github.com/maximaripov/Arkanum-Data. It is **public** so GitHub Actions minutes are unlimited; there's no LICENSE file, so all rights are reserved.
 - Next.js 16 App Router. It's newer than most training data, so read `node_modules/next/dist/docs/` before writing Next-specific code.
 
 ## 2. Working rules (owner's standing instructions)
@@ -22,7 +22,7 @@ Updated 2026-11-12, after round 94. Full history: `docs/build-log.md` (rounds 1-
 - **Ping:** send a PushNotification to the owner's phone when a task is done.
 - **No emoji anywhere** (enforced by `tests/no-emoji.test.mjs`); ▲ ▼ › ↗ × are fine.
 - **No mention of GitHub on the site** (owner, 2026-11-09). Comments in the code are fine.
-- **Contact:** the owner's email is shown on About → Contact, at the owner's explicit request. Never put it in request headers, User-Agents or API calls.
+- **Contact:** info@arkanumdata.com (Zoho Mail free plan; MX, SPF and DKIM `zmail._domainkey` in Vercel DNS) on About → Contact. The owner's personal email is not on the site; never put it in request headers, User-Agents or API calls. Search Console: domain property verified by DNS TXT, sitemap submitted, Bing imported (owner, 2026-11-13).
 - **Secrets:** never store `ALERTS_PASSCODE`, `CRON_SECRET` or tokens in code. GitHub secret: `SEC_USER_AGENT`.
 - **No correction notes** anywhere on the site, including the methodology page (owner, rounds 81 and 89).
 - **Don't re-suggest** (declined):
