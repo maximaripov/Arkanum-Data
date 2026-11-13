@@ -2,7 +2,7 @@
 // contact email and at most 10 requests/second.
 import { parseForm4 as parseForm4Js } from "./form4.mjs";
 
-const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
+const UA = (process.env.SEC_USER_AGENT || "").replace(/[^\x20-\x7e]+/g, " ").replace(/\s+/g, " ").trim() || "Arkanum (set SEC_USER_AGENT)"; // tidied: a header value cannot hold a line break
 
 // Simple concurrency gate so one page load never bursts past SEC's limit.
 let active = 0;

@@ -3,8 +3,9 @@
 // 60 days, from public-domain government sources (BEA, Federal Reserve) and, with a free
 // FRED_API_KEY (or else BLS's own calendar), the jobs report and CPI.
 import { writeFile, mkdir } from "node:fs/promises";
+import { UA as SEC_UA_CLEAN } from "./lib/sec.mjs";
 
-const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
+const UA = SEC_UA_CLEAN;
 const FRED = process.env.FRED_API_KEY;
 const get = async (url, as = "text") => {
   try { const r = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) }); return r.ok ? (as === "json" ? r.json() : r.text()) : null; } catch { return null; }

@@ -18,12 +18,12 @@ import { monthBootstrap } from "../lib/bootstrap.mjs";
 import { unsplit } from "../lib/returns.mjs";
 import { delayFields, delayTables } from "./lib/delay.mjs";
 import { encode, roleCode } from "../lib/lab.mjs";
-import { getJson } from "./lib/sec.mjs";
+import { getJson, UA as SEC_UA_CLEAN } from "./lib/sec.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const FROM = arg("from", "2023q1"), TO = arg("to", "2025q1"), HIST = arg("history-from", "2020q1");
 const MAX_TICKERS = +arg("max-tickers", "100000");
-const UA = process.env.SEC_USER_AGENT;
+const UA = process.env.SEC_USER_AGENT ? SEC_UA_CLEAN : undefined;
 const LOCAL = arg("local", null); // directory of already-downloaded zips (tests)
 const TMP = arg("tmp", "/tmp/form4-backtest");
 const OUT = arg("out", "docs/backtest");

@@ -8,11 +8,11 @@
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { quarterRange, qName, qNum, tsv, isoDate, roleOf, getZip } from "./lib/form345.mjs";
 import { personName, roleLabel, companyName } from "../lib/people.mjs";
-import { MIN_SALE } from "./lib/sec.mjs";
+import { MIN_SALE, UA as SEC_UA_CLEAN } from "./lib/sec.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const TMP = arg("tmp", "/tmp/form4-people"), LOCAL = arg("local", null);
-const UA = process.env.SEC_USER_AGENT;
+const UA = process.env.SEC_USER_AGENT ? SEC_UA_CLEAN : undefined;
 if (!UA && !LOCAL) throw new Error("Set SEC_USER_AGENT (SEC refuses requests without contact details)");
 
 const now = new Date();

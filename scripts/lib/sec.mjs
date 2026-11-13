@@ -1,6 +1,8 @@
 // Polite SEC EDGAR fetching for the data scripts: identifies itself (SEC asks for a
 // contact in the User-Agent; set SEC_USER_AGENT), retries, and backs off when throttled.
-export const UA = process.env.SEC_USER_AGENT || "Arkanum (set SEC_USER_AGENT)";
+// Tidied, because a header value can't hold a line break: a secret pasted from a phone
+// (Nov 13) carried one and a non-breaking space, and every SEC request failed before sending.
+export const UA = (process.env.SEC_USER_AGENT || "").replace(/[^\x20-\x7e]+/g, " ").replace(/\s+/g, " ").trim().replace(/^["']|["']$/g, "") || "Arkanum (set SEC_USER_AGENT)";
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // SEC allows 10 requests a second per client; space every request out to stay under it.
@@ -13,6 +15,7 @@ async function slot() {
 
 /** Text of a URL; null for a missing file. Throws after repeated failures. */
 export async function getText(url) {
+  let last = "";
   for (let i = 0; i < 4; i++) {
     try {
       await slot();
@@ -23,10 +26,11 @@ export async function getText(url) {
       // "AccessDenied" XML; real throttling is an HTML "Request Rate Threshold" page.
       if (r.status === 403 && (await r.text()).includes("AccessDenied")) return null;
       if (r.status === 403 || r.status === 429) await sleep(5000 * (i + 1));
-    } catch {}
+      last = `HTTP ${r.status}`;
+    } catch (e) { last = e.cause?.message ?? e.message; }
     await sleep(1000 * (i + 1));
   }
-  throw new Error(`Failed: ${url}`);
+  throw new Error(`Failed (${last}): ${url}`);
 }
 export const getJson = async (url) => { const t = await getText(url); return t ? JSON.parse(t) : null; };
 
