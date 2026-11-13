@@ -1,5 +1,5 @@
 // Counts what visitors do (not who they are): alerts turned on, follows, watchlist adds,
-// strategy saves, CSV downloads, API sign-ups, searches, chart loads. Sent to whichever
+// strategy saves, CSV downloads, API sign-ups and searches. Sent to whichever
 // cookieless analytics service is configured (Umami or Plausible, see components/SiteAnalytics.tsx);
 // does nothing when none is. Never pass personal data (emails, names) as a property.
 type Props = Record<string, string | number | boolean>;

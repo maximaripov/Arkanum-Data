@@ -817,3 +817,4 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Stock chart** loads TradingView on hover, tap or focus; a placeholder holds its place (no price line, as prices are licensed). Stock page 2.1 MB to 580 KB (local Lighthouse).
 - **Accessibility:** ticker chips, bar-chart columns (min 24px, scroll when long) and small text links reach 24px; the Congress member picker's name includes its visible text; the digest archive has a heading. Lighthouse accessibility 100 on all five pages checked; homepage blocking time 1.42 s to 0.25 s.
 - **Reading text** in Inter (paragraphs, prose lists, paper text); numbers, tickers, labels, headings, tables and controls stay JetBrains Mono.
+- **Follow-up (owner):** the stock-chart lazy load was reverted (the chart loads with the page again, as before). Umami Cloud is on: `NEXT_PUBLIC_UMAMI_WEBSITE_ID` is set in Vercel (production and preview), so the script loads from the next build.

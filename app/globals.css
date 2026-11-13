@@ -970,12 +970,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 @media (min-width: 761px) and (max-width: 840px) { .nav .nav-links a { font-size: .82rem; padding-left: .35rem; padding-right: .35rem; } .nav .wordmark { font-size: 1.05rem; } }
 .home-spot .spot-use { font-size: .95rem; color: var(--text); line-height: 1.5; }
 .home-spot .spot-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .2rem 0 .3rem; }
-/* Stock chart placeholder (round 101): the live chart loads on hover, tap or focus. */
-.chart-preview { position: relative; width: 100%; display: grid; place-items: center; background: var(--card2); border: 1px dashed var(--line); color: var(--text); cursor: pointer; font: inherit; padding: 0; overflow: hidden; }
-.chart-preview:hover, .chart-preview:focus-visible { border-color: var(--accent); }
-.chart-preview-grid { position: absolute; inset: 0; width: 100%; height: 100%; }
-.chart-preview-grid line { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.chart-preview-text { position: relative; display: grid; gap: .3rem; justify-items: center; text-align: center; padding: 1rem; background: var(--card); border: 1px solid var(--line); }
 /* Tap targets (round 101): ticker chips, bar-chart columns and small text links reach 24px. */
 .ticker a { display: inline-flex; align-items: center; gap: .35em; min-height: 24px; }
 .vb-scroll { overflow-x: auto; }
