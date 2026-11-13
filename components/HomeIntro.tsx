@@ -27,7 +27,7 @@ export function HomeIntro() {
       <section className="home-hero" aria-labelledby="hero-title">
         <p className="hero-kicker">Independent research · free · no account</p>
         <h1 id="hero-title" className="hi-title">Follow the money. Test the signal.</h1>
-        <p className="hi-lead">What company insiders, members of Congress and big funds buy and sell, from their filings, next to how trades like them have done. Other sites sell insider signals; we test them and publish every result.</p>
+        <p className="hi-lead">What company insiders, members of Congress and big funds buy and sell, from their filings, next to tested evidence on what it means. Other sites sell insider trades as tips; we test them, and the evidence says to use them as warnings.</p>
         <ul className="hero-proof" aria-label="Why trust it">
           <li><Link href="/about?tab=data">Official SEC and House filings</Link></li>
           <li><Link href="/research">Tested against history</Link></li>
@@ -45,6 +45,8 @@ export function HomeIntro() {
           <h2 id="research-title" className="kinds-title">From {SAMPLE.kept.toLocaleString("en-US")} insider purchases, 2023–25</h2>
           <Link href={lead.href} className="spot-fig mono">{lead.figure}</Link>
           <p className="spot-head"><strong>{lead.head}</strong></p>
+          <p className="spot-use">So use filings as a warning system, not a tip sheet: see who&apos;s selling, what&apos;s gone wrong, and get told when it changes.</p>
+          <div className="spot-actions"><Link className="btn primary" href="/briefing#notify">Turn on watchlist alerts</Link><Link className="btn" href="/briefing">Read the daily digest</Link></div>
           <p className="muted small">{lead.body} Returns start when each purchase became public.</p>
           <details className="spot-more">
             <summary>{more.length} more results</summary>

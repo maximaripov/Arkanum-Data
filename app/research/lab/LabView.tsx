@@ -9,6 +9,7 @@ import { applyRules, decode, DEFAULT_RULES, HORIZONS, summarize, verdict } from 
 import { RangeBar } from "@/components/TradeAnalysis";
 import { MAX_SAVED, useStrategies, type Saved } from "@/components/useStrategies";
 import { notificationsOn } from "@/lib/device";
+import { track } from "@/lib/track";
 
 type Rules = typeof DEFAULT_RULES;
 type Row = ReturnType<typeof decode>[number];
@@ -88,7 +89,7 @@ function RuleForm({ rules, set, label }: { rules: Rules; set: (r: Rules) => void
   return (
     <fieldset className="lab-rules">
       <legend>{label}</legend>
-      <div className="lab-presets">{PRESETS.map(([n, r]) => <button key={n} type="button" className="chip" onClick={() => set(r)}>{n}</button>)}</div>
+      <div className="lab-presets">{PRESETS.map(([n, r]) => <button key={n} type="button" className="chip" onClick={() => { track("Backtester preset", { preset: n }); set(r); }}>{n}</button>)}</div>
       <label className="check"><input type="checkbox" checked={rules.ceoOnly} onChange={(e) => set({ ...rules, ceoOnly: e.target.checked, topOnly: e.target.checked ? false : rules.topOnly })} /> CEO purchases only</label>
       <label className="check"><input type="checkbox" checked={rules.topOnly} onChange={(e) => set({ ...rules, topOnly: e.target.checked, ceoOnly: e.target.checked ? false : rules.ceoOnly })} /> Top executives only (CEO, CFO, President, Chair)</label>
       <label className="sel" htmlFor={`${id}-ins`}>Insiders buying the same stock (30 days)

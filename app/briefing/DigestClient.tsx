@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { deviceId, notificationsOn, register } from "@/lib/device";
 import Link from "next/link";
 import { DigestView, isDigest, type Digest } from "@/components/DigestView";
+import { track } from "@/lib/track";
 
 function b64ToBytes(b64: string) {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -49,6 +50,7 @@ function Notifications() {
       const reg = await navigator.serviceWorker.ready;
       const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) }));
       await register({ subscription: sub.toJSON(), instant });
+      track("Alerts turned on", { instant, device: env.desktop ? "computer" : "phone" });
       setOn(true); setStatus("You're set. The digest arrives each weekday at 5:00 PM ET.");
     } catch (e: any) { setStatus(`Couldn't turn on notifications: ${e.message ?? e}`); }
   }

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Search } from "./Search";
 import { LogoMark } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
+import { track } from "@/lib/track";
 
 // [address, label, phone tab label]: the phone tab bar has about 53px per tab, too narrow for
 // "Institutional Holdings", so it keeps the short name there.
@@ -37,7 +38,7 @@ export function Nav() {
         ))}
       </nav>
       <Search onDone={() => setSearching(false)} />
-      <Link href="/developers" className="btn primary api-btn">Get API</Link>
+      <Link href="/developers" className="btn primary api-btn" onClick={() => track("Get API click")}>Get API</Link>
       <button className="theme-btn search-btn" onClick={() => setSearching(!searching)} aria-label={searching ? "Close search" : "Search"} aria-expanded={searching}>
         {searching ? (
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6L6 18" /></svg>

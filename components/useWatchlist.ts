@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_WATCHLIST } from "@/lib/markets";
 import { syncSoon } from "@/lib/device";
+import { track } from "@/lib/track";
 
 const KEY = "foresight.watchlist";
 const read = (): string[] => {
@@ -24,6 +25,6 @@ export function useWatchlist() {
     window.dispatchEvent(new Event("form4-watchlist"));
     syncSoon();
   }, []);
-  const toggle = useCallback((s: string) => { const cur = read(); save(cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]); }, [save]);
+  const toggle = useCallback((s: string) => { const cur = read(); track(cur.includes(s) ? "Watchlist remove" : "Watchlist add"); save(cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]); }, [save]);
   return { list, toggle, save, has: (s: string) => list.includes(s) };
 }

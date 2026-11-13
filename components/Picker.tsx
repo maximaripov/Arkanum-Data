@@ -59,8 +59,8 @@ export function Picker({ label, items, value, onChange, featured = [], featuredT
   return (
     <div className="picker" ref={box}>
       <span className="muted small" id={`${id}-l`}>{label}</span>
-      <button type="button" className="picker-btn" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${id}-l`} onClick={() => (open ? close() : setOpen(true))}>
-        <span className="picker-cur">{current?.label ?? "Choose"}{current?.sub ? <span className="muted"> · {current.sub}</span> : null}</span>
+      <button type="button" className="picker-btn" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${id}-l ${id}-v`} onClick={() => (open ? close() : setOpen(true))}>
+        <span className="picker-cur" id={`${id}-v`}>{current?.label ?? "Choose"}{current?.sub ? <span className="muted"> · {current.sub}</span> : null}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
       </button>
       {open ? (

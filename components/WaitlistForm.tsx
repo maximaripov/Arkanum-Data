@@ -1,6 +1,7 @@
 "use client";
 // Early-access sign-up for the planned API (/developers). Posts to /api/waitlist.
 import { useState } from "react";
+import { track } from "@/lib/track";
 
 export function WaitlistForm() {
   const [email, setEmail] = useState(""), [use, setUse] = useState(""), [plan, setPlan] = useState("unsure"), [website, setWebsite] = useState("");
@@ -10,7 +11,7 @@ export function WaitlistForm() {
     setState("sending"); setMsg("");
     const r = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, use, plan, website }) }).catch(() => null);
     const d = await r?.json().catch(() => ({}));
-    if (r?.ok) { setState("done"); return; }
+    if (r?.ok) { track("API waitlist signup", { plan }); setState("done"); return; }
     setState("idle"); setMsg(d?.error ?? "Couldn't send that. Please try again.");
   }
   if (state === "done") return <p className="waitlist-done" role="status"><strong>You&apos;re on the list.</strong> We&apos;ll email you once, when early access opens. Nothing else.</p>;

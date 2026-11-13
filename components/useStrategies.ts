@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { syncSoon } from "@/lib/device";
 import type { DEFAULT_RULES } from "@/lib/lab.mjs";
+import { track } from "@/lib/track";
 
 export type Saved = { id: string; name: string; rules: typeof DEFAULT_RULES; med: number | null; period: string; saved: string };
 const KEY = "arkanum.strategies";
@@ -23,6 +24,7 @@ export function useStrategies() {
     setList(next); window.dispatchEvent(new Event("arkanum-strategies")); syncSoon();
   }, []);
   const save = useCallback((s: Omit<Saved, "id" | "saved">) => {
+    track("Strategy saved");
     const cur = read();
     if (cur.length >= MAX_SAVED) return false;
     write([...cur, { ...s, id: Math.random().toString(36).slice(2, 10), saved: new Date().toISOString().slice(0, 10) }]);

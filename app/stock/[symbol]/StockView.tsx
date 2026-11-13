@@ -22,6 +22,7 @@ import type { InsiderTrade } from "@/lib/sec";
 import type { Announcement } from "@/lib/news";
 import { companyName } from "@/lib/people.mjs";
 import { PageTabs } from "@/components/PageTabs";
+import { track } from "@/lib/track";
 
 type Company = { ticker: string; name: string | null; exchange: string | null };
 const titleCase = (s: string, sym?: string | null) => companyName(s, sym);
@@ -46,6 +47,10 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
   const { has, toggle } = useWatchlist();
   const [range, setRange] = useState("1Y");
   const [tools, setTools] = useState(false);
+  // The TradingView chart is about 1.6 MB of scripts, so it loads only when wanted: on hover with
+  // a mouse, or on tap or keyboard focus. Until then a light placeholder holds its place.
+  const [chartOn, setChartOn] = useState(false);
+  const loadChart = () => { if (!chartOn) { setChartOn(true); track("Chart loaded"); } };
 
   useEffect(() => {
     // Anything the server couldn't load is fetched here instead.
@@ -95,14 +100,19 @@ export function StockView({ symbol, initial }: { symbol: string; initial?: Stock
         { key: "overview", label: "Overview", content: (
           <section className="card">
             <div className="chart-bar">
-              <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => setRange(l)}>{l}</button>)}</div>
-              <button className="linkbtn" onClick={() => setTools(!tools)}>{tools ? "Simple chart" : "Indicators & compare"}</button>
+              <div className="seg">{RANGES.map(([l]) => <button key={l} className={range === l ? "on" : ""} onClick={() => { setRange(l); loadChart(); }}>{l}</button>)}</div>
+              <button className="linkbtn" onClick={() => { setTools(!tools); loadChart(); }}>{tools ? "Simple chart" : "Indicators & compare"}</button>
             </div>
-            {tv ? <TradingView key={`${tv}${range}${tools}`} widget="advanced-chart" height={tools ? 520 : 380} blend config={{
+            {tv && chartOn ? <TradingView key={`${tv}${range}${tools}`} widget="advanced-chart" height={tools ? 520 : 380} blend config={{
               symbol: tv, autosize: true, timezone: "America/New_York", allow_symbol_change: false, save_image: false, calendar: false,
               interval: RANGES.find(([l]) => l === range)![2], range: RANGES.find(([l]) => l === range)![1], style: tools ? "1" : "3",
               hide_top_toolbar: !tools, hide_side_toolbar: !tools, hide_legend: !tools, hide_volume: !tools, studies: [], support_host: "https://www.tradingview.com",
-            }} label="Price chart by TradingView" /> : <div className="chart-skeleton" style={{ height: 380 }} />}
+            }} label="Price chart by TradingView" /> : (
+              <button type="button" className="chart-preview" style={{ height: 380 }} onMouseEnter={loadChart} onFocus={loadChart} onClick={loadChart} disabled={!tv}>
+                <svg aria-hidden viewBox="0 0 400 160" preserveAspectRatio="none" className="chart-preview-grid">{[32, 64, 96, 128].map((y) => <line key={y} x1="0" x2="400" y1={y} y2={y} />)}{[80, 160, 240, 320].map((x) => <line key={x} y1="0" y2="160" x1={x} x2={x} />)}</svg>
+                <span className="chart-preview-text"><strong>{symbol} price chart</strong><span className="muted small">{tv ? "Hover or tap to load the live chart (TradingView, delayed 15 minutes)" : "Loading…"}</span></span>
+              </button>
+            )}
             <InsiderStrip trades={insiders} range={range} events={news} />
             <p className="muted small">Prices are delayed 15 minutes. Insider trades and company announcements are lined up under the chart for the same period.</p>
           </section>

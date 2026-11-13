@@ -808,3 +808,12 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - `/developers`: the planned API of analysed SEC insider data (insider trades with cleaned roles and pre-planned flags, Activity Score with reasons, clusters, company risk flags, 13F holdings; Form 144 and webhooks planned), a real example response (no price-derived fields), planned prices (Free / $19 / $49), what it excludes (Congress: federal law; prices and returns: licence; advice), and an early-access form.
 - Sign-ups: `POST /api/waitlist` (email check, honeypot, rate-limited by the existing /api firewall rule) into private Blob `waitlist/developers.json` (`lib/waitlist.ts`); each new sign-up pushes "API sign-up #N" to the owner's devices; `GET /api/waitlist` with the alerts secret returns the list. Privacy text updated (the only place the site asks for an email).
 - Go/no-go agreed with the owner: about 30 sign-ups in a month before building version 1.
+
+## Round 101 (2026-11-13): warning-system positioning and audit fixes
+
+- **Positioning:** the homepage lead says insider trades are tested and work as warnings; under the −6.7% the line "So use filings as a warning system, not a tip sheet: see who's selling, what's gone wrong, and get told when it changes." with buttons to watchlist alerts (/briefing#notify) and the digest.
+- **Who runs Arkanum** on About (one independent person, no owners or investors, contact; no name until the owner decides).
+- **Action tracking:** `lib/track.ts` + `components/SiteAnalytics.tsx` send cookieless events to Umami (`NEXT_PUBLIC_UMAMI_WEBSITE_ID`) or Plausible (`NEXT_PUBLIC_PLAUSIBLE_DOMAIN`); nothing loads until one is set. Events: Watchlist add/remove, Follow/Unfollow, CSV download, Strategy saved, Backtester preset, Search, API waitlist signup, Alerts turned on, Get API click, Chart loaded. Privacy text updated.
+- **Stock chart** loads TradingView on hover, tap or focus; a placeholder holds its place (no price line, as prices are licensed). Stock page 2.1 MB to 580 KB (local Lighthouse).
+- **Accessibility:** ticker chips, bar-chart columns (min 24px, scroll when long) and small text links reach 24px; the Congress member picker's name includes its visible text; the digest archive has a heading. Lighthouse accessibility 100 on all five pages checked; homepage blocking time 1.42 s to 0.25 s.
+- **Reading text** in Inter (paragraphs, prose lists, paper text); numbers, tickers, labels, headings, tables and controls stay JetBrains Mono.

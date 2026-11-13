@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@/lib/track";
 
 type Hit = { symbol: string; name: string; type: string; exchange: string; href?: string };
 
@@ -28,7 +29,7 @@ export function Search({ onDone, placeholder = "Search stocks, people, funds" }:
     return () => document.removeEventListener("click", close);
   }, []);
 
-  const go = (s: string, href?: string) => { setQ(""); setOpen(false); onDone?.(); router.push(href ?? `/stock/${encodeURIComponent(s)}`); };
+  const go = (s: string, href?: string) => { track("Search", { to: href ? href.split("/")[1] : "stock" }); setQ(""); setOpen(false); onDone?.(); router.push(href ?? `/stock/${encodeURIComponent(s)}`); };
 
   return (
     <div className="search" ref={box}>

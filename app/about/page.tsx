@@ -13,6 +13,7 @@ export default function About() {
       </section>
       <PageTabs label="About" tabs={[
         { key: "principles", label: "What we stand on", content: (
+          <>
           <section className="card" id="principles">
             <h2>What Arkanum stands on</h2>
             <ul>
@@ -22,6 +23,12 @@ export default function About() {
             </ul>
             <p className="muted small">Arkanum is independent: no ads, no paid placements, no accounts, and no tips. It doesn&apos;t sell trading signals, so it has no reason to make them look better than they are.</p>
           </section>
+          <section className="card" id="who">
+            <h2>Who runs Arkanum</h2>
+            <p>Arkanum Data is an independent project, built and run by one person. It is not owned by a broker, a fund or a data company, has no investors, and takes no payment from the companies or people it covers.</p>
+            <p>Every number on the site is produced by code that reads public filings, and the methods are written down in the <Link href="/research/methodology">methodology</Link>. If something looks wrong, write to <a href="mailto:info@arkanumdata.com">info@arkanumdata.com</a>; corrections are made publicly and quickly.</p>
+          </section>
+          </>
         ) },
         { key: "about", label: "Not advice", content: (
           <section className="card">
@@ -83,6 +90,7 @@ export default function About() {
               <li><strong>If you turn on notifications,</strong> we store a random device ID, your browser&apos;s push address, your watchlist and the people you follow (SEC IDs of insiders, names of House members), only to send your digest and alerts. Turning notifications off deletes them; devices that haven&apos;t opened Arkanum in about 4 months are deleted automatically.</li>
               <li><strong>Stock charts and index quotes</strong> load from TradingView, which receives your IP address and the symbol you view (it sets no cookies, per its documentation). Our host, Vercel, keeps standard server logs.</li>
               <li><strong>Visitor counts:</strong> we use Vercel Web Analytics to count page views. It sets no cookies and doesn&apos;t track you across sites or days; visitors are counted with a hash that resets daily.</li>
+                  <li><strong>What features get used:</strong> we count actions such as turning on alerts, following someone, saving a strategy or downloading a CSV, so we know what to improve. The counts are cookieless and anonymous: no names, emails, IP addresses or cross-site tracking.</li>
               <li>We don&apos;t sell or share any data, and there are no ads or cross-site trackers.</li>
             </ul>
           </section>

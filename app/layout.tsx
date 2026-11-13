@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { THEME_KEY, THEME_COLORS } from "@/lib/theme";
 import "./globals.css";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 
 const sans = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono" });
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Analytics />
         <Nav />
         <MoveIn />
+        <SiteAnalytics />
         <Ticker />
         <main id="main" tabIndex={-1}>{children}</main>
         <footer className="site-footer">

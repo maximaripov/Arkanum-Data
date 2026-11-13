@@ -15,7 +15,8 @@ export default async function Archive() {
   const list = await digestIndex();
   return (
     <div className="stack">
-      {list.length ? <PastDigests list={list} all /> : <section className="card"><h1>Digest archive</h1><p className="muted">No digests yet.</p></section>}
+      <h1 className="holdings-title">Digest archive</h1>
+      {list.length ? <PastDigests list={list} all /> : <section className="card"><p className="muted">No digests yet.</p></section>}
     </div>
   );
 }
