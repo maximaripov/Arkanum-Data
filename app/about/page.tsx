@@ -73,7 +73,7 @@ export default function About() {
           <>
           <section className="card" id="contact">
             <h2>Contact</h2>
-            <p>Found a wrong number, a bug, or have a question? Email <a href="mailto:aripovmaxim@gmail.com">aripovmaxim@gmail.com</a>.</p>
+            <p>Found a wrong number, a bug, or have a question? Email <a href="mailto:info@arkanumdata.com">info@arkanumdata.com</a>.</p>
           </section>
           <section className="card" id="privacy">
             <h2>Privacy</h2>
