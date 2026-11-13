@@ -1,4 +1,5 @@
-// The live site, and the GitHub job's proof of identity for its protected endpoints
+// The site the jobs call (the vercel.app address keeps answering API calls after the move to
+// arkanumdata.com, so the jobs need no firewall or DNS change), and the GitHub job's proof of identity for its protected endpoints
 // (a GitHub OIDC token; ALERTS_SECRET works instead when running by hand).
 export const SITE = (process.env.SITE_URL || "https://arkanumdata.vercel.app").replace(/\/$/, "");
 

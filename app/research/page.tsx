@@ -50,6 +50,7 @@ export default function Research() {
         <p className="paper-series">Arkanum Data Research</p>
         <h1 className="paper-title">What insider trades tell you, tested</h1>
         <p className="paper-authors">{tested.toLocaleString("en-US")} trades by company officers and directors, 2023 to 2026, checked against what the stock did next</p>
+        <p className="research-cta"><Link className="btn primary" href="/research/lab">Open the backtester ›</Link> <span className="muted small">Test your own rules on every insider purchase since 2023.</span></p>
       </header>
 
       <PageTabs label="Research" tabs={[
@@ -68,7 +69,7 @@ export default function Research() {
               ))}
             </ol>
 
-            <p><Link href="/research/lab"><strong>Research lab ›</strong></Link> Test your own rules (CEOs only, 3+ insiders, $100K+, company size, no pre-planned trades) on every purchase from 2023 to 2025 and since January 2026, with the same ranges the papers use.</p>
+            <p><Link href="/research/lab"><strong>Backtester ›</strong></Link> Test your own rules (CEOs only, 3+ insiders, $100K+, company size, no pre-planned trades) on every purchase from 2023 to 2025 and since January 2026, with the same ranges the papers use.</p>
 
             <p><Link href="/research/report-card"><strong>Report card ›</strong></Link> Every label on the site, how it did in 2023–2025 and whether that has held on trades filed since, updated monthly.</p>
 

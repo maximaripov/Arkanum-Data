@@ -1,3 +1,5 @@
+import { SITE } from "@/lib/site";
+import { MoveIn } from "@/components/MoveIn";
 import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
 import type { Metadata, Viewport } from "next";
@@ -17,7 +19,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--
 const DESCRIPTION = "Insider and Congress stock trades from official SEC and House filings, next to tested evidence of how trades like them have actually done. Free, no account.";
 const OG_TITLE = "Arkanum Data: insider trades, tested";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://arkanumdata.vercel.app"),
+  metadataBase: new URL(SITE),
   title: { default: "Arkanum Data: insider and Congress trades, tested", template: "%s · Arkanum Data" },
   description: DESCRIPTION,
   openGraph: { type: "website", siteName: "Arkanum Data", title: OG_TITLE, description: DESCRIPTION, url: "/" },
@@ -32,7 +34,6 @@ export const viewport: Viewport = { themeColor: THEME_COLORS.dark, width: "devic
 
 // Tells search engines what the site is (schema.org): the site's name for brand searches, and
 // the organization behind it. No social profiles yet; add them under sameAs when they exist.
-const SITE = "https://arkanumdata.vercel.app";
 const JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Welcome market={findings().find((f) => f.id === "market")?.figure} />
         <Analytics />
         <Nav />
+        <MoveIn />
         <Ticker />
         <main id="main" tabIndex={-1}>{children}</main>
         <footer className="site-footer">

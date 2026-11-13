@@ -168,7 +168,7 @@ export function LabView() {
   return (
     <article className="paper lab">
       <header className="paper-head">
-        <p className="paper-series">Arkanum Data Research · Lab</p>
+        <p className="paper-series">Arkanum Data Research · Backtester</p>
         <h1 className="paper-title">Test an insider-buying strategy</h1>
         <p className="paper-authors">Pick rules, and see what happened after every officer and director purchase that matched, bought at the first close after the filing became public, against the S&amp;P 500.</p>
       </header>

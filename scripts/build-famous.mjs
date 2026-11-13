@@ -11,7 +11,7 @@ import { getJson } from "./lib/sec.mjs";
 import { matchFamous, withActivity } from "./lib/famous.mjs";
 import { mergeInsiders } from "../lib/insiderMerge.mjs";
 
-const UA = "Arkanum (free, non-commercial insider-trading site; arkanumdata.vercel.app)";
+const UA = "Arkanum (free, non-commercial insider-trading site; arkanumdata.com)";
 const OUT = "public/data/famous.json";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const read = async (f) => { try { return JSON.parse(await readFile(f, "utf8")); } catch { return null; } };

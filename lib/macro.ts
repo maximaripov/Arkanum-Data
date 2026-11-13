@@ -36,7 +36,7 @@ function finish(base: Omit<Series, "date" | "value" | "prev" | "weekAgo" | "hist
 async function fred(id: string, start: string): Promise<Point[]> {
   try {
     // FRED turns away requests without a recognizable client name, so say who we are.
-    const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { headers: { "User-Agent": "Arkanum/1.0 (+https://arkanumdata.vercel.app)" }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(15_000) });
+    const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { headers: { "User-Agent": "Arkanum/1.0 (+https://arkanumdata.com)" }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(15_000) });
     if (!r.ok) return [];
     const out: Point[] = [];
     for (const line of (await r.text()).trim().split("\n").slice(1)) {

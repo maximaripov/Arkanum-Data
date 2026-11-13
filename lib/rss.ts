@@ -1,5 +1,5 @@
+import { SITE } from "@/lib/site";
 // A minimal RSS 2.0 document for the site's feeds (/feeds/*.xml).
-const SITE = "https://arkanumdata.vercel.app";
 export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 /** "2026-11-03" -> an RFC 822 date at noon UTC (filings carry the day only). */
 const rssDate = (d: string) => new Date(d + "T12:00:00Z").toUTCString();

@@ -121,7 +121,7 @@ export function WatchingView() {
         ) : null },
         { key: "strategies", label: <>Strategies<span className="muted"> {strategies.length}</span></>, content: strategies.length ? (
           <section className="card flush">
-            <div className="card-title"><h2>Saved strategies <span className="muted small">an alert when a new purchase meets every rule</span></h2><Link href="/research/lab" className="linkbtn">Research lab ›</Link></div>
+            <div className="card-title"><h2>Saved strategies <span className="muted small">an alert when a new purchase meets every rule</span></h2><Link href="/research/lab" className="linkbtn">Backtester ›</Link></div>
             <ul className="lrows">{strategies.map((x) => (
               <li key={x.id}><Link href="/research/lab"><span className="lrow-main"><strong>{x.name}</strong><span className="muted small">saved {day(x.saved)}{x.med != null ? ` · tested ${x.period === "2026" ? "2026" : "2023-25"}: ${x.med > 0 ? "+" : x.med < 0 ? "−" : ""}${Math.abs(x.med * 100).toFixed(1)}% vs the S&P 500 over 6 months` : ""}</span></span></Link></li>
             ))}</ul>

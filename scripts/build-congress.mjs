@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { dedupeReports, parsePtr, stateDistrict } from "./lib/congress.mjs";
 import { writeSummaries } from "./lib/congress-summary.mjs";
 
-const UA = "Arkanum (free, non-commercial insider-trading site; arkanumdata.vercel.app)";
+const UA = "Arkanum (free, non-commercial insider-trading site; arkanumdata.com)";
 const BASE = "https://disclosures-clerk.house.gov/public_disc";
 const MAX = +(process.argv[process.argv.indexOf("--max") + 1] || 0) || Infinity;
 const TMP = "/tmp/form4-congress";

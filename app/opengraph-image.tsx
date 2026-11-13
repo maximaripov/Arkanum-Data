@@ -20,7 +20,7 @@ export default function Image() {
             <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, maxWidth: 640 }}>Insider trades, tested</div>
             <div style={{ fontSize: 30, color: "#8c8c8c", maxWidth: 620, lineHeight: 1.35 }}>Other sites sell you insider signals. We test them, on every SEC and House filing.</div>
           </div>
-          <div style={{ fontSize: 24, color: "#8c8c8c" }}>Free · no account · arkanumdata.vercel.app</div>
+          <div style={{ fontSize: 24, color: "#8c8c8c" }}>Free · no account · arkanumdata.com</div>
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: "100%", paddingBottom: 10 }}>
           {BARS.map((h, i) => <div key={i} style={{ width: 22, height: h * 2.6, background: "#3ddc84", opacity: 0.55 + (i / BARS.length) * 0.45 }} />)}

@@ -25,7 +25,7 @@ export function PaperPrint({ base, title, date, no, pages, bodies, updated }: {
         </section>
       ))}
       <footer className="paper-foot">
-        <p className="paper-cite">Cite as: Arkanum Data Research (2026). &ldquo;{title}.&rdquo; Working paper no. {no}, {date}. arkanumdata.vercel.app{base}</p>
+        <p className="paper-cite">Cite as: Arkanum Data Research (2026). &ldquo;{title}.&rdquo; Working paper no. {no}, {date}. arkanumdata.com{base}</p>
       </footer>
     </article>
   );

@@ -121,7 +121,7 @@ export type PushMessage = { title: string; body: string; url: string; tag?: stri
 
 /** Sends each message to its device; returns the device IDs whose push address is gone. */
 export async function pushEach(items: { id: string; sub: PushSubscription; msg: PushMessage }[]) {
-  webpush.setVapidDetails(process.env.SITE_URL ?? "https://arkanumdata.vercel.app", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+  webpush.setVapidDetails(process.env.SITE_URL ?? "https://arkanumdata.com", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   const gone: string[] = [];
   const errors: string[] = [];
   let sent = 0;

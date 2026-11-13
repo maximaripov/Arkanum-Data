@@ -36,6 +36,7 @@ const nextConfig = {
       ...old,
       // The screener and calendar were retired; send old links somewhere useful.
       { source: "/screener", destination: "/stakes", permanent: false },
+      { source: "/backtester", destination: "/research/lab", permanent: false },
       { source: "/calendar", destination: "/markets", permanent: false },
     ];
   },

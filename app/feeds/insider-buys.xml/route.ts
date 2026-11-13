@@ -5,11 +5,11 @@ import { isExecOrDirector, personName, roleLabel, companyName } from "@/lib/peop
 import { fmtBig } from "@/lib/format";
 import { rss, esc, type FeedItem } from "@/lib/rss";
 import type { InsiderTrade } from "@/lib/sec";
+import { SITE } from "@/lib/site";
 
 // Built per request and cached by the CDN for an hour (Cache-Control in lib/rss.ts), so the
 // data file never goes into Vercel's runtime cache (its free writes are limited).
 export const dynamic = "force-dynamic";
-const SITE = "https://arkanumdata.vercel.app";
 type Scored = InsiderTrade & { conv?: { score: number; tier: string; reasons: { text: string }[] } | null };
 const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 

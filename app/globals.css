@@ -926,3 +926,4 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 /* Alerts bell in the header (desktop; phones reach alerts from the Digest tab). */
 .alerts-btn { text-decoration: none; }
 @media (max-width: 760px) { .nav .alerts-btn { display: none; } }
+.research-cta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: .8rem 0 0; }

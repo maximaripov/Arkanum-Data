@@ -14,7 +14,7 @@ const PAPERS: [string, string][] = [
   ["/research/house-trades", "Do House members' trades beat the market?"],
   ["/research/fund-copying", "Does copying famous funds work?"],
   ["/research/report-card", "Report card: do the labels still hold?"],
-  ["/research/lab", "Research lab: test your own strategy"],
+  ["/research/lab", "Backtester: test your own strategy"],
 ];
 
 export function HomeIntro() {
@@ -50,7 +50,7 @@ export function HomeIntro() {
             <summary>{more.length} more results</summary>
             <ul>{more.map((x) => <li key={x.id}><Link href={x.href}><span className="mono">{x.figure}</span> {x.head}</Link> <span className="muted small">{x.figureNote}</span></li>)}</ul>
           </details>
-          <Link href="/research" className="small">All findings and papers ›</Link>
+          <span className="small"><Link href="/research/lab">Test your own rules in the backtester ›</Link> · <Link href="/research">All findings ›</Link></span>
         </section>
         <TradeKinds compact />
         {/* The papers as one full-width strip under both cards, so neither card leaves empty space. */}

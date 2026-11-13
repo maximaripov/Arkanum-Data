@@ -33,7 +33,7 @@ export function Paper({ base, title, date, pages, current, children, no = 1 }: {
           {next != null ? <Link href={href(next)} rel="next">{pages[next].title} ›</Link> : <span />}
         </div>
         <p className="paper-cite"><Link href={`${base}/print`}>Download PDF</Link> · all pages in one document</p>
-        <p className="paper-cite">Cite as: Arkanum Data Research (2026). &ldquo;{title}.&rdquo; Working paper no. {no}, {date}. arkanumdata.vercel.app{base}</p>
+        <p className="paper-cite">Cite as: Arkanum Data Research (2026). &ldquo;{title}.&rdquo; Working paper no. {no}, {date}. arkanumdata.com{base}</p>
       </footer>
     </article>
   );
