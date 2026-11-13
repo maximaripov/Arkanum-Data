@@ -802,3 +802,9 @@ Owner's brief: research at the centre of the brand, sections that read as one pl
 - **Backtester:** the research lab is named Backtester; button on Research, link on the homepage research card, `/backtester` redirects to `/research/lab`.
 - **Timeout fix confirmed:** zero function timeouts in every hour since 22:04 UTC Nov 12.
 - Owner to do: Search Console domain property (TXT record, Claude adds it to Vercel DNS), sitemap submission, Bing import; business email provider choice (DNS records added by Claude).
+
+## Round 100 (2026-11-13): API demand check (shipped b860dce)
+
+- `/developers`: the planned API of analysed SEC insider data (insider trades with cleaned roles and pre-planned flags, Activity Score with reasons, clusters, company risk flags, 13F holdings; Form 144 and webhooks planned), a real example response (no price-derived fields), planned prices (Free / $19 / $49), what it excludes (Congress: federal law; prices and returns: licence; advice), and an early-access form.
+- Sign-ups: `POST /api/waitlist` (email check, honeypot, rate-limited by the existing /api firewall rule) into private Blob `waitlist/developers.json` (`lib/waitlist.ts`); each new sign-up pushes "API sign-up #N" to the owner's devices; `GET /api/waitlist` with the alerts secret returns the list. Privacy text updated (the only place the site asks for an email).
+- Go/no-go agreed with the owner: about 30 sign-ups in a month before building version 1.
