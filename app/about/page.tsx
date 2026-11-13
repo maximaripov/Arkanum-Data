@@ -78,7 +78,7 @@ export default function About() {
           <section className="card" id="privacy">
             <h2>Privacy</h2>
             <ul>
-              <li><strong>No accounts.</strong> We never ask for your name, email or phone number.</li>
+              <li><strong>No accounts.</strong> We never ask for your name, email or phone number, except on the optional <Link href="/developers">API early-access list</Link>, which keeps the email you give only to tell you when the API opens.</li>
               <li><strong>Your watchlist and the people you follow</strong> are stored in your browser on your device.</li>
               <li><strong>If you turn on notifications,</strong> we store a random device ID, your browser&apos;s push address, your watchlist and the people you follow (SEC IDs of insiders, names of House members), only to send your digest and alerts. Turning notifications off deletes them; devices that haven&apos;t opened Arkanum in about 4 months are deleted automatically.</li>
               <li><strong>Stock charts and index quotes</strong> load from TradingView, which receives your IP address and the symbol you view (it sets no cookies, per its documentation). Our host, Vercel, keeps standard server logs.</li>

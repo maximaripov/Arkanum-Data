@@ -927,3 +927,24 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .alerts-btn { text-decoration: none; }
 @media (max-width: 760px) { .nav .alerts-btn { display: none; } }
 .research-cta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: .8rem 0 0; }
+/* /developers (round 100): the planned API. */
+.dev-hero { display: grid; gap: .7rem; }
+.dev-endpoints { display: grid; gap: .8rem; margin: 0; }
+.dev-endpoints > div { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: .3rem 1.2rem; }
+.dev-endpoints dt { font-size: .85rem; color: var(--text); }
+.dev-endpoints dd { margin: 0; color: var(--muted); font-size: .9rem; }
+.dev-code { background: var(--bg); border: 1px solid var(--line); padding: 1rem; overflow-x: auto; font: .78rem/1.5 var(--font-mono), monospace; margin: 0; max-height: 34rem; }
+.dev-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dev-plan { border: 1px solid var(--line); padding: 1rem; display: grid; gap: .4rem; align-content: start; }
+.dev-plan .mono { font-size: 1.3rem; }
+.dev-plan ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: .88rem; }
+.waitlist { display: grid; gap: .8rem; max-width: 560px; }
+.waitlist label { display: grid; gap: .3rem; font-size: .85rem; }
+.waitlist input[type=email], .waitlist textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line); padding: .55rem .65rem; font: inherit; }
+.waitlist fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font-size: .85rem; }
+.waitlist legend { padding: 0; margin-bottom: .3rem; }
+.waitlist label.radio { display: flex; gap: .4rem; align-items: center; }
+.waitlist .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.waitlist button { justify-self: start; }
+.waitlist-done { border: 1px solid var(--up); padding: 1rem; }
+@media (max-width: 760px) { .dev-endpoints > div, .dev-plans { grid-template-columns: minmax(0, 1fr); } }

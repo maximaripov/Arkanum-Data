@@ -26,6 +26,7 @@ ${f.map((x) => `- ${x.head}: ${x.figure} (${x.figureNote}). ${x.body} Source: ${
 - [Backtester](${SITE}/research/lab): test an insider-buying strategy on every purchase since 2023.
 - [Methodology](${SITE}/research/methodology): sources, how returns and ranges are computed, and limits.
 - [Open data](${SITE}/open-data): the site's data as files.
+- [API (early access)](${SITE}/developers): planned API of analysed SEC insider trades, fund holdings and company risk flags.
 - Stock pages: ${SITE}/stock/{TICKER}, with insider trades, risk flags, finances, announcements and research context.
 `;
   return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });

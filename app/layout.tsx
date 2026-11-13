@@ -67,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/about">About</Link>
               <Link href="/research/methodology">Methodology</Link>
               <Link href="/open-data">Open data</Link>
+              <Link href="/developers">API</Link>
               <Link href="/about#privacy">Privacy</Link>
               <Link href="/research">Research</Link>
               <Link href="/terms">Terms</Link>
