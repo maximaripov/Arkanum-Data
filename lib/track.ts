@@ -7,6 +7,7 @@ declare global { interface Window { umami?: { track: (name: string, data?: Props
 
 export function track(name: string, props?: Props) {
   if (typeof window === "undefined") return;
+  try { if (localStorage.getItem("arkanum.notrack") === "1") return; } catch {} // the owner's browser (components/AnalyticsOptOut.tsx)
   try {
     window.umami?.track(name, props);
     window.plausible?.(name, props ? { props } : undefined);

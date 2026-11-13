@@ -979,3 +979,4 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 p, dd, blockquote, .hi-lead, .paper-authors, .prose li, .paper li, .paper-body li, ul:not([class]) > li, ol:not([class]) > li, .findings li { font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif; }
 p, .prose li, .paper li, .paper-body li { line-height: 1.6; }
 .mono, p.mono, li .mono, .kpi, .lrows, .ttable, .ticker, .trows, .ctrows, .tabs, .chip, .btn, .side, .party, .risk-tag, .pill { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
+.optout-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 50; display: flex; gap: 1rem; align-items: center; background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: .7rem 1rem; max-width: calc(100vw - 32px); font-size: .85rem; }

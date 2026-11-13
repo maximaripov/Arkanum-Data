@@ -8,7 +8,7 @@ import { Nav, TabBar } from "@/components/Nav";
 import { Ticker } from "@/components/Ticker";
 import { Welcome } from "@/components/Welcome";
 import { findings } from "@/lib/findings";
-import { Analytics } from "@vercel/analytics/next";
+import { AnalyticsOptOut, SiteVercelAnalytics } from "@/components/AnalyticsOptOut";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { THEME_KEY, THEME_COLORS } from "@/lib/theme";
 import "./globals.css";
@@ -56,7 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">Skip to content</a>
         <ServiceWorker />
         <Welcome market={findings().find((f) => f.id === "market")?.figure} />
-        <Analytics />
+        <SiteVercelAnalytics />
+        <AnalyticsOptOut />
         <Nav />
         <MoveIn />
         <SiteAnalytics />
