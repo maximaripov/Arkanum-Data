@@ -2,12 +2,12 @@
 
 Two scheduled routines post into the pinned "Arkanum Usage" chat (`session_01FV3qJV8Wgyssc1swtx1Eho`). Their instructions can only be changed from that chat. To apply this file there, say: "Update both daily routines' prompts to the versions in docs/monitoring.md on main."
 
-Why these versions (2026-11-09): Vercel Bot Protection now challenges cloud machines, so HTML pages answer 429 "Vercel Security Checkpoint" to the routines; the insider job runs every two hours; the Vercel API token works, so the usage check reads cache writes, functions and the firewall directly.
+Why these versions (2026-11-09): Vercel Bot Protection now challenges cloud machines, so HTML pages answer 429 "Vercel Security Checkpoint" to the routines; the insider job runs every two hours; the Vercel API token works, so the usage check reads cache writes, functions and the firewall directly. Updated 2026-11-13: the site moved to arkanumdata.com, so both checks test the new domain; the usage check also confirms the old address still serves data.
 
 ## Usage check (trig_01E5A35A5tgeZXtuvtMvqfSj, 7:37 PM ET)
 
 ```
-Run today's Arkanum daily usage and storage check (the first of two daily checks in this chat; the 8:34 PM one checks the site's content). This session has the repo maximaripov/Arkanum-Data attached, so GitHub API calls work here. The site is Next.js on Vercel Hobby at https://arkanumdata.vercel.app; GitHub Actions commit data to main and every push to main redeploys. Report only: do not change code, settings or data. Never put the owner's email in requests.
+Run today's Arkanum daily usage and storage check (the first of two daily checks in this chat; the 8:34 PM one checks the site's content). This session has the repo maximaripov/Arkanum-Data attached, so GitHub API calls work here. The site is Next.js on Vercel Hobby at https://arkanumdata.com (moved from arkanumdata.vercel.app on 2026-11-13; the old address still serves /data, /api and the service worker for the jobs and old alert subscriptions, and sends pages to the new domain); GitHub Actions commit data to main and every push to main redeploys. Report only: do not change code, settings or data. Never put the owner's email in requests.
 
 Start from a fresh copy: git fetch origin main and check out origin/main (deepen with git fetch --deepen if a 7-day-old commit is needed). Then:
 
@@ -21,7 +21,7 @@ Start from a fresh copy: git fetch origin main and check out origin/main (deepen
    If the API answers missing token or forbidden: "ISSUE: Vercel API token not working"; fix: re-save the network secret for api.vercel.com (header Authorization, prefix Bearer, value without the word Bearer).
 4. Functions size: npm ci && npm run build, then sum files listed in every .next/server/**/*.nft.json (paths relative to each nft file). Report the largest; warn if over 15 MB or if any node_modules/@img or sharp file is traced.
 5. Data size: public/data and docs/backtest; warn if public/data is over 60 MB or any file there over 10 MB; compare with the newest commit older than 7 days (git ls-tree -r -l) and warn on growth over 25%.
-6. Site health: GET /data/overview.json, /data/insiders-today.json, /sitemap.xml, /robots.txt, /feeds/congress.xml; all must be 200 (these skip Bot Protection). On a weekday after 10 AM New York time, warn if /data/insiders-today.json "updated" is over 3 hours old. HTML pages may answer 429 titled "Vercel Security Checkpoint": expected, not an issue.
+6. Site health: GET /data/overview.json, /data/insiders-today.json, /sitemap.xml, /robots.txt, /feeds/congress.xml on https://arkanumdata.com; all must be 200 (these skip Bot Protection), and /sitemap.xml must be XML, not HTML. Also GET https://arkanumdata.vercel.app/data/insiders-today.json: must be 200 JSON (the jobs and old alert subscriptions still use the old address). On a weekday after 10 AM New York time, warn if /data/insiders-today.json "updated" is over 3 hours old. HTML pages may answer 429 titled "Vercel Security Checkpoint": expected, not an issue.
 7. Active CPU and Functions Storage can't be read on Hobby (that API is Pro-only); say so in one line.
 
 Always post the full results in this chat, starting with "Usage check <date>: no issues" or "Usage check <date>: N issue(s)", then one line per check with its numbers, marking issues with ISSUE: and the likely fix. Under 22 lines. Send ONE PushNotification (under 200 characters, leading with the most important issue) only if there is at least one issue.
@@ -30,7 +30,7 @@ Always post the full results in this chat, starting with "Usage check <date>: no
 ## Content check (trig_014ngq1ztgL5aJVRk9BKYxXQ, 8:34 PM ET)
 
 ```
-Run today's Arkanum content check: does the live site look up to date and ordinary? (The second daily check in this chat; the 7:37 PM one covers usage.) Site: https://arkanumdata.vercel.app (data from GitHub Actions in the attached repo maximaripov/Arkanum-Data, whose code shows what each page should show). Report only: do not change code, settings or data. Never put the owner's email in requests. Times are New York time. A trading day is a weekday that isn't an NYSE holiday (marketClosed in lib/marketDays.mjs). Never flag staleness the calendar explains.
+Run today's Arkanum content check: does the live site look up to date and ordinary? (The second daily check in this chat; the 7:37 PM one covers usage.) Site: https://arkanumdata.com (moved from arkanumdata.vercel.app on 2026-11-13; data from GitHub Actions in the attached repo maximaripov/Arkanum-Data, whose code shows what each page should show). Report only: do not change code, settings or data. Never put the owner's email in requests. Times are New York time. A trading day is a weekday that isn't an NYSE holiday (marketClosed in lib/marketDays.mjs). Never flag staleness the calendar explains.
 
 Bot Protection: Vercel challenges cloud machines, so HTML pages may answer 429 titled "Vercel Security Checkpoint". Expected, not an issue. If so, skip steps 1 and 3, say "HTML checks skipped: pages behind Bot Protection" in one line, and run every data-file check (/data/*, /feeds/*, /api/alerts/digest, /sitemap.xml, /robots.txt skip Bot Protection). If pages load, run everything.
 
