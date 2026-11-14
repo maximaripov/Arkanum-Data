@@ -32,8 +32,6 @@ export function VBars({ cols, selected, onPick, height = 150 }: { cols: VCol[]; 
   return (
     <div className="vbars">
       <div className="vb-read small">{show ? <><strong>{show.label}</strong> · {show.detail}</> : <span className="muted">Tap a bar to see that day&apos;s trades</span>}</div>
-      {/* Each bar is at least 24px wide so it is easy to tap; a long run scrolls sideways. */}
-      <div className="vb-scroll"><div className="vb-inner" style={{ minWidth: cols.length * 27 }}>
       <div className="vb-cols" style={{ height }} onPointerLeave={() => setHover(null)}>
         {cols.map((c) => (
           <button key={c.key} className={`vb-col${c.key === selected ? " on" : ""}${selected && c.key !== selected ? " dim" : ""}`}
@@ -44,7 +42,6 @@ export function VBars({ cols, selected, onPick, height = 150 }: { cols: VCol[]; 
         ))}
       </div>
       <div className="vb-axis">{cols.map((c, i) => <span key={c.key}>{i % every === 0 ? c.label : ""}</span>)}</div>
-      </div></div>
     </div>
   );
 }

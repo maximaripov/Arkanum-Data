@@ -970,10 +970,8 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 @media (min-width: 761px) and (max-width: 840px) { .nav .nav-links a { font-size: .82rem; padding-left: .35rem; padding-right: .35rem; } .nav .wordmark { font-size: 1.05rem; } }
 .home-spot .spot-use { font-size: .95rem; color: var(--text); line-height: 1.5; }
 .home-spot .spot-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .2rem 0 .3rem; }
-/* Tap targets (round 101): ticker chips, bar-chart columns and small text links reach 24px. */
+/* Tap targets (round 101): ticker chips and small text links reach 24px. */
 .ticker a { display: inline-flex; align-items: center; gap: .35em; min-height: 24px; }
-.vb-scroll { overflow-x: auto; }
-.vb-col { min-width: 24px; }
 .hero-proof a, .home-papers a, .kinds-more a, .spot-more a, .home-spot a.small, .home-spot .small a, .card-title .linkbtn, .card-head a.small, a.linkbtn, .site-footer a { display: inline-flex; align-items: center; min-height: 24px; }
 /* Reading text (round 101): long text in a sans face; numbers, tickers, labels, headings and controls stay monospace. */
 p, dd, blockquote, .hi-lead, .paper-authors, .prose li, .paper li, .paper-body li, ul:not([class]) > li, ol:not([class]) > li, .findings li { font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif; }
