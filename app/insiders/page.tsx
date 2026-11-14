@@ -20,7 +20,7 @@ async function overview(): Promise<Overview | null> {
 export default async function Insiders() {
   return (
     <div className="stack">
-      <h1 className="home-dash-title">Insider trades <span className="muted small">company executives and directors, from SEC filings, updated every two hours on weekdays</span></h1>
+      <h1 className="home-dash-title">Insider trades <span className="muted small">company executives and directors, from SEC filings</span></h1>
       <KindsLine />
       <InsidersView initial={await overview()} />
     </div>
