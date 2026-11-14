@@ -8,6 +8,9 @@ import type { Group } from "@/lib/macro";
 import { weekSummary } from "@/lib/macroFormat";
 
 const STRIP = ["FOREXCOM:SPXUSD", "FOREXCOM:NSXUSD", "BITSTAMP:BTCUSD", "TVC:GOLD", "FRED:DGS10"]; // free widgets can't show TVC:US10Y, so the 10-year is TradingView's (daily) copy of FRED
+// FRED's series has one value a day, and a one-month mini chart asks for intraday bars
+// ("Unsupported interval"), so the 10-year shows three months, which are drawn from daily bars.
+const RANGE: Record<string, string> = { "FRED:DGS10": "3M" };
 
 export function useMarkets() {
   const [groups, setGroups] = useState<Group[] | null>(null);
@@ -28,11 +31,11 @@ export function WeekSummary({ groups }: { groups: Group[] | null }) {
 export function MarketBoard() {
   return (
     <section className="card">
-      <div className="card-head"><h2>Markets</h2><span className="muted small">S&amp;P 500 · Nasdaq 100 · Bitcoin · Gold · 10-year yield</span></div>
+      <div className="card-head"><h2>Markets</h2><span className="muted small">S&amp;P 500 · Nasdaq 100 · Bitcoin · Gold · 10-year yield (3 months)</span></div>
       <div className="mstrip">
         {STRIP.map((symbol) => (
           <div key={symbol} className="mcard tvq">
-            <TradingView widget="mini-symbol-overview" height={130} config={{ symbol, width: "100%", height: "100%", dateRange: "1M", isTransparent: true, chartOnly: false, noTimeScale: true }} label="TradingView" />
+            <TradingView widget="mini-symbol-overview" height={130} config={{ symbol, width: "100%", height: "100%", dateRange: RANGE[symbol] ?? "1M", isTransparent: true, chartOnly: false, noTimeScale: true }} label="TradingView" />
           </div>
         ))}
       </div>
