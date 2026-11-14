@@ -55,7 +55,6 @@ export default async function Developers() {
         <h1 className="hi-title">Insider trades, already analysed.</h1>
         <p className="hi-lead">Raw Form 4 data is everywhere. What takes work is cleaning it and reading it: who is really buying, whether it&apos;s routine, whether several insiders moved at once, and what else the company&apos;s filings say. The Arkanum API returns that, as JSON, from SEC filings only.</p>
         <ul className="hero-proof"><li>SEC filings, each linked</li><li>Cleaned names and roles</li><li>Scores with their reasons</li></ul>
-        <p className="muted small">Not built yet: we&apos;re measuring demand first. Join the list below and you&apos;ll hear once, when early access opens.</p>
       </section>
 
       <section className="card">
